@@ -1,0 +1,15 @@
+# kit 的忽略规则(gitignore 语法)。kit 的跟踪范围由这个文件决定。
+# 两个仓库目录本身必须互相排除
+.git/
+.kit/
+
+# 依赖与构建产物(按项目调整)
+node_modules/
+dist/
+build/
+out/
+.next/
+target/
+__pycache__/
+.venv/
+*.log
