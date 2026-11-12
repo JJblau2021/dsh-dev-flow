@@ -1,6 +1,9 @@
 .kit/
+.dev-flow/
 
 node_modules/
+.npm-cache/
+.capture/
 dist/
 build/
 out/

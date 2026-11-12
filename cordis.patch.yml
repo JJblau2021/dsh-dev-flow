@@ -1,0 +1,4 @@
+# dev-flow: publish the bundled scheduling skill.
+- insert:
+    - id: dev-flow
+      name: '@jjblau2021/dsh-dev-flow'
