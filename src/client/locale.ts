@@ -1,7 +1,7 @@
 export const NAMESPACE = 'devFlow'
 
 export const zh: Record<string, string> = {
-  'tab.title': '工作流',
+  'tab.title': 'dev-flow',
   'tab.description': '查看多仓库开发任务、槽位和代理',
   'switch.label': '工作流',
   'page.overview': '概览',
@@ -82,7 +82,7 @@ export const zh: Record<string, string> = {
 }
 
 export const en: Record<string, string> = {
-  'tab.title': 'Workflow',
+  'tab.title': 'dev-flow',
   'tab.description': 'Tasks, slots, and agents for a multi-repo workspace',
   'switch.label': 'Workflow',
   'page.overview': 'Overview',

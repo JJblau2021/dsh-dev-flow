@@ -38,7 +38,7 @@ module.exports = __toCommonJS(index_exports);
 // src/client/locale.ts
 var NAMESPACE = "devFlow";
 var zh = {
-  "tab.title": "\u5DE5\u4F5C\u6D41",
+  "tab.title": "dev-flow",
   "tab.description": "\u67E5\u770B\u591A\u4ED3\u5E93\u5F00\u53D1\u4EFB\u52A1\u3001\u69FD\u4F4D\u548C\u4EE3\u7406",
   "switch.label": "\u5DE5\u4F5C\u6D41",
   "page.overview": "\u6982\u89C8",
@@ -118,7 +118,7 @@ var zh = {
   "hint.pick": "\u5148\u52FE\u9009\u5F85\u9A8C\u6536\u4EFB\u52A1"
 };
 var en = {
-  "tab.title": "Workflow",
+  "tab.title": "dev-flow",
   "tab.description": "Tasks, slots, and agents for a multi-repo workspace",
   "switch.label": "Workflow",
   "page.overview": "Overview",
