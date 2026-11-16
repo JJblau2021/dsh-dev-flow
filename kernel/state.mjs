@@ -32,6 +32,7 @@ export function emptyState() {
     batches: {},
     sessions: {},
     agents: [],
+    schedules: {},
     trunks: null,
   };
 }
@@ -42,6 +43,7 @@ export function loadState(workspace) {
     const parsed = JSON.parse(readFileSync(statePath(workspace), 'utf8'));
     const state = { ...emptyState(), ...parsed };
     if (!Array.isArray(state.agents)) state.agents = [];
+    if (state.schedules === undefined || state.schedules === null || Array.isArray(state.schedules)) state.schedules = {};
     if (state.trunks === undefined) state.trunks = null;
     return state;
   } catch (error) {

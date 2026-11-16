@@ -7,10 +7,15 @@ import test from 'node:test';
 
 import {
   abandonDevTask,
+  attachLiveAgent,
+  deleteAcceptances,
+  releaseLiveAgent,
   completeDevTask,
   createDevTask,
   failDevTask,
+  startSchedule,
   finishAcceptance,
+  finishTaskAcceptance,
   planDispatch,
   scan,
   sessionEnabled,
@@ -167,8 +172,8 @@ test('acceptance uses one slot and port per repo and rejects a second batch', ()
   assert.equal(batch.repos.kit.port, 4100);
   assert.equal(batch.repos.glose.port, 4101);
   assert.equal(branch(batch.repos.kit.path), 'df-check/batch-1');
-  assert.equal(batch.repos.kit.path.endsWith(`${path.sep}kit${path.sep}01`), true);
-  assert.equal(loadState(root).devSlots.kit['01'].path.endsWith(`${path.sep}kit${path.sep}01`), true);
+  assert.equal(batch.repos.kit.path.endsWith(`${path.sep}01${path.sep}kit-01`), true);
+  assert.equal(loadState(root).devSlots.kit['01'].path.endsWith(`${path.sep}01${path.sep}kit-01`), true);
   assert.throws(() => startAcceptance(root, { id: 'batch-2', taskIds: ['login'] }), (error) => error.code === 'busy');
   finishAcceptance(root, 'batch-1', 'rejected');
   assert.equal(loadState(root).tasks.login.status, 'pending-acceptance');
@@ -186,6 +191,141 @@ test('acceptance uses one slot and port per repo and rejects a second batch', ()
   rmSync(root, { recursive: true, force: true });
 });
 
+test('a schedule task records the tasks, slots, and agent it creates', () => {
+  const root = workspace();
+  setSessionEnabled(root, 'session-a', true);
+  startSchedule(root, { id: 'sched-login', title: '安排登录', sessionId: 'session-a' });
+  createDevTask(root, { id: 'login', title: '登录', repos: ['kit'], scheduleId: 'sched-login' });
+  const plan = planDispatch(root, 'session-a', { kind: 'dev', id: 'login' });
+  const state = loadState(root);
+  assert.equal(state.tasks.login.scheduleId, 'sched-login');
+  assert.deepEqual(state.schedules['sched-login'].taskIds, ['login']);
+  assert.deepEqual(state.schedules['sched-login'].agentIds, [plan.agentId]);
+  assert.equal(state.schedules['sched-login'].status, 'dispatched');
+  assert.equal(state.tasks.login.slots.kit.number, '01');
+  rmSync(root, { recursive: true, force: true });
+});
+
+test('an acceptance batch passes only after every development task passes', () => {
+  const root = workspace();
+  for (const [id, repo, file] of [['login', 'kit', 'kit.txt'], ['copy', 'glose', 'glose.txt']]) {
+    createDevTask(root, { id, title: id, repos: [repo] });
+    const slot = loadState(root).tasks[id].slots[repo].path;
+    writeFileSync(path.join(slot, file), `${id}\n`);
+    git(slot, ['add', file]);
+    git(slot, ['commit', '-m', id]);
+    completeDevTask(root, id);
+  }
+  startAcceptance(root, { id: 'batch-1', taskIds: ['login', 'copy'] });
+  writeFileSync(path.join(root, 'kit', '.gitignore'), 'nested\n');
+  git(path.join(root, 'kit'), ['add', '.gitignore']);
+  git(path.join(root, 'kit'), ['commit', '-m', 'ignore nested']);
+  finishTaskAcceptance(root, 'batch-1', 'login', 'accepted');
+  assert.equal(loadState(root).batches['batch-1'].status, 'accepting');
+  assert.equal(loadState(root).tasks.login.acceptance, 'accepted');
+  assert.notEqual(loadState(root).acceptSlots.kit.batchId, null);
+  finishTaskAcceptance(root, 'batch-1', 'copy', 'accepted');
+  assert.equal(loadState(root).batches['batch-1'].status, 'accepted');
+  assert.equal(loadState(root).tasks.copy.status, 'merged');
+  assert.equal(loadState(root).acceptSlots.kit.batchId, null);
+  rmSync(root, { recursive: true, force: true });
+});
+
+test('passing acceptance also accepts the dependencies already in the trunk', () => {
+  const root = workspace();
+  const ids = ['base', 'middle', 'top'];
+  for (const [index, id] of ids.entries()) {
+    createDevTask(root, { id, title: id, repos: ['kit'], dependsOn: index === 0 ? [] : [ids[index - 1]] });
+    const slot = loadState(root).tasks[id].slots.kit.path;
+    writeFileSync(path.join(slot, `${id}.txt`), `${id}\n`);
+    git(slot, ['add', `${id}.txt`]);
+    git(slot, ['commit', '-m', id]);
+    completeDevTask(root, id);
+  }
+  writeFileSync(path.join(root, 'kit', '.gitignore'), 'nested\n');
+  git(path.join(root, 'kit'), ['add', '.gitignore']);
+  git(path.join(root, 'kit'), ['commit', '-m', 'ignore nested']);
+  startAcceptance(root, { id: 'batch-top', taskIds: ['top'] });
+  finishTaskAcceptance(root, 'batch-top', 'top', 'accepted');
+  const state = loadState(root);
+  assert.equal(state.tasks.top.status, 'merged');
+  assert.equal(state.tasks.middle.status, 'merged');
+  assert.equal(state.tasks.middle.acceptance, 'accepted');
+  assert.equal(state.tasks.base.status, 'merged');
+  assert.equal(state.tasks.base.acceptance, 'accepted');
+  rmSync(root, { recursive: true, force: true });
+});
+
+test('a failed acceptance creation frees the accept slot', () => {
+  const root = workspace();
+  for (const [id, text] of [['left', 'left\n'], ['right', 'right\n']]) {
+    createDevTask(root, { id, title: id, repos: ['kit'] });
+    const slot = loadState(root).tasks[id].slots.kit.path;
+    writeFileSync(path.join(slot, 'conflict.txt'), text);
+    git(slot, ['add', 'conflict.txt']);
+    git(slot, ['commit', '-m', id]);
+    completeDevTask(root, id);
+  }
+  assert.throws(
+    () => startAcceptance(root, { id: 'batch-clash', taskIds: ['left', 'right'] }),
+    (error) => error.code === 'conflict',
+  );
+  const state = loadState(root);
+  assert.equal(state.batches['batch-clash'], undefined);
+  assert.equal(state.acceptSlots.kit?.batchId ?? null, null);
+  assert.equal(state.tasks.left.status, 'pending-acceptance');
+  assert.equal(state.tasks.right.status, 'pending-acceptance');
+  rmSync(root, { recursive: true, force: true });
+});
+
+test('deleting an acceptance task removes its acceptance branch', () => {
+  const root = workspace();
+  createDevTask(root, { id: 'login', title: '登录', repos: ['kit'] });
+  const slot = loadState(root).tasks.login.slots.kit.path;
+  writeFileSync(path.join(slot, 'kit.txt'), 'login\n');
+  git(slot, ['add', 'kit.txt']);
+  git(slot, ['commit', '-m', 'login']);
+  completeDevTask(root, 'login');
+  startAcceptance(root, { id: 'batch-cut', taskIds: ['login'] });
+  finishAcceptance(root, 'batch-cut', 'rejected');
+  const kit = path.join(root, 'kit');
+  assert.equal(execFileSync('git', ['rev-parse', '--verify', 'df-check/batch-cut'], { cwd: kit, encoding: 'utf8' }).trim().length > 0, true);
+  deleteAcceptances(root, ['batch-cut']);
+  assert.equal(loadState(root).batches['batch-cut'], undefined);
+  assert.equal(loadState(root).acceptSlots.kit.batchId, null);
+  assert.equal(loadState(root).tasks.login.status, 'pending-acceptance');
+  assert.throws(() => execFileSync('git', ['rev-parse', '--verify', 'df-check/batch-cut'], { cwd: kit, stdio: 'ignore' }));
+  rmSync(root, { recursive: true, force: true });
+});
+
+test('a live subagent is recorded even when dispatch was skipped', () => {
+  const root = workspace();
+  setSessionEnabled(root, 'session-a', true);
+  startSchedule(root, { id: 'sched-card', title: '发卡', sessionId: 'session-a' });
+  createDevTask(root, { id: 'card', title: '卡片', repos: ['kit'], scheduleId: 'sched-card' });
+  assert.equal(loadState(root).tasks.card.agentStatus, 'idle');
+  attachLiveAgent(root, 'card', 'child-1');
+  const running = loadState(root);
+  assert.equal(running.tasks.card.agentStatus, 'running');
+  assert.equal(running.agents.some((agent) => agent.status === 'running' && agent.taskId === 'card'), true);
+  assert.equal(running.schedules['sched-card'].status, 'dispatched');
+  releaseLiveAgent(root, 'child-1');
+  const idle = loadState(root);
+  assert.equal(idle.tasks.card.agentStatus, 'idle');
+  assert.equal(idle.tasks.card.status, 'developing');
+  assert.equal(idle.agents.some((agent) => agent.status === 'running'), false);
+  rmSync(root, { recursive: true, force: true });
+});
+
+test('a task cannot span more than one service', () => {
+  const root = workspace();
+  assert.throws(
+    () => createDevTask(root, { id: 'both', title: '两边', repos: ['kit', 'glose'] }),
+    (error) => error.code === 'scope',
+  );
+  rmSync(root, { recursive: true, force: true });
+});
+
 test('dispatch stays closed until the session switch is on', () => {
   const root = workspace();
   createDevTask(root, { id: 'login', title: '登录', repos: ['kit'] });
@@ -197,6 +337,19 @@ test('dispatch stays closed until the session switch is on', () => {
   assert.equal(plan.model, 'dev-model');
   assert.equal(plan.cwd, loadState(root).tasks.login.slots.kit.path);
   assert.throws(() => planDispatch(root, 'session-a', { kind: 'dev', id: 'login' }), (error) => error.code === 'busy');
+  rmSync(root, { recursive: true, force: true });
+});
+
+test('a task branch starts from the trunk checkout, not the detected default branch', () => {
+  const root = mkdtempSync(path.join(tmpdir(), 'dev-flow-'));
+  const kit = makeRepo(root, 'kit');
+  git(kit, ['checkout', '-b', 'trunk-line']);
+  commit(kit, 'trunk.txt', 'on trunk\n');
+  const trunkHead = head(kit);
+  createDevTask(root, { id: 'login', title: '登录', repos: ['kit'] });
+  const slot = loadState(root).tasks.login.slots.kit.path;
+  assert.equal(head(slot), trunkHead);
+  assert.notEqual(trunkHead, execFileSync('git', ['rev-parse', 'main'], { cwd: kit, encoding: 'utf8' }).trim());
   rmSync(root, { recursive: true, force: true });
 });
 

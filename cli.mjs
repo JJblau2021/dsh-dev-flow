@@ -12,6 +12,7 @@ import {
   scan,
   setSessionEnabled,
   startAcceptance,
+  startSchedule,
 } from './kernel/flow.mjs';
 import { loadPluginSettings } from './kernel/plugin-settings.mjs';
 import { loadState } from './kernel/state.mjs';
@@ -27,6 +28,7 @@ const { values } = parseArgs({
     session: { type: 'string' },
     enabled: { type: 'string' },
     kind: { type: 'string' },
+    schedule: { type: 'string' },
   },
   allowPositionals: true,
 });
@@ -42,11 +44,17 @@ function list(value) {
 const commands = {
   scan: () => scan(workspace),
   status: () => loadState(workspace),
+  'schedule-start': () => startSchedule(workspace, {
+    id: values.id,
+    title: values.title ?? values.id,
+    sessionId: values.session,
+  }),
   'task-create': () => createDevTask(workspace, {
     id: values.id,
     title: values.title ?? values.id,
     repos: list(values.repos),
     dependsOn: list(values.depends),
+    scheduleId: values.schedule,
     settings,
   }),
   'task-complete': () => completeDevTask(workspace, values.id),

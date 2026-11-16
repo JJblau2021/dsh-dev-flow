@@ -1,4 +1,4 @@
-import { finishAcceptance, sessionEnabled, setSessionEnabled, settlePendingMerges, startAcceptance } from './flow.mjs';
+import { deleteAcceptances, finishAcceptance, finishTaskAcceptance, mergePendingTask, refreshSchedules, sessionEnabled, setSessionEnabled, settlePendingMerges, settleStaleAcceptSlots, startAcceptance } from './flow.mjs';
 import { loadPluginSettings, savePluginSettings } from './plugin-settings.mjs';
 import { hasState, initializeWorkspace } from './state.mjs';
 import { snapshot } from './view.mjs';
@@ -13,7 +13,11 @@ import { snapshot } from './view.mjs';
  */
 export function handle(workspace, sessionId, endpoint, payload = {}, settingsHome) {
   if (endpoint === 'snapshot') {
-    if (hasState(workspace)) settlePendingMerges(workspace);
+    if (hasState(workspace)) {
+      settlePendingMerges(workspace);
+      refreshSchedules(workspace);
+      settleStaleAcceptSlots(workspace);
+    }
     return snapshot(workspace, sessionId);
   }
   if (endpoint === 'init') {
@@ -39,6 +43,25 @@ export function handle(workspace, sessionId, endpoint, payload = {}, settingsHom
       settings,
     });
     return { batch, snapshot: snapshot(workspace, sessionId) };
+  }
+  if (endpoint === 'accept-delete') {
+    const ids = Array.isArray(payload.ids) ? payload.ids.map(String) : [];
+    deleteAcceptances(workspace, ids);
+    return snapshot(workspace, sessionId);
+  }
+  if (endpoint === 'task-merge') {
+    mergePendingTask(workspace, String(payload.taskId ?? ''));
+    return snapshot(workspace, sessionId);
+  }
+  if (endpoint === 'accept-task') {
+    const result = payload.result === 'rejected' ? 'rejected' : payload.result;
+    if (result !== 'accepted' && result !== 'rejected') {
+      const error = new Error('验收结果只能是通过或不通过');
+      error.code = 'status';
+      throw error;
+    }
+    finishTaskAcceptance(workspace, String(payload.id ?? ''), String(payload.taskId ?? ''), result);
+    return snapshot(workspace, sessionId);
   }
   if (endpoint === 'accept-finish') {
     const result = payload.result === 'rejected' ? 'rejected' : payload.result;

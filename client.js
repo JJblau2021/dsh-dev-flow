@@ -53,6 +53,10 @@ var zh = {
   "action.working": "\u6B63\u5728\u53D1\u8D77",
   "toast.started": "\u5DF2\u53D1\u8D77\u9A8C\u6536",
   "action.pass": "\u901A\u8FC7",
+  "action.merge": "\u5408\u5165",
+  "action.delete": "\u5220\u9664",
+  "action.deleting": "\u6B63\u5728\u5220\u9664",
+  "action.detail": "\u8BE6\u60C5",
   "action.fail": "\u4E0D\u901A\u8FC7",
   "status.review": "\u5F85\u786E\u8BA4",
   "action.refresh": "\u5237\u65B0",
@@ -67,10 +71,16 @@ var zh = {
   "metric.slots": "\u6D3B\u8DC3\u69FD\u4F4D",
   "metric.pending": "\u5F85\u9A8C\u6536",
   "metric.dirty": "\u4E3B\u5E72\u4E0D\u5E72\u51C0",
+  "section.scheduleTasks": "\u8C03\u5EA6\u4EFB\u52A1",
+  "section.emptySchedule": "\u6CA1\u6709\u8C03\u5EA6\u4EFB\u52A1",
   "section.devTasks": "\u5F00\u53D1\u4EFB\u52A1",
   "section.acceptTasks": "\u9A8C\u6536\u4EFB\u52A1",
   "section.emptyDev": "\u6CA1\u6709\u5F00\u53D1\u4EFB\u52A1",
   "section.emptyAccept": "\u6CA1\u6709\u9A8C\u6536\u4EFB\u52A1",
+  "fact.depends": "\u4F9D\u8D56",
+  "fact.merged": "\u5DF2\u5E76\u5165",
+  "fact.state": "\u72B6\u6001",
+  "fact.notMerged": "\u672A\u5E76\u5165",
   "section.trunks": "\u4E3B\u5E72",
   "section.active": "\u6D3B\u8DC3\u4E2D",
   "section.none": "\u6CA1\u6709\u8FDB\u884C\u4E2D\u7684\u4EE3\u7406",
@@ -91,6 +101,9 @@ var zh = {
   "trunk.clean": "\u5E72\u51C0",
   "trunk.dirty": "\u4E0D\u5E72\u51C0",
   "status.developing": "\u5F00\u53D1\u4E2D",
+  "status.awaiting-agent": "\u5F85\u6D3E\u53D1",
+  "status.scheduling": "\u8C03\u5EA6\u4E2D",
+  "status.dispatched": "\u5DF2\u8C03\u5EA6",
   "status.failed": "\u5931\u8D25",
   "status.waiting": "\u7B49\u5F85",
   "status.pending-acceptance": "\u5F85\u9A8C\u6536",
@@ -98,7 +111,8 @@ var zh = {
   "status.merged": "\u5DF2\u5B8C\u6210",
   "status.pending-merge": "\u5F85\u5408\u5165",
   "status.abandoned": "\u653E\u5F03",
-  "status.accepting": "\u5F85\u786E\u8BA4",
+  "status.accepting": "\u9A8C\u6536\u4E2D",
+  "status.idle": "\u7A7A\u95F2",
   "status.rejected": "\u4E0D\u901A\u8FC7",
   "hint.order": "\u6309\u52FE\u9009\u987A\u5E8F\u5E76\u5165",
   "hint.pick": "\u5148\u52FE\u9009\u5F85\u9A8C\u6536\u4EFB\u52A1"
@@ -119,6 +133,10 @@ var en = {
   "action.working": "Starting",
   "toast.started": "Acceptance started",
   "action.pass": "Pass",
+  "action.merge": "Merge",
+  "action.delete": "Delete",
+  "action.deleting": "Deleting",
+  "action.detail": "Details",
   "action.fail": "Fail",
   "status.review": "Waiting for review",
   "action.refresh": "Refresh",
@@ -133,10 +151,16 @@ var en = {
   "metric.slots": "Active slots",
   "metric.pending": "Pending",
   "metric.dirty": "Dirty trunks",
+  "section.scheduleTasks": "Scheduling",
+  "section.emptySchedule": "No scheduling tasks",
   "section.devTasks": "Development",
   "section.acceptTasks": "Acceptance",
   "section.emptyDev": "No development tasks",
   "section.emptyAccept": "No acceptance tasks",
+  "fact.depends": "Depends on",
+  "fact.merged": "Merged",
+  "fact.state": "State",
+  "fact.notMerged": "Not merged",
   "section.trunks": "Trunks",
   "section.active": "Active",
   "section.none": "No agent is running",
@@ -157,6 +181,9 @@ var en = {
   "trunk.clean": "Clean",
   "trunk.dirty": "Dirty",
   "status.developing": "Developing",
+  "status.awaiting-agent": "Not started",
+  "status.scheduling": "Scheduling",
+  "status.dispatched": "Dispatched",
   "status.failed": "Failed",
   "status.waiting": "Waiting",
   "status.pending-acceptance": "Pending",
@@ -164,7 +191,8 @@ var en = {
   "status.merged": "Done",
   "status.pending-merge": "Awaiting merge",
   "status.abandoned": "Abandoned",
-  "status.accepting": "Review",
+  "status.accepting": "Accepting",
+  "status.idle": "Idle",
   "status.rejected": "Rejected",
   "hint.order": "Merge order follows the selection",
   "hint.pick": "Select pending tasks first"
@@ -173,119 +201,278 @@ var en = {
 // src/client/sheet.ts
 var PANEL_STYLE_ID = "dev-flow-panel";
 var panelSheet = `
+/* \u57FA\u7840\uFF1A\u6240\u6709\u989C\u8272\u8D70\u4E3B\u9898\u53D8\u91CF\uFF0C\u6DF1\u6D45\u8272\u90FD\u8DDF DSH \u8D70 */
 .df {
+  position: absolute;
+  inset: 0;
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 10px;
   min-width: 0;
   min-height: 0;
-  height: 100%;
-  overflow: auto;
+  overflow: hidden;
   box-sizing: border-box;
-  padding: 12px 16px 24px;
+  padding: 10px 16px 16px;
   color: var(--dsw-alias-label-primary);
   font-size: 13px;
   line-height: 20px;
 }
-.df-toolbar {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
+[data-sidebar-right-tab]:has(> .df) { position: relative; }
+
+/* \u9876\u90E8\u5DE5\u5177\u6761\u4E0E\u7B5B\u9009 */
+.df-toolbar { display: flex; align-items: center; gap: 8px; flex: none; }
 .df-toolbar > :first-child { flex: 1; min-width: 0; }
 .df-filters, .df-rowline { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
-.df-section {
-  margin: 2px 0 0;
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--dsw-alias-label-secondary);
-}
-.df-note { margin: 0; color: var(--dsw-alias-label-tertiary); font-size: 12px; }
-.df-metrics {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 8px;
-}
-.df-metric, .df-card, .df-empty {
-  border: 0.5px solid var(--dsw-alias-border-l2);
-  border-radius: var(--dsw-radius-md);
-  background: var(--dsw-alias-bg-base);
-}
-.df-metric { padding: 10px 12px; }
-.df-kicker {
-  color: var(--dsw-alias-label-tertiary);
-  font-size: 12px;
-  line-height: 18px;
-}
+.df-view > .df-filters { flex: none; padding: 8px 16px 6px; }
+.df-view > .df-foot { flex: none; position: static; padding: 10px 16px 8px; }
+
+/* \u5206\u533A\u6807\u9898 */
+.df-section { margin: 6px 0 0; font-size: 11px; font-weight: 600; letter-spacing: 0.02em; color: var(--dsw-alias-label-tertiary); }
+
+/* \u6307\u6807 */
+.df-metrics { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0; padding: 2px 0 8px; border-bottom: 0.5px solid var(--dsw-alias-border-l2); }
+.df-metric, .df-empty { border: 0; background: transparent; }
+.df-metric { padding: 2px 0; }
+.df-kicker { color: var(--dsw-alias-label-tertiary); font-size: 11px; line-height: 16px; }
 .df-metric strong {
   display: block;
-  margin-top: 2px;
-  font-size: 20px;
-  line-height: 28px;
+  margin-top: 1px;
+  font-family: var(--ds-font-family-code, ui-monospace, SFMono-Regular, Menlo, monospace);
+  font-size: 17px;
+  line-height: 24px;
   font-weight: 600;
   font-variant-numeric: tabular-nums;
 }
 .df-metric[data-tone='info'] strong { color: var(--dsw-alias-state-business-primary); }
 .df-metric[data-tone='warn'] strong { color: var(--dsw-alias-state-warn-primary); }
-.df-card { overflow: hidden; }
-.df-line, .df-task, .df-agent {
-  display: grid;
-  align-items: center;
-  gap: 8px 10px;
-  padding: 10px 12px;
-  border-top: 0.5px solid var(--dsw-alias-border-l2);
-}
-.df-card > :first-child { border-top: none; }
+
+/* \u5217\u8868\uFF1A\u901A\u680F\u3001\u53D1\u4E1D\u5206\u9694\uFF0C\u4E0D\u7528\u5361\u7247\u6846 */
+.df-card { border: 0; border-radius: 0; background: transparent; }
+.df-line, .df-agent { display: grid; align-items: center; gap: 8px 10px; padding: 8px 16px; border-bottom: 0.5px solid var(--dsw-alias-border-l2); }
 .df-line { grid-template-columns: minmax(0, 1fr) auto; }
-.df-task, .df-agent { grid-template-columns: auto minmax(0, 1fr) auto; }
-.df-task[data-pick='true'] { cursor: pointer; }
-.df-task[data-on='true'] { background: color-mix(in srgb, var(--dsw-alias-state-business-primary) 8%, transparent); }
-@media (hover: hover) {
-  .df-task[data-pick='true']:hover { background: var(--dsw-alias-interactive-bg-hover, rgba(38, 49, 72, 0.06)); }
+.df-agent { grid-template-columns: auto minmax(0, 1fr) auto; }
+.df-line:hover, .df-agent:hover { background: var(--dsw-alias-interactive-bg-hover, rgba(38, 49, 72, 0.06)); }
+.df-trunk-live { box-shadow: inset 2px 0 0 color-mix(in srgb, var(--dsw-alias-state-business-primary) 60%, transparent); }
+.df-trunk-states { display: inline-flex; align-items: center; gap: 8px; }
+
+/* \u4EFB\u52A1\u884C */
+.df-tree { display: flex; flex-direction: column; width: 100%; box-sizing: border-box; border-bottom: 0.5px solid var(--dsw-alias-border-l2); transition: background-color 120ms ease; position: relative; }
+.df-tree[data-tone='success'] > .df-tree-head { box-shadow: inset 2px 0 0 var(--dsw-alias-state-success-primary); }
+.df-tree[data-tone='warn'] > .df-tree-head { box-shadow: inset 2px 0 0 var(--dsw-alias-state-warn-primary); }
+.df-tree[data-tone='error'] > .df-tree-head { box-shadow: inset 2px 0 0 var(--dsw-alias-state-error-primary); }
+.df-tree[data-tone='info'] > .df-tree-head { box-shadow: inset 2px 0 0 var(--dsw-alias-state-business-primary); }
+.df-tree[data-clickable='true'] .df-tree-head { cursor: pointer; }
+.df-tree[data-clickable='true'] > .df-tree-head:active { background: color-mix(in srgb, var(--dsw-alias-state-business-primary) 12%, transparent); }
+.df-tree[data-clickable='true']:focus-visible { outline: 1px solid var(--dsw-alias-state-business-primary); outline-offset: -1px; }
+.df-tree[data-open='true'] { background: color-mix(in srgb, var(--dsw-alias-label-primary) 3%, transparent); }
+.df-tree[data-open='true'] > .df-tree-head { background: transparent; }
+.df-tree-head { transition: background-color 120ms ease; }
+
+.df-tree-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  padding: 9px 16px;
+  box-sizing: border-box;
+  text-align: left;
 }
-.df-chev { width: 22px; height: 22px; border: 0; padding: 0; background: transparent; color: var(--dsw-alias-label-tertiary); cursor: pointer; }
-.df-name { font-weight: 560; }
-.df-meta { color: var(--dsw-alias-label-tertiary); font-size: 12px; line-height: 18px; }
+.df-tree-content { display: flex; align-items: center; gap: 8px; flex: 1 1 auto; min-width: 0; }
+.df-tree-title { flex: 0 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 560; }
+.df-chev {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 12px;
+  height: 12px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--dsw-alias-label-tertiary);
+  cursor: pointer;
+  transform: rotate(-90deg);
+  transition: transform 120ms ease, color 120ms ease;
+}
+.df-chev[data-expanded='true'] { transform: none; }
+.df-chev:hover { color: var(--dsw-alias-label-primary); }
+.df-chev svg { display: block; }
+.df-chev-space { width: 12px; flex: none; }
+.df-tree .df-actions { display: flex; align-items: center; gap: 7px; flex: none; }
+.df-tree .df-chips { flex: 0 1 auto; min-width: 0; flex-wrap: nowrap; overflow: hidden; display: flex; gap: 5px; }
+.df-tree .df-chips .df-chip { flex: none; max-width: 150px; }
+.df-tree-children { display: flex; flex-direction: column; padding-left: 20px; }
+.df-tree-children > .df-tree { background: transparent; }
+.df-tree-children > .df-tree { border-bottom: 0; }
+.df-tree-children > .df-tree > .df-tree-head { padding-left: 14px; }
+.df-facts { display: flex; flex-direction: column; gap: 2px; padding: 1px 16px 8px 36px; }
+.df-tree-children > .df-tree > .df-facts { padding-left: 34px; }
+.df-line { grid-template-columns: minmax(0, 1fr) auto; }
+.df-agent { grid-template-columns: auto minmax(0, 1fr) auto; }
+.df-line:hover, .df-agent:hover { background: var(--dsw-alias-interactive-bg-hover, rgba(38, 49, 72, 0.06)); }
+.df-trunk-live { box-shadow: inset 2px 0 0 color-mix(in srgb, var(--dsw-alias-state-business-primary) 60%, transparent); }
+.df-trunk-states { display: inline-flex; align-items: center; gap: 8px; }
+
+/* \u4EFB\u52A1\u884C */
+.df-tree { display: flex; flex-direction: column; gap: 2px; width: 100%; box-sizing: border-box; border-bottom: 0.5px solid var(--dsw-alias-border-l2); transition: background-color 120ms ease; }
+.df-fact { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 8px; align-items: baseline; }
+.df-fact-slot { color: var(--dsw-alias-label-tertiary); font-size: 11px; line-height: 17px; white-space: nowrap; }
+.df-fact-detail { color: var(--dsw-alias-label-secondary); font-size: 11px; line-height: 17px; overflow-wrap: anywhere; }
+
+/* \u540D\u79F0\u3001\u6807\u7B7E\u3001\u836F\u4E38 */
+.df-name { font-weight: 560; display: flex; align-items: center; gap: 6px; min-width: 0; }
+.df-meta { margin: 0; color: var(--dsw-alias-label-tertiary); font-size: 11px; line-height: 17px; }
+.df-branch {
+  color: var(--dsw-alias-label-tertiary);
+  font-weight: 400;
+  font-size: 10.5px;
+  line-height: 16px;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: var(--dsw-alias-bg-layer-2);
+  max-width: 60%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.df-chips { display: flex; flex-wrap: wrap; gap: 5px; }
+.df-chip {
+  padding: 1px 7px;
+  border: 0.5px solid var(--dsw-alias-border-l3);
+  border-radius: 999px;
+  background: var(--dsw-alias-bg-layer-2);
+  color: var(--dsw-alias-label-secondary);
+  font-size: 10.5px;
+  line-height: 1.6;
+  font-variant-numeric: tabular-nums;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.df-task-chips { gap: 4px; flex: 1 1 auto; min-width: 0; flex-wrap: nowrap; overflow: hidden; }
+.df-tree .df-actions { display: flex; align-items: center; gap: 6px; flex: none; justify-self: end; margin-left: auto; }
+.df-tree .df-chips { flex: 0 1 auto; min-width: 0; flex-wrap: nowrap; overflow: hidden; }
+.df-tree-head > .df-check, .df-tree-head > span[data-state], .df-tree-head > span { flex: none; }
+.df-tree .df-chips .df-chip { flex: none; max-width: 150px; }
 .df-ok { color: var(--dsw-alias-state-success-primary); }
 .df-warn { color: var(--dsw-alias-state-warn-primary); }
 .df-bad { color: var(--dsw-alias-state-error-primary); }
 .df-muted { color: var(--dsw-alias-label-tertiary); }
-.df-repo { padding: 12px 12px 8px; }
-.df-slot {
-  display: grid;
-  grid-template-columns: 64px 52px minmax(0, 1fr);
-  gap: 8px;
-  padding: 6px 12px;
-  font-size: 12px;
-  line-height: 18px;
+.df-empty-line { margin: 0; color: var(--dsw-alias-label-tertiary); font-size: 12px; }
+.df-empty { padding: 26px 18px; text-align: center; }
+.df-empty p { margin: 0; color: var(--dsw-alias-label-tertiary); font-size: 12px; line-height: 1.65; }
+
+/* \u6D3B\u8DC3\u4EE3\u7406 */
+.df-active { display: flex; flex-direction: column; gap: 0; }
+.df-active-card {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 8px 16px 9px;
+  border-bottom: 0.5px solid var(--dsw-alias-border-l2);
+  box-shadow: inset 2px 0 0 color-mix(in srgb, var(--dsw-alias-state-business-primary) 60%, transparent);
+  background: transparent;
+  border-radius: 0;
 }
-.df-actions { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
-.df-nested { margin: 0 12px 10px; border: 0.5px solid var(--dsw-alias-border-l2); border-radius: var(--dsw-radius-sm); overflow: hidden; }
-.df-split { flex: 1; min-height: 0; display: flex; flex-direction: column; }
-.df-pane { min-height: 96px; overflow: auto; display: flex; flex-direction: column; gap: 10px; }
-.df-pane-accept { flex: 1; }
-.df-split-bar { flex: none; height: 14px; margin: 2px 0; border: 0; padding: 0; background: transparent; cursor: row-resize; display: flex; align-items: center; justify-content: center; }
-.df-split-bar::before { content: ''; width: 36px; height: 3px; border-radius: 999px; background: var(--dsw-alias-border-l3, rgba(0, 0, 0, 0.22)); }
-.df-split-bar:hover::before, .df-split-bar:focus-visible::before { background: var(--dsw-alias-state-business-primary, rgb(65, 118, 230)); }
-.df-foot { display: flex; flex-direction: column; gap: 6px; position: sticky; bottom: 0; padding: 10px 0 4px; background: linear-gradient(to top, var(--dsw-specific-sidebar-fill, rgb(249, 250, 251)) 72%, transparent); }
+.df-active-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.df-active-title { font-size: 12px; line-height: 18px; color: var(--dsw-alias-label-secondary); }
+.df-live {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--dsw-alias-state-business-primary);
+  box-shadow: 0 0 0 0 color-mix(in srgb, var(--dsw-alias-state-business-primary) 45%, transparent);
+  display: inline-block;
+  animation: df-pulse 2.4s ease-out infinite;
+}
+@keyframes df-pulse {
+  0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--dsw-alias-state-business-primary) 45%, transparent); }
+  70%, 100% { box-shadow: 0 0 0 6px transparent; }
+}
+
+/* \u69FD\u4F4D\u3001\u4ED3\u5E93 */
+.df-repo { display: flex; align-items: center; gap: 8px; padding: 8px 16px 6px; font-size: 12px; color: var(--dsw-alias-label-primary); }
+.df-slot { display: grid; grid-template-columns: minmax(0, 1.2fr) 52px minmax(0, 1fr); gap: 8px; padding: 6px 16px; font-size: 11px; line-height: 17px; }
+
+/* \u5B50\u9762\u677F */
+.df-views { position: relative; flex: 1 1 0; min-height: 0; display: flex; flex-direction: column; margin: 0 -16px; overflow: hidden; }
+.df-view { position: relative; min-height: 0; min-width: 0; display: flex; flex-direction: column; overflow: hidden; }
+.df-view[data-open='true'] { flex: 1 1 0; min-height: 0; }
+.df-view[data-open='false'] { flex: none; border-bottom: 0.5px solid var(--dsw-alias-border-l2); }
+.df-view-head {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  height: 28px;
+  padding: 0 16px 0 12px;
+  border: 0;
+  background: transparent;
+  color: var(--dsw-alias-label-primary);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: grab;
+  text-align: left;
+  touch-action: none;
+  transition: background-color 120ms ease;
+}
+.df-view-head:hover { background: var(--dsw-alias-interactive-bg-hover, rgba(38, 49, 72, 0.06)); }
+.df-view-head:active { cursor: grabbing; }
+.df-view-chev { flex: none; display: inline-flex; align-items: center; justify-content: center; width: 14px; height: 14px; color: var(--dsw-alias-label-tertiary); transform: rotate(-90deg); transition: transform 120ms ease; }
+.df-view[data-open='true'] > .df-view-head .df-view-chev { transform: none; }
+.df-view-count { margin-left: auto; color: var(--dsw-alias-label-tertiary); font-weight: 500; font-variant-numeric: tabular-nums; }
+.df-view-body { display: block; flex: 1 1 0; min-height: 0; max-height: 100%; overflow-x: hidden; overflow-y: auto; overscroll-behavior: contain; padding: 0 0 10px; }
+.df-view-body > * + * { margin-top: 8px; }
+.df-drop { position: absolute; left: 10px; right: 10px; height: 2px; margin-top: -1px; background: var(--dsw-alias-state-business-primary); pointer-events: none; z-index: 4; }
+.df-sash { position: absolute; left: 0; right: 0; bottom: -3px; height: 6px; cursor: row-resize; z-index: 2; touch-action: none; }
+.df-sash::before { content: ''; position: absolute; left: 0; right: 0; top: 2px; height: 1px; background: var(--dsw-alias-border-l2); }
+.df-sash:hover::before { top: 1px; height: 2px; background: var(--dsw-alias-state-business-primary); }
+
+/* \u9A8C\u6536\u6279\u6B21\u5185\u90E8 */
+
+/* \u8C03\u5EA6\u4EFB\u52A1 */
+
+/* \u5E95\u90E8\u6279\u91CF\u64CD\u4F5C */
+.df-foot { display: flex; flex-direction: column; gap: 6px; padding: 10px 0 4px; }
 .df-go { width: 100%; }
-.df-hint { margin: 0; text-align: center; color: var(--dsw-alias-label-tertiary); font-size: 12px; }
-.df-empty { padding: 28px 16px; text-align: center; }
-.df-empty p { margin: 8px 0 12px; color: var(--dsw-alias-label-secondary); }
-.df-note { position: absolute; left: 16px; bottom: 100%; z-index: 3; display: flex; align-items: center; gap: 6px; height: 22px; padding: 0 6px 0 8px; border-radius: 6px 6px 0 0; border: 0.5px solid var(--dsw-alias-state-business-primary, rgb(65, 118, 230)); background: var(--dsw-alias-bg-base, #fff); color: var(--dsw-alias-state-business-primary, rgb(65, 118, 230)); opacity: 0.45; transition: opacity 160ms ease; }
-.df-note[data-on='true'] { background: var(--dsw-alias-state-business-primary, rgb(65, 118, 230)); color: #fff; }
+.df-hint { margin: 0; text-align: center; color: var(--dsw-alias-label-tertiary); font-size: 11px; line-height: 17px; }
+
+/* \u8F93\u5165\u6846\u4E0A\u7684\u5F00\u5173 */
+.df-note {
+  position: absolute;
+  left: 16px;
+  bottom: 100%;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 22px;
+  padding: 0 6px 0 8px;
+  border-radius: 6px 6px 0 0;
+  border: 0.5px solid var(--dsw-alias-state-business-primary);
+  background: var(--dsw-alias-bg-base);
+  color: var(--dsw-alias-state-business-primary);
+  opacity: 0.45;
+  transition: opacity 160ms ease;
+}
+.df-note[data-on='true'] { background: var(--dsw-alias-state-business-primary); color: var(--dsw-alias-bg-base); }
 .df-note:hover, .df-note:focus-within { opacity: 1; }
 .df-note-title { flex: none; font-size: 12px; line-height: 18px; font-weight: 560; }
-.df-toggle { display: flex; align-items: center; width: 26px; height: 14px; padding: 1px; border: 0; border-radius: 999px; background: color-mix(in srgb, currentColor 18%, #fff); cursor: pointer; }
-.df-note[data-on='true'] .df-toggle { justify-content: flex-end; background: #fff; }
-.df-toggle i { width: 12px; height: 12px; border-radius: 50%; background: var(--dsw-alias-label-tertiary, #8b93a7); }
-.df-note[data-on='true'] .df-toggle i { background: var(--dsw-alias-state-business-primary, rgb(65, 118, 230)); }
+.df-toggle { display: flex; align-items: center; width: 26px; height: 14px; padding: 1px; border: 0; border-radius: 999px; background: color-mix(in srgb, currentColor 18%, var(--dsw-alias-bg-base)); cursor: pointer; }
+.df-note[data-on='true'] .df-toggle { justify-content: flex-end; background: var(--dsw-alias-bg-base); }
+.df-toggle i { width: 12px; height: 12px; border-radius: 50%; background: var(--dsw-alias-label-tertiary); }
+.df-note[data-on='true'] .df-toggle i { background: var(--dsw-alias-state-business-primary); }
+
+/* \u8BBE\u7F6E\u8868\u5355 */
 .df-form { display: flex; flex-direction: column; gap: 10px; }
-.df-field { display: flex; flex-direction: column; gap: 4px; color: var(--dsw-alias-label-secondary); font-size: 12px; }
+.df-field { display: flex; flex-direction: column; gap: 4px; color: var(--dsw-alias-label-secondary); font-size: 11px; }
 .df-field input {
   box-sizing: border-box;
   width: 100%;
-  height: 32px;
+  height: 30px;
   padding: 0 10px;
   border: 0.5px solid var(--dsw-alias-border-l4);
   border-radius: var(--dsw-radius-sm);
@@ -293,16 +480,36 @@ var panelSheet = `
   color: var(--dsw-alias-label-primary);
   font: inherit;
 }
-.df-check { width: 16px; height: 16px; margin: 0; }
+.df-field input:focus-visible, .df-task-chev:focus-visible, .df-chev:focus-visible, .df-view-head:focus-visible, .df-schedule-toggle:focus-visible, .df-toggle:focus-visible, .df-note:focus-visible {
+  outline: 1px solid var(--dsw-alias-state-business-primary);
+  outline-offset: 1px;
+}
+.df-check { width: 14px; height: 14px; margin: 0; accent-color: var(--dsw-alias-state-business-primary); }
+
+/* \u53F3\u4E0A\u89D2\u63D0\u793A */
 .df-toasts { position: fixed; top: 16px; right: 16px; z-index: 1300; display: flex; flex-direction: column; align-items: flex-end; gap: 8px; pointer-events: none; }
-.df-toast { pointer-events: auto; display: flex; align-items: center; gap: 8px; max-width: min(360px, calc(100vw - 32px)); padding: 10px 14px; border-radius: var(--dsw-radius-lg, 10px); background: var(--dsw-alias-toast-bg, rgb(53, 54, 56)); color: var(--dsw-alias-toast-label, #fff); box-shadow: var(--dsw-shadow-lv3, 0 12px 32px #0003); font-size: 13px; line-height: 20px; animation: df-toast-in 200ms cubic-bezier(.2,.8,.2,1); }
+.df-toast {
+  pointer-events: auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  max-width: min(360px, calc(100vw - 32px));
+  padding: 9px 13px;
+  border-radius: var(--dsw-radius-lg, 10px);
+  background: var(--dsw-alias-toast-bg, rgb(53, 54, 56));
+  color: var(--dsw-alias-toast-label, #fff);
+  box-shadow: var(--dsw-shadow-lv3, 0 12px 32px #0003);
+  font-size: 12px;
+  line-height: 18px;
+  animation: df-toast-in 200ms cubic-bezier(.2,.8,.2,1);
+}
 .df-toast[data-closing='true'] { animation: df-toast-out 180ms ease-in forwards; pointer-events: none; }
 .df-toast[data-tone='error'] .df-toast-mark { color: var(--dsw-alias-state-error-primary); }
 .df-toast-text { min-width: 0; overflow-wrap: anywhere; }
 .df-toast-mark { width: 6px; height: 6px; border-radius: 50%; background: currentColor; flex: none; }
 @keyframes df-toast-in { from { opacity: 0; transform: translateX(calc(100% + 20px)); } to { opacity: 1; transform: none; } }
 @keyframes df-toast-out { to { opacity: 0; transform: translateX(calc(100% + 20px)); } }
-@media (prefers-reduced-motion: reduce) { .df-toast, .df-toast[data-closing='true'] { animation: none; } }
+@media (prefers-reduced-motion: reduce) { .df-toast, .df-toast[data-closing='true'], .df-live, .df-view-chev { animation: none; transition: none; } }
 `;
 function ensureSheet() {
   if (typeof document === "undefined") return;
@@ -412,10 +619,10 @@ function PanelView({ ui, sessionId, call, t }) {
   ];
   return /* @__PURE__ */ React.createElement("div", { className: "df" }, node, /* @__PURE__ */ React.createElement("div", { className: "df-toolbar" }, ui.SegmentedTabs ? /* @__PURE__ */ React.createElement(ui.SegmentedTabs, { size: "sm", label: t("tab.title"), items: pages, value: page, onChange: (value) => setPage(value) }) : /* @__PURE__ */ React.createElement("div", { role: "tablist", className: "df-filters" }, pages.map((item) => /* @__PURE__ */ React.createElement("button", { key: item.value, type: "button", "aria-selected": page === item.value, onClick: () => setPage(item.value) }, item.label))), /* @__PURE__ */ React.createElement(ActionButton, { ui, variant: "ghost", onClick: () => {
     void load();
-  } }, t("action.refresh"))), !data ? null : data.problem ? null : !data.initialized ? /* @__PURE__ */ React.createElement(Uninitialized, { ui, t, sessionId, call, reload: load }) : /* @__PURE__ */ React.createElement(PageBody, { ui, page, data, t, picked, setPicked, sessionId, call, reload: load, show }));
+  } }, t("action.refresh"))), !data ? null : data.problem ? null : !data.initialized ? /* @__PURE__ */ React.createElement(Uninitialized, { ui, t, sessionId, call, reload: load, workspace: data.workspace }) : /* @__PURE__ */ React.createElement(PageBody, { ui, page, data, t, picked, setPicked, sessionId, call, reload: load, show }));
 }
-function Uninitialized({ ui, t, sessionId, call, reload }) {
-  return /* @__PURE__ */ React.createElement("div", { className: "df-empty" }, /* @__PURE__ */ React.createElement("p", null, t("empty.init")), /* @__PURE__ */ React.createElement(ActionButton, { ui, variant: "primary", onClick: () => {
+function Uninitialized({ ui, t, sessionId, call, reload, workspace }) {
+  return /* @__PURE__ */ React.createElement("div", { className: "df-empty" }, /* @__PURE__ */ React.createElement("p", null, t("empty.init")), workspace ? /* @__PURE__ */ React.createElement("p", { className: "df-meta" }, workspace) : null, /* @__PURE__ */ React.createElement(ActionButton, { ui, variant: "primary", onClick: () => {
     call("init", { sessionId }).then(() => reload()).catch((reason) => reload(reason));
   } }, t("action.init")));
 }
@@ -437,7 +644,11 @@ function Overview({ ui, data, t }) {
     [t("metric.dirty"), `${data.counts.dirtyTrunks}/${data.counts.projects}`, data.counts.dirtyTrunks > 0 ? "warn" : void 0]
   ];
   const running = (data.agents ?? []).filter((agent) => agent.status === "running");
-  return /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("div", { className: "df-metrics" }, cards.map(([label, value, tone]) => /* @__PURE__ */ React.createElement("div", { key: label, className: "df-metric", "data-tone": tone }, /* @__PURE__ */ React.createElement("div", { className: "df-kicker" }, label), /* @__PURE__ */ React.createElement("strong", null, String(value))))), /* @__PURE__ */ React.createElement("h3", { className: "df-section" }, t("section.trunks")), /* @__PURE__ */ React.createElement("div", { className: "df-card" }, (data.trunks ?? []).map((repo) => /* @__PURE__ */ React.createElement("div", { key: repo.name, className: "df-line" }, /* @__PURE__ */ React.createElement("span", { className: "df-name" }, repo.name), /* @__PURE__ */ React.createElement("span", { className: repo.dirty ? "df-warn" : "df-ok" }, repo.dirty ? t("trunk.dirty") : t("trunk.clean"))))), /* @__PURE__ */ React.createElement("h3", { className: "df-section" }, t("section.active")), running.length === 0 ? /* @__PURE__ */ React.createElement("p", { className: "df-note" }, t("section.none")) : /* @__PURE__ */ React.createElement("div", { className: "df-card" }, running.map((agent) => /* @__PURE__ */ React.createElement("div", { key: agent.id, className: "df-line" }, /* @__PURE__ */ React.createElement("span", null, agent.id, " \xB7 ", agent.kind === "accept" ? t("slot.accept") : t("slot.dev"), " \xB7 ", taskTitle(data, agent.taskId)), /* @__PURE__ */ React.createElement("span", { className: "df-meta" }, slotSummary(data, agent))))), dev || accept ? /* @__PURE__ */ React.createElement("p", { className: "df-note" }, `${t("slot.dev")} ${dev?.used ?? 0}/${dev?.total ?? 0} \xB7 ${t("slot.accept")} ${accept?.used ?? 0}/${accept?.total ?? 0}`) : null);
+  return /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("div", { className: "df-metrics" }, cards.map(([label, value, tone]) => /* @__PURE__ */ React.createElement("div", { key: label, className: "df-metric", "data-tone": tone }, /* @__PURE__ */ React.createElement("div", { className: "df-kicker" }, label), /* @__PURE__ */ React.createElement("strong", null, String(value))))), /* @__PURE__ */ React.createElement("h3", { className: "df-section" }, t("section.trunks")), /* @__PURE__ */ React.createElement("div", { className: "df-card" }, (data.trunks ?? []).map((repo) => {
+    const active = trunkActivity(data, repo.name);
+    const phase = trunkPhase(active);
+    return /* @__PURE__ */ React.createElement("div", { key: repo.name, className: phase === "idle" ? "df-line" : "df-line df-trunk-live" }, /* @__PURE__ */ React.createElement("span", { className: "df-name" }, phase === "idle" ? null : /* @__PURE__ */ React.createElement("span", { className: "df-live", "aria-hidden": "true" }), repo.name, repo.branch ? /* @__PURE__ */ React.createElement("span", { className: "df-branch" }, repo.branch) : null), /* @__PURE__ */ React.createElement("span", { className: "df-trunk-states" }, /* @__PURE__ */ React.createElement(StatusTag, { ui, t, status: phase }), /* @__PURE__ */ React.createElement("span", { className: repo.dirty ? "df-warn" : "df-ok" }, repo.dirty ? t("trunk.dirty") : t("trunk.clean"))));
+  })), /* @__PURE__ */ React.createElement("h3", { className: "df-section" }, t("section.active")), running.length === 0 ? /* @__PURE__ */ React.createElement("p", { className: "df-empty-line" }, t("section.none")) : /* @__PURE__ */ React.createElement("div", { className: "df-active" }, running.map((agent) => /* @__PURE__ */ React.createElement("article", { key: agent.id, className: "df-active-card" }, /* @__PURE__ */ React.createElement("div", { className: "df-active-top" }, /* @__PURE__ */ React.createElement("span", { className: "df-name" }, /* @__PURE__ */ React.createElement("span", { className: "df-live", "aria-hidden": "true" }), agent.id), /* @__PURE__ */ React.createElement(StatusTag, { ui, t, status: agentPhase(agent) })), /* @__PURE__ */ React.createElement("div", { className: "df-active-title" }, taskTitle(data, agent.taskId)), /* @__PURE__ */ React.createElement("div", { className: "df-chips" }, agentSlots(data, agent).map((slot) => /* @__PURE__ */ React.createElement("span", { key: slot, className: "df-chip" }, slot)))))), dev || accept ? /* @__PURE__ */ React.createElement("p", { className: "df-meta" }, `${t("slot.dev")} ${dev?.used ?? 0}/${dev?.total ?? 0} \xB7 ${t("slot.accept")} ${accept?.used ?? 0}/${accept?.total ?? 0}`) : null);
 }
 function Tasks({
   ui,
@@ -453,11 +664,24 @@ function Tasks({
   const [filter, setFilter] = useState("all");
   const [busy, setBusy] = useState(false);
   const [opened, setOpened] = useState({});
-  const [devHeight, setDevHeight] = useState(240);
+  const [scheduleOpen, setScheduleOpen] = useState({});
+  const [pickedBatches, setPickedBatches] = useState([]);
+  const [removing, setRemoving] = useState(false);
+  const [details, setDetails] = useState({});
+  const detailProps = (id) => ({
+    detailsOpen: details[id] === true,
+    onToggleDetails: () => setDetails({ ...details, [id]: !details[id] })
+  });
+  const [layout, setLayout] = useState(loadPaneLayout);
+  const [dropY, setDropY] = useState(null);
+  const dragged = useRef(false);
+  const dropAt = useRef(null);
   const splitRef = useRef(null);
-  const devAll = data.tasks.filter((task) => task.kind !== "accept");
+  const { order, open, heights } = layout;
+  const newest = (left, right) => String(right.createdAt ?? "").localeCompare(String(left.createdAt ?? ""));
+  const devAll = data.tasks.filter((task) => task.kind !== "accept").sort(newest);
   const devRows = devAll.filter((task) => matchFilter(filter, task));
-  const acceptRows = data.tasks.filter((task) => task.kind === "accept");
+  const acceptRows = data.tasks.filter((task) => task.kind === "accept").sort(newest);
   const reason = acceptReason(data, picked, t);
   const selected = data.tasks.filter((task) => task.selectable && picked.includes(task.id));
   const filters = [
@@ -471,13 +695,18 @@ function Tasks({
     setBusy(true);
     start(call, sessionId, picked, setPicked, reload).then(() => show(t("toast.started"), "info")).catch(() => void 0).finally(() => setBusy(false));
   };
-  const dragSplit = (event) => {
+  const resizePane = (id, event) => {
+    event.preventDefault();
+    event.stopPropagation();
+    const section = event.currentTarget.parentElement;
+    const parent = splitRef.current;
+    if (!section || !parent) return;
     const startY = event.clientY;
-    const startHeight = devHeight;
-    const bounds = splitRef.current?.getBoundingClientRect();
-    const limit = bounds ? bounds.height - 140 : 480;
+    const startHeight = section.getBoundingClientRect().height;
+    const limit = parent.getBoundingClientRect().height;
     const move = (next) => {
-      setDevHeight(Math.min(limit, Math.max(120, startHeight + next.clientY - startY)));
+      const height = Math.round(Math.min(Math.max(120, limit - 80), Math.max(120, startHeight + next.clientY - startY)));
+      setLayout((prev) => ({ ...prev, heights: { ...prev.heights, [id]: height } }));
     };
     const stop = () => {
       window.removeEventListener("pointermove", move);
@@ -487,31 +716,226 @@ function Tasks({
     window.addEventListener("pointermove", move);
     window.addEventListener("pointerup", stop);
   };
-  return /* @__PURE__ */ React.createElement("div", { className: "df-split", ref: splitRef }, /* @__PURE__ */ React.createElement("div", { className: "df-pane", style: { height: devHeight } }, /* @__PURE__ */ React.createElement("div", { className: "df-filters" }, filters.map(([value, label]) => {
-    const count = devAll.filter((task) => matchFilter(value, task)).length;
-    const text = `${label} ${count}`;
-    return ui.Pill ? /* @__PURE__ */ React.createElement(ui.Pill, { key: value, active: filter === value, onClick: () => setFilter(value) }, text) : /* @__PURE__ */ React.createElement("button", { key: value, type: "button", "aria-pressed": filter === value, onClick: () => setFilter(value) }, text);
-  })), /* @__PURE__ */ React.createElement("h3", { className: "df-section" }, t("section.devTasks")), /* @__PURE__ */ React.createElement("div", { className: "df-card" }, devRows.length === 0 ? /* @__PURE__ */ React.createElement("div", { className: "df-empty" }, /* @__PURE__ */ React.createElement("p", null, t("section.emptyDev"))) : devRows.map((task) => /* @__PURE__ */ React.createElement(TaskLine, { key: task.id, ui, t, task, picked, setPicked }))), /* @__PURE__ */ React.createElement("div", { className: "df-foot" }, /* @__PURE__ */ React.createElement(ActionButton, { ui, className: "df-go", variant: "primary", disabled: busy || reason !== "", title: reason, onClick: launch }, busy ? t("action.working") : t("action.accept")), /* @__PURE__ */ React.createElement("p", { className: "df-hint" }, reason !== "" ? reason : selected.length > 0 ? `${t("hint.order")}\uFF1A${selected.map((task) => task.title).join(" \u2192 ")}` : t("hint.pick")))), /* @__PURE__ */ React.createElement("button", { type: "button", className: "df-split-bar", "aria-label": "\u8C03\u6574\u5F00\u53D1\u4EFB\u52A1\u548C\u9A8C\u6536\u4EFB\u52A1\u7684\u9AD8\u5EA6", onPointerDown: dragSplit }), /* @__PURE__ */ React.createElement("div", { className: "df-pane df-pane-accept" }, /* @__PURE__ */ React.createElement("h3", { className: "df-section" }, t("section.acceptTasks")), /* @__PURE__ */ React.createElement("div", { className: "df-card" }, acceptRows.length === 0 ? /* @__PURE__ */ React.createElement("div", { className: "df-empty" }, /* @__PURE__ */ React.createElement("p", null, t("section.emptyAccept"))) : acceptRows.map((batch) => {
-    const open = opened[batch.id] ?? batch.status === "accepting";
-    const children = containedTasks(data, batch);
-    return /* @__PURE__ */ React.createElement("div", { key: batch.id }, /* @__PURE__ */ React.createElement(
-      TaskLine,
-      {
-        ui,
-        t,
-        task: batch,
-        picked,
-        setPicked,
-        sessionId,
-        call,
-        reload,
-        open,
-        onToggle: () => setOpened({ ...opened, [batch.id]: !open })
+  const pressHeader = (id, event) => {
+    if (event.button !== 0) return;
+    const startY = event.clientY;
+    let moved = false;
+    const move = (next) => {
+      if (!moved && Math.abs(next.clientY - startY) < 4) return;
+      moved = true;
+      dragged.current = true;
+      const parent = splitRef.current;
+      if (!parent) return;
+      const parentRect = parent.getBoundingClientRect();
+      const sections = [...parent.querySelectorAll("[data-pane]")];
+      let index = sections.length;
+      let line = parentRect.height;
+      for (let i = 0; i < sections.length; i += 1) {
+        const rect = sections[i].getBoundingClientRect();
+        if (next.clientY < rect.top + rect.height / 2) {
+          index = i;
+          line = rect.top - parentRect.top;
+          break;
+        }
       }
-    ), open ? /* @__PURE__ */ React.createElement("div", { className: "df-nested" }, children.map((task) => /* @__PURE__ */ React.createElement(TaskLine, { key: task.id, ui, t, task, picked, setPicked, nested: true }))) : null);
-  }))));
+      dropAt.current = index;
+      setDropY(line);
+    };
+    const stop = () => {
+      window.removeEventListener("pointermove", move);
+      window.removeEventListener("pointerup", stop);
+      const index = dropAt.current;
+      dropAt.current = null;
+      setDropY(null);
+      if (!moved || index === null) return;
+      setLayout((prev) => {
+        const from = prev.order.indexOf(id);
+        if (from < 0 || index === from || index === from + 1) return prev;
+        const next = prev.order.filter((item) => item !== id);
+        next.splice(index > from ? index - 1 : index, 0, id);
+        return { ...prev, order: next };
+      });
+    };
+    window.addEventListener("pointermove", move);
+    window.addEventListener("pointerup", stop);
+  };
+  useEffect(() => {
+    savePaneLayout(layout);
+  }, [layout]);
+  const schedules = [...data.schedules ?? []].sort((left, right) => String(right.createdAt ?? "").localeCompare(String(left.createdAt ?? "")));
+  const visible = order.filter((id) => open[id]);
+  const paneStyle = (id) => {
+    if (!open[id] || visible.length < 2 || id === visible[visible.length - 1]) return void 0;
+    return { flex: `0 0 ${heights[id] ?? 220}px` };
+  };
+  const togglePane = (id) => {
+    if (dragged.current) {
+      dragged.current = false;
+      return;
+    }
+    setLayout((prev) => ({ ...prev, open: { ...prev.open, [id]: !prev.open[id] } }));
+  };
+  return /* @__PURE__ */ React.createElement("div", { className: "df-views", ref: splitRef }, dropY !== null ? /* @__PURE__ */ React.createElement("div", { className: "df-drop", style: { top: dropY } }) : null, order.map((id) => {
+    const laterOpen = order.slice(order.indexOf(id) + 1).some((next) => open[next]);
+    const title = id === "schedule" ? t("section.scheduleTasks") : id === "dev" ? t("section.devTasks") : t("section.acceptTasks");
+    const count = id === "schedule" ? schedules.length : id === "dev" ? devAll.length : acceptRows.length;
+    return /* @__PURE__ */ React.createElement("section", { key: id, className: "df-view", "data-pane": id, "data-open": open[id] ? "true" : "false", style: paneStyle(id) }, /* @__PURE__ */ React.createElement(
+      "button",
+      {
+        type: "button",
+        className: "df-view-head",
+        "aria-expanded": open[id],
+        onClick: () => togglePane(id),
+        onPointerDown: (event) => pressHeader(id, event)
+      },
+      /* @__PURE__ */ React.createElement("span", { className: "df-view-chev", "aria-hidden": "true" }, /* @__PURE__ */ React.createElement(Chevron, null)),
+      title,
+      /* @__PURE__ */ React.createElement("span", { className: "df-view-count" }, count)
+    ), id === "schedule" && open.schedule ? /* @__PURE__ */ React.createElement("div", { className: "df-view-body" }, schedules.length === 0 ? /* @__PURE__ */ React.createElement("div", { className: "df-empty" }, /* @__PURE__ */ React.createElement("p", null, t("section.emptySchedule"))) : schedules.map((schedule) => /* @__PURE__ */ React.createElement(ScheduleItem, { key: schedule.id, ui, t, schedule, open: scheduleOpen[schedule.id] === true, onToggle: () => setScheduleOpen({ ...scheduleOpen, [schedule.id]: scheduleOpen[schedule.id] !== true }) }))) : null, id === "dev" && open.dev ? /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("div", { className: "df-filters" }, filters.map(([value, label]) => {
+      const count2 = devAll.filter((task) => matchFilter(value, task)).length;
+      const text = `${label} ${count2}`;
+      return ui.Pill ? /* @__PURE__ */ React.createElement(ui.Pill, { key: value, active: filter === value, onClick: () => setFilter(value) }, text) : /* @__PURE__ */ React.createElement("button", { key: value, type: "button", "aria-pressed": filter === value, onClick: () => setFilter(value) }, text);
+    })), /* @__PURE__ */ React.createElement("div", { className: "df-view-body" }, /* @__PURE__ */ React.createElement("div", { className: "df-card" }, devRows.length === 0 ? /* @__PURE__ */ React.createElement("div", { className: "df-empty" }, /* @__PURE__ */ React.createElement("p", null, t("section.emptyDev"))) : devRows.map((task) => /* @__PURE__ */ React.createElement(DevTaskItem, { key: task.id, ui, t, task, picked, setPicked, sessionId, call, reload, show, ...detailProps(task.id) })))), selected.length > 0 ? /* @__PURE__ */ React.createElement("div", { className: "df-foot" }, /* @__PURE__ */ React.createElement(ActionButton, { ui, className: "df-go", variant: "primary", disabled: busy || reason !== "", title: reason, onClick: launch }, busy ? t("action.working") : t("action.accept")), /* @__PURE__ */ React.createElement("p", { className: "df-hint" }, reason !== "" ? reason : `${t("hint.order")}\uFF1A${selected.map((task) => task.title).join(" \u2192 ")}`)) : null) : null, id === "accept" && open.accept ? /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("div", { className: "df-view-body" }, /* @__PURE__ */ React.createElement("div", { className: "df-card" }, acceptRows.length === 0 ? /* @__PURE__ */ React.createElement("div", { className: "df-empty" }, /* @__PURE__ */ React.createElement("p", null, t("section.emptyAccept"))) : acceptRows.map((batch) => {
+      const children = containedTasks(data, batch);
+      const open2 = children.length > 0 && (opened[batch.id] ?? batch.status === "accepting");
+      const deletable = batch.status !== "accepting";
+      return /* @__PURE__ */ React.createElement(
+        AcceptTaskItem,
+        {
+          key: batch.id,
+          ui,
+          t,
+          batch,
+          picked,
+          setPicked,
+          sessionId,
+          call,
+          reload,
+          show,
+          pickedBatches,
+          setPickedBatches,
+          open: open2,
+          onToggle: children.length > 0 ? () => setOpened({ ...opened, [batch.id]: !open2 }) : void 0,
+          children
+        }
+      );
+    }))), pickedBatches.length > 0 ? /* @__PURE__ */ React.createElement("div", { className: "df-foot" }, /* @__PURE__ */ React.createElement(ActionButton, { ui, className: "df-go", disabled: removing, onClick: () => removeBatches(call, sessionId, pickedBatches, setPickedBatches, setRemoving, reload, show) }, removing ? t("action.deleting") : t("action.delete")), /* @__PURE__ */ React.createElement("p", { className: "df-hint" }, `${pickedBatches.length} \u4E2A\u9A8C\u6536\u4EFB\u52A1\uFF0C\u5220\u9664\u65F6\u4E00\u5E76\u5220\u6389\u9A8C\u6536\u5206\u652F`)) : null) : null, open[id] && laterOpen ? /* @__PURE__ */ React.createElement("div", { className: "df-sash", role: "separator", "aria-orientation": "horizontal", "aria-label": "\u8C03\u6574\u9762\u677F\u9AD8\u5EA6", onPointerDown: (event) => resizePane(id, event) }) : null);
+  }));
 }
-function TaskLine({
+var PANE_KEY = "dsh-dev-flow.task-panes";
+var PANE_IDS = ["schedule", "dev", "accept"];
+function isPaneId(value) {
+  return PANE_IDS.includes(value);
+}
+function loadPaneLayout() {
+  const fallback = { order: [...PANE_IDS], open: { schedule: true, dev: true, accept: true }, heights: { schedule: 220, dev: 260, accept: 220 } };
+  try {
+    const raw = localStorage.getItem(PANE_KEY);
+    if (!raw) return fallback;
+    const parsed = JSON.parse(raw);
+    const order = (parsed.order ?? []).filter(isPaneId);
+    for (const id of PANE_IDS) if (!order.includes(id)) order.push(id);
+    return {
+      order,
+      open: { schedule: parsed.open?.schedule !== false, dev: parsed.open?.dev !== false, accept: parsed.open?.accept !== false },
+      heights: { ...fallback.heights, ...parsed.heights }
+    };
+  } catch {
+    return fallback;
+  }
+}
+function savePaneLayout(layout) {
+  try {
+    localStorage.setItem(PANE_KEY, JSON.stringify(layout));
+  } catch {
+  }
+}
+function toneOf(status) {
+  if (status === "merged" || status === "accepted" || status === "dispatched") return "success";
+  if (status === "failed" || status === "rejected") return "error";
+  if (status === "pending-merge" || status === "waiting" || status === "pending-acceptance" || status === "accepting" || status === "awaiting-agent") return "warn";
+  if (status === "developing" || status === "running" || status === "scheduling") return "info";
+  return "neutral";
+}
+function Chevron() {
+  return /* @__PURE__ */ React.createElement("svg", { width: "10", height: "10", viewBox: "0 0 10 10", "aria-hidden": "true", focusable: "false" }, /* @__PURE__ */ React.createElement("path", { d: "M1.6 3.6 L5 7 L8.4 3.6", fill: "none", stroke: "currentColor", strokeWidth: "1.4", strokeLinecap: "round", strokeLinejoin: "round" }));
+}
+function TreeItem({
+  kind,
+  title,
+  chips,
+  leading,
+  actions,
+  facts,
+  expanded = false,
+  expandable = false,
+  onToggle,
+  onClick,
+  children,
+  depth = 0,
+  tone
+}) {
+  const row = onToggle ?? onClick;
+  return /* @__PURE__ */ React.createElement("div", { className: `df-tree df-tree-${kind}`, "data-tone": tone ?? "neutral", "data-open": expanded ? "true" : "false", "data-clickable": row ? "true" : "false", "data-depth": depth, tabIndex: row ? 0 : void 0, onKeyDown: (event) => {
+    if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
+      row?.();
+    }
+  } }, /* @__PURE__ */ React.createElement("div", { className: "df-tree-head", onClick: (event) => {
+    const target = event.target;
+    if (target && target.closest(".df-tree") !== event.currentTarget.parentElement) return;
+    row?.();
+  } }, expandable ? /* @__PURE__ */ React.createElement("button", { type: "button", className: "df-chev", "data-expanded": expanded ? "true" : "false", "aria-expanded": expanded, onClick: (event) => {
+    event.stopPropagation();
+    onToggle?.();
+  } }, /* @__PURE__ */ React.createElement(Chevron, null)) : /* @__PURE__ */ React.createElement("span", { className: "df-chev-space", "aria-hidden": "true" }), leading, /* @__PURE__ */ React.createElement("span", { className: "df-tree-content" }, /* @__PURE__ */ React.createElement("span", { className: "df-tree-title" }, title), chips.length > 0 ? /* @__PURE__ */ React.createElement("span", { className: "df-chips df-task-chips" }, chips.map((chip) => /* @__PURE__ */ React.createElement("span", { key: chip, className: "df-chip" }, chip))) : null), /* @__PURE__ */ React.createElement("span", { className: "df-actions" }, actions)), expanded && facts && facts.length > 0 ? /* @__PURE__ */ React.createElement("div", { className: "df-facts" }, facts.map((fact, index) => /* @__PURE__ */ React.createElement("div", { key: `${index}-${fact.slot}-${fact.detail}`, className: "df-fact" }, /* @__PURE__ */ React.createElement("span", { className: "df-fact-slot" }, fact.slot), fact.detail ? /* @__PURE__ */ React.createElement("span", { className: "df-fact-detail" }, fact.detail) : null))) : null, expanded && children ? /* @__PURE__ */ React.createElement("div", { className: "df-tree-children" }, children) : null);
+}
+function ScheduleItem({ ui, t, schedule, open, onToggle, depth = 0 }) {
+  const tasks = [...schedule.tasks ?? []].sort((left, right) => String(right.createdAt ?? "").localeCompare(String(left.createdAt ?? "")));
+  const [openTasks, setOpenTasks] = useState({});
+  return /* @__PURE__ */ React.createElement(
+    TreeItem,
+    {
+      kind: "schedule",
+      title: schedule.title,
+      chips: schedule.usage?.totalTokens ? [formatTokens(schedule.usage.totalTokens)] : [],
+      actions: /* @__PURE__ */ React.createElement(StatusTag, { ui, t, status: schedule.status }),
+      expandable: true,
+      expanded: open,
+      onToggle,
+      depth,
+      tone: toneOf(schedule.status)
+    },
+    tasks.map((task) => {
+      const facts = [
+        {
+          slot: "\u4F9D\u8D56",
+          detail: task.dependsOn.length === 0 ? "\u65E0" : task.dependsOn.map((dep) => `${dep.title}${dep.merged ? `\uFF0C\u5DF2\u5E76\u5165 ${dep.branch}` : "\uFF0C\u672A\u5E76\u5165"}`).join("\uFF1B")
+        },
+        ...task.slots.map((slot) => ({
+          slot: "\u69FD\u4F4D",
+          detail: `${slot.number ? `${slot.repo}-${slot.number}` : slot.repo}${slot.branch ? ` \xB7 ${slot.branch}` : ""}`
+        }))
+      ];
+      return /* @__PURE__ */ React.createElement(
+        TreeItem,
+        {
+          key: task.id,
+          kind: "dev",
+          title: task.title,
+          chips: task.slots.map((slot) => slot.number ? `${slot.repo}-${slot.number}` : slot.repo),
+          actions: /* @__PURE__ */ React.createElement(StatusTag, { ui, t, status: shownStatus({ ...task, kind: "dev", repos: [] }) }),
+          facts,
+          expandable: true,
+          expanded: openTasks[task.id] === true,
+          onToggle: () => setOpenTasks({ ...openTasks, [task.id]: openTasks[task.id] !== true }),
+          depth: depth + 1
+        }
+      );
+    })
+  );
+}
+function DevTaskItem({
   ui,
   t,
   task,
@@ -520,47 +944,129 @@ function TaskLine({
   sessionId,
   call,
   reload,
+  show,
+  detailsOpen = false,
+  onToggleDetails,
   nested = false,
-  open,
-  onToggle
+  reviewing = false,
+  batchId,
+  depth = 0
 }) {
-  const chosen = !nested && task.selectable && picked.includes(task.id);
-  const toggle = () => {
-    if (!nested && task.selectable) setPicked(togglePick(picked, task.id));
-  };
-  return /* @__PURE__ */ React.createElement("div", { className: "df-task", "data-pick": !nested && task.selectable ? "true" : "false", "data-on": chosen ? "true" : "false", onClick: toggle }, !nested && task.selectable ? /* @__PURE__ */ React.createElement("input", { className: "df-check", type: "checkbox", checked: chosen, onClick: (event) => event.stopPropagation(), onChange: toggle }) : /* @__PURE__ */ React.createElement(Dot, { ui, state: dotOf(task.status) }), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { className: "df-name" }, onToggle ? /* @__PURE__ */ React.createElement("button", { type: "button", className: "df-chev", "aria-expanded": open, onClick: (event) => {
-    event.stopPropagation();
-    onToggle();
-  } }, open ? "\u25BE" : "\u25B8") : null, task.title), /* @__PURE__ */ React.createElement("div", { className: "df-meta" }, taskMeta(task, t))), /* @__PURE__ */ React.createElement("div", { className: "df-actions" }, /* @__PURE__ */ React.createElement(StatusTag, { ui, t, status: task.status }), !nested && task.kind === "accept" && task.status === "accepting" && call && reload ? /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement(ActionButton, { ui, onClick: (event) => {
-    event.stopPropagation();
-    finish(call, sessionId, task.id, "accepted", reload);
-  } }, t("action.pass")), /* @__PURE__ */ React.createElement(ActionButton, { ui, onClick: (event) => {
-    event.stopPropagation();
-    finish(call, sessionId, task.id, "rejected", reload);
-  } }, t("action.fail"))) : null));
+  const facts = taskFacts(task, t);
+  const deps = task.dependsOn ?? [];
+  const [openDeps, setOpenDeps] = useState({});
+  const [selfOpen, setSelfOpen] = useState(false);
+  const openDetails = onToggleDetails === void 0 ? selfOpen : detailsOpen;
+  const toggleDetails = onToggleDetails ?? (() => setSelfOpen(!selfOpen));
+  const expandable = facts.length > 0 || deps.length > 0;
+  const selectable = !nested && task.selectable === true;
+  const leading = selectable ? /* @__PURE__ */ React.createElement("input", { className: "df-check", type: "checkbox", checked: picked.includes(task.id), onClick: (event) => event.stopPropagation(), onChange: () => setPicked(togglePick(picked, task.id)) }) : void 0;
+  return /* @__PURE__ */ React.createElement(
+    TreeItem,
+    {
+      kind: "dev",
+      title: task.title,
+      chips: taskChips(task),
+      leading,
+      actions: /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement(StatusTag, { ui, t, status: shownStatus(task) }), task.status === "pending-merge" && task.kind !== "accept" && call && reload ? /* @__PURE__ */ React.createElement(ActionButton, { ui, onClick: (event) => {
+        event.stopPropagation();
+        mergeTask(call, sessionId, task.id, reload, show);
+      } }, t("action.merge")) : null, nested && reviewing && task.acceptance !== "accepted" && batchId && call && reload ? /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement(ActionButton, { ui, onClick: (event) => {
+        event.stopPropagation();
+        finishTask(call, sessionId, batchId, task.id, "accepted", reload);
+      } }, t("action.pass")), /* @__PURE__ */ React.createElement(ActionButton, { ui, onClick: (event) => {
+        event.stopPropagation();
+        finishTask(call, sessionId, batchId, task.id, "rejected", reload);
+      } }, t("action.fail"))) : null),
+      facts,
+      expandable,
+      expanded: openDetails,
+      onToggle: expandable ? toggleDetails : void 0,
+      onClick: selectable ? () => setPicked(togglePick(picked, task.id)) : void 0,
+      depth,
+      tone: toneOf(shownStatus(task))
+    },
+    deps.map((dep) => /* @__PURE__ */ React.createElement(
+      TreeItem,
+      {
+        key: `dep-${dep.id}`,
+        kind: "dev",
+        title: dep.title,
+        chips: [],
+        actions: /* @__PURE__ */ React.createElement(StatusTag, { ui, t, status: dep.status }),
+        facts: [
+          { slot: t("fact.state"), detail: t(`status.${dep.status}`) || dep.status },
+          { slot: t("fact.merged"), detail: dep.merged ? dep.branch ?? "" : t("fact.notMerged") }
+        ],
+        expandable: true,
+        expanded: openDeps[dep.id] === true,
+        onToggle: () => setOpenDeps({ ...openDeps, [dep.id]: openDeps[dep.id] !== true }),
+        depth: depth + 1,
+        tone: toneOf(dep.status)
+      }
+    ))
+  );
+}
+function AcceptTaskItem({
+  ui,
+  t,
+  batch,
+  picked,
+  setPicked,
+  sessionId,
+  call,
+  reload,
+  show,
+  pickedBatches,
+  setPickedBatches,
+  open,
+  onToggle,
+  children,
+  depth = 0
+}) {
+  const deletable = batch.status !== "accepting";
+  const leading = deletable ? /* @__PURE__ */ React.createElement("input", { className: "df-check", type: "checkbox", checked: pickedBatches.includes(batch.id), onClick: (event) => event.stopPropagation(), onChange: () => setPickedBatches(togglePick(pickedBatches, batch.id)) }) : void 0;
+  return /* @__PURE__ */ React.createElement(
+    TreeItem,
+    {
+      kind: "accept",
+      title: batch.title,
+      chips: taskChips(batch),
+      leading,
+      actions: /* @__PURE__ */ React.createElement(StatusTag, { ui, t, status: shownStatus(batch) }),
+      expandable: onToggle !== void 0,
+      expanded: open,
+      onToggle,
+      onClick: deletable ? () => setPickedBatches(togglePick(pickedBatches, batch.id)) : void 0,
+      depth,
+      tone: toneOf(shownStatus(batch))
+    },
+    children.map((task) => /* @__PURE__ */ React.createElement(DevTaskItem, { key: task.id, ui, t, task, picked, setPicked, sessionId, call, reload, show, nested: true, reviewing: batch.status === "accepting", batchId: batch.id, depth: depth + 1 }))
+  );
 }
 function containedTasks(data, batch) {
   const ids = batch.taskIds ?? [];
   const fromIds = ids.map((id) => data.tasks.find((task) => task.kind !== "accept" && task.id === id)).filter((task) => task !== void 0);
-  if (fromIds.length > 0) return fromIds;
-  return data.tasks.filter((task) => task.kind !== "accept" && task.batchId === batch.id);
+  const rows = fromIds.length > 0 ? fromIds : data.tasks.filter((task) => task.kind !== "accept" && task.batchId === batch.id);
+  return rows.sort((left, right) => String(right.createdAt ?? "").localeCompare(String(left.createdAt ?? "")));
 }
 function Slots({ ui, data, t }) {
   const dev = data.counts.devSlots;
   const accept = data.counts.acceptSlots;
-  return /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("p", { className: "df-note" }, `${t("slot.dev")} ${dev?.used ?? 0}/${dev?.total ?? 0} \xB7 ${t("slot.accept")} ${accept?.used ?? 0}/${accept?.total ?? 0}`), data.repos.map((repo) => /* @__PURE__ */ React.createElement("section", { key: repo.name, className: "df-card" }, /* @__PURE__ */ React.createElement("div", { className: "df-repo" }, /* @__PURE__ */ React.createElement("strong", null, repo.name), " ", /* @__PURE__ */ React.createElement("span", { className: repo.dirty ? "df-warn" : "df-ok" }, repo.dirty ? t("trunk.dirty") : t("trunk.clean"))), repo.devSlots.length === 0 ? /* @__PURE__ */ React.createElement(SlotLine, { t, kind: "dev", state: "missing", detail: t("slot.noDev") }) : repo.devSlots.map((slot) => /* @__PURE__ */ React.createElement(SlotLine, { key: slot.number, t, kind: "dev", number: slot.number, state: slot.taskId ? "busy" : "free", detail: devDetail(data, repo, slot, t) })), /* @__PURE__ */ React.createElement(
+  return /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("p", { className: "df-meta" }, `${t("slot.dev")} ${dev?.used ?? 0}/${dev?.total ?? 0} \xB7 ${t("slot.accept")} ${accept?.used ?? 0}/${accept?.total ?? 0}`), data.repos.map((repo) => /* @__PURE__ */ React.createElement("section", { key: repo.name, className: "df-card" }, /* @__PURE__ */ React.createElement("div", { className: "df-repo" }, /* @__PURE__ */ React.createElement("strong", null, repo.name), " ", /* @__PURE__ */ React.createElement("span", { className: repo.dirty ? "df-warn" : "df-ok" }, repo.dirty ? t("trunk.dirty") : t("trunk.clean"))), repo.devSlots.length === 0 ? /* @__PURE__ */ React.createElement(SlotLine, { t, kind: "dev", state: "missing", detail: t("slot.noDev") }) : repo.devSlots.map((slot) => /* @__PURE__ */ React.createElement(SlotLine, { key: slot.number, t, kind: "dev", repo: repo.name, number: slot.number, state: slot.taskId ? "busy" : "free", detail: devDetail(data, repo, slot, t) })), /* @__PURE__ */ React.createElement(
     SlotLine,
     {
       t,
       kind: "accept",
+      repo: repo.name,
       number: repo.acceptSlot?.number,
       state: repo.acceptSlot ? repo.acceptSlot.batchId ? "busy" : "free" : "missing",
       detail: acceptDetail(repo, t)
     }
   ))));
 }
-function SlotLine({ t, kind, number, state, detail }) {
-  const label = `${kind === "dev" ? t("slot.dev") : t("slot.accept")} ${number ?? ""}`.trim();
+function SlotLine({ t, kind, repo, number, state, detail }) {
+  const label = repo && number ? `${repo}-${number}` : `${kind === "dev" ? t("slot.dev") : t("slot.accept")} ${number ?? ""}`.trim();
   const tone = state === "busy" ? "df-warn" : state === "free" ? "df-ok" : "df-muted";
   const text = state === "busy" ? t("slot.busy") : state === "free" ? t("slot.free") : t("slot.missing");
   return /* @__PURE__ */ React.createElement("div", { className: "df-slot" }, /* @__PURE__ */ React.createElement("span", null, label), /* @__PURE__ */ React.createElement("span", { className: tone }, text), /* @__PURE__ */ React.createElement("span", { className: "df-meta" }, detail));
@@ -576,11 +1082,11 @@ function visibleAgents(agents) {
 }
 function Agents({ ui, data, t }) {
   const rows = [{ id: t("agent.lead"), status: "lead", kind: "lead" }, ...visibleAgents(data.agents)];
-  return /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("p", { className: "df-note" }, `${t("metric.agents")} ${data.counts.activeAgents}/${data.counts.agentLimit}`), /* @__PURE__ */ React.createElement("div", { className: "df-card" }, rows.map((agent) => /* @__PURE__ */ React.createElement("div", { key: agent.id, className: "df-agent" }, /* @__PURE__ */ React.createElement(Dot, { ui, state: agent.status === "running" ? "ongoing" : "idle" }), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { className: "df-name" }, agent.id), /* @__PURE__ */ React.createElement("div", { className: "df-meta" }, agentDetail(data, agent, t))), /* @__PURE__ */ React.createElement(StatusTag, { ui, t, status: agent.status === "running" ? "running" : agent.status === "lead" ? "lead" : "idle" })))));
+  return /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("p", { className: "df-meta" }, `${t("metric.agents")} ${data.counts.activeAgents}/${data.counts.agentLimit}`), /* @__PURE__ */ React.createElement("div", { className: "df-card" }, rows.map((agent) => /* @__PURE__ */ React.createElement("div", { key: agent.id, className: "df-agent" }, /* @__PURE__ */ React.createElement(Dot, { ui, state: agent.status === "running" ? "ongoing" : "idle" }), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { className: "df-name" }, agent.id), /* @__PURE__ */ React.createElement("div", { className: "df-meta" }, agentDetail(data, agent, t))), /* @__PURE__ */ React.createElement(StatusTag, { ui, t, status: agent.status === "lead" ? "lead" : agentPhase(agent) })))));
 }
 function StatusTag({ ui, t, status }) {
   const label = status === "running" ? t("agent.running") : status === "idle" ? t("agent.idle") : status === "lead" ? t("agent.dispatch") : t(`status.${status}`) || status;
-  const tone = status === "failed" || status === "rejected" ? "danger" : status === "accepted" || status === "merged" ? "success" : status === "pending-merge" ? "warning" : status === "developing" || status === "running" ? "info" : status === "pending-acceptance" || status === "waiting" || status === "accepting" ? "warning" : "neutral";
+  const tone = status === "failed" || status === "rejected" ? "danger" : status === "accepted" || status === "merged" ? "success" : status === "pending-merge" || status === "awaiting-agent" ? "warning" : status === "developing" || status === "running" || status === "scheduling" ? "info" : status === "pending-acceptance" || status === "waiting" || status === "accepting" ? "warning" : "neutral";
   return ui.Tag ? /* @__PURE__ */ React.createElement(ui.Tag, { tone }, label) : /* @__PURE__ */ React.createElement("span", { className: "df-meta" }, label);
 }
 function SettingsForm({ ui, view, call, t }) {
@@ -593,7 +1099,7 @@ function SettingsForm({ ui, view, call, t }) {
     return () => controller.abort();
   }, [view, call]);
   if (view === "summary") return /* @__PURE__ */ React.createElement("span", { className: "df-meta" }, t("settings.summary"));
-  if (!draft) return /* @__PURE__ */ React.createElement("p", { className: "df-note" }, message || "\u2026");
+  if (!draft) return /* @__PURE__ */ React.createElement("p", { className: "df-meta" }, message || "\u2026");
   const fields = [
     ["devModel", "\u5F00\u53D1\u4EFB\u52A1\u6A21\u578B"],
     ["acceptModel", "\u9A8C\u6536\u4EFB\u52A1\u6A21\u578B"],
@@ -641,19 +1147,31 @@ function start(call, sessionId, picked, setPicked, reload) {
     throw reason;
   });
 }
-function finish(call, sessionId, id, result, reload) {
-  call("accept-finish", { sessionId, id, result }).then(() => reload()).catch((reason) => reload(reason));
+function removeBatches(call, sessionId, ids, setPicked, setBusy, reload, show) {
+  setBusy(true);
+  call("accept-delete", { sessionId, ids }).then(() => {
+    setPicked([]);
+    show?.(`\u5DF2\u5220\u9664 ${ids.length} \u4E2A\u9A8C\u6536\u4EFB\u52A1`, "info");
+    return reload();
+  }).catch((reason) => reload(reason)).finally(() => setBusy(false));
+}
+function mergeTask(call, sessionId, taskId, reload, show) {
+  call("task-merge", { sessionId, taskId }).then((value) => {
+    const task = value?.tasks?.find((item) => item.id === taskId);
+    if (task?.status === "pending-merge") show?.(task.warnings?.join("\uFF0C") || "\u6CA1\u6709\u5408\u5165", "error");
+    else show?.("\u5DF2\u5408\u5165\u4E3B\u5E72", "info");
+    return reload();
+  }).catch((reason) => reload(reason));
+}
+function finishTask(call, sessionId, id, taskId, result, reload) {
+  call("accept-task", { sessionId, id, taskId, result }).then(() => reload()).catch((reason) => reload(reason));
 }
 function togglePick(picked, id) {
   return picked.includes(id) ? picked.filter((item) => item !== id) : [...picked, id];
 }
-function dotOf(status) {
-  if (status === "developing") return "ongoing";
-  if (status === "failed") return "error";
-  if (status === "accepted" || status === "merged") return "done";
-  if (status === "pending-merge") return "warning";
-  if (status === "waiting" || status === "pending-acceptance" || status === "accepting") return "warning";
-  return "idle";
+function shownStatus(task) {
+  if (task.kind !== "accept" && task.status === "developing" && task.agentStatus !== "running") return "awaiting-agent";
+  return task.status;
 }
 function matchFilter(filter, task) {
   if (filter === "pending") return task.status === "pending-acceptance";
@@ -674,19 +1192,56 @@ function taskTitle(data, id) {
   if (!id) return "";
   return data.tasks.find((task) => task.id === id)?.title ?? id;
 }
-function slotSummary(data, agent) {
-  const task = data.tasks.find((item) => item.id === agent.taskId);
-  if (!task?.slots) return "";
-  return Object.entries(task.slots).map(([repo, slot]) => slot.number ? `${repo}-${slot.number}` : `${repo} ${slot.port ?? ""}`).join("\u3001");
+function trunkPhase(active) {
+  if (active.some((item) => item.kind === "accept")) return "accepting";
+  if (active.some((item) => item.kind === "schedule")) return "scheduling";
+  if (active.length > 0) return "developing";
+  return "idle";
 }
-function taskMeta(task, t) {
-  const slots = Object.entries(task.slots ?? {}).map(([repo, slot]) => {
-    if (slot.port) return `${repo} ${t("slot.accept")} \xB7 ${t("status.accepting") === "\u5F85\u786E\u8BA4" ? "\u7AEF\u53E3" : "port"} ${slot.port}`;
-    return [slot.number ? `${repo}-${slot.number}` : repo, slot.branch].filter(Boolean).join(" \xB7 ");
+function agentPhase(agent) {
+  if (agent.status !== "running") return "idle";
+  if (agent.kind === "accept") return "accepting";
+  if (agent.kind === "schedule") return "scheduling";
+  return "developing";
+}
+function trunkActivity(data, repoName) {
+  return (data.agents ?? []).flatMap((agent) => {
+    if (agent.status !== "running") return [];
+    const task = data.tasks.find((item) => item.id === agent.taskId);
+    if (!task) return [];
+    const slots = Object.entries(task.slots ?? {}).filter(([repo]) => repo === repoName).map(([, slot]) => slot.number ? `${repoName}-${slot.number}` : repoName);
+    const involved = task.repos?.includes(repoName) || slots.length > 0;
+    if (!involved) return [];
+    return [{ agent: agent.id, title: task.title, kind: agent.kind, slots }];
   });
-  if (task.batchId && task.kind === "dev") slots.push(`${t("status.accepting") === "\u5F85\u786E\u8BA4" ? "\u6279\u6B21" : "batch"} ${task.batchId}`);
-  if (task.warnings?.length) slots.push(task.warnings.join("\uFF0C"));
-  return slots.join(" \xB7 ");
+}
+function agentSlots(data, agent) {
+  const task = data.tasks.find((item) => item.id === agent.taskId || item.id === agent.lastTaskId);
+  if (!task?.slots) return [];
+  return Object.entries(task.slots).map(([repo, slot]) => slot.number ? `${repo}-${slot.number}` : `${repo} ${slot.port ?? ""}`.trim());
+}
+function taskChips(task) {
+  return Object.entries(task.slots ?? {}).map(([repo, slot]) => {
+    if (slot.port) return `${repo} \xB7 ${slot.port}`;
+    return slot.number ? `${repo}-${slot.number}` : repo;
+  });
+}
+function taskFacts(task, t) {
+  const zh2 = t("page.tasks") === "\u4EFB\u52A1";
+  const batchLabel = zh2 ? "\u6279\u6B21" : "batch";
+  const rows = [];
+  for (const [repo, slot] of Object.entries(task.slots ?? {})) {
+    if (slot.branch) rows.push({ slot: repo, detail: slot.branch });
+  }
+  if (task.batchId && task.kind === "dev") rows.push({ slot: batchLabel, detail: task.batchId });
+  if (task.warnings?.length) rows.push({ slot: t("status.pending-merge"), detail: task.warnings.join("\uFF0C") });
+  if (task.usage?.totalTokens) rows.push({ slot: "token", detail: formatTokens(task.usage.totalTokens) });
+  return rows;
+}
+function formatTokens(total) {
+  if (total >= 1e4) return `${Math.round(total / 1e3)}k`;
+  if (total >= 1e3) return `${(total / 1e3).toFixed(1)}k`;
+  return String(total);
 }
 function devDetail(data, repo, slot, t) {
   if (!slot.taskId) return t("slot.reusable");
@@ -695,8 +1250,9 @@ function devDetail(data, repo, slot, t) {
 }
 function acceptDetail(repo, t) {
   if (!repo.acceptSlot) return t("slot.noAccept");
-  if (!repo.acceptSlot.batchId) return repo.acceptSlot.port ? `${t("status.accepting") === "\u5F85\u786E\u8BA4" ? "\u7AEF\u53E3" : "port"} ${repo.acceptSlot.port}` : t("slot.free");
-  return [`${t("status.accepting") === "\u5F85\u786E\u8BA4" ? "\u7AEF\u53E3" : "port"} ${repo.acceptSlot.port ?? ""}`, repo.acceptSlot.batchId].filter(Boolean).join(" \xB7 ");
+  const portLabel = t("page.tasks") === "\u4EFB\u52A1" ? "\u7AEF\u53E3" : "port";
+  if (!repo.acceptSlot.batchId) return repo.acceptSlot.port ? `${portLabel} ${repo.acceptSlot.port}` : t("slot.free");
+  return [`${portLabel} ${repo.acceptSlot.port ?? ""}`, repo.acceptSlot.batchId].filter(Boolean).join(" \xB7 ");
 }
 function agentDetail(data, agent, t) {
   if (agent.kind === "lead" || agent.status === "lead") return t("agent.leadDetail");

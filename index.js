@@ -1,11 +1,13 @@
-import { readFileSync, statSync } from 'node:fs';
+import { existsSync, readFileSync, statSync } from 'node:fs';
 import { readFile } from 'node:fs/promises';
-import { join, resolve } from 'node:path';
+import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { finishAcceptance, planDispatch, sessionEnabled } from './kernel/flow.mjs';
+import { attachLiveAgent, finishAcceptance, planDispatch, releaseLiveAgent, sessionEnabled } from './kernel/flow.mjs';
 import { handle } from './kernel/service.mjs';
-import { flushStateWrites, setStateWriter } from './kernel/state.mjs';
+import { flushStateWrites, loadState, setStateWriter, statePath } from './kernel/state.mjs';
+import { bindChildSession, findUsageTarget, normalizeUsage, recordUsage } from './kernel/usage.mjs';
+import { verificationNotes } from './kernel/verify.mjs';
 
 export const name = 'dev-flow';
 export const inject = ['skills'];
@@ -72,6 +74,19 @@ export function apply(ctx) {
     },
   };
   ctx.skills.registerProvider(() => provider);
+  if (typeof ctx.on === 'function') {
+    ctx.on('session/event', observeUsage);
+    ctx.on('session/disposed', (session) => {
+      try {
+        const cwd = session?.header?.cwd;
+        const workspace = workspaceOf(cwd);
+        if (workspace === null) return;
+        releaseLiveAgent(workspace, session?.header?.id ?? session?.id);
+      } catch {
+        /* 会话结束时记不上占用，不影响会话关闭。 */
+      }
+    });
+  }
   if (typeof ctx.inject !== 'function') return;
 
   ctx.inject(['systemPrompt', 'workingDirectory'], (scope) => {
@@ -117,7 +132,7 @@ export function apply(ctx) {
         try {
           const payload = body.payload ?? {};
           const sessionId = typeof payload.sessionId === 'string' ? payload.sessionId : '';
-          const workspace = resolveWorkspace(rpc, sessionId) ?? (typeof payload.workspace === 'string' ? payload.workspace : '');
+          const workspace = withState(resolveWorkspace(rpc, sessionId) ?? (typeof payload.workspace === 'string' ? payload.workspace : ''));
           if (workspace === '' && endpoint !== 'settings-get' && endpoint !== 'settings-set') {
             const value = endpoint === 'snapshot'
               ? { initialized: false, enabled: false, problem: '找不到工作区', counts: emptyCounts(), projects: [], trunks: [], tasks: [], repos: [], agents: [] }
@@ -135,9 +150,16 @@ export function apply(ctx) {
           await flushStateWrites();
           if (endpoint === 'accept-start') {
             try {
-              value.child = await launchAcceptance(rpc, sessionId, workspace, value.batch);
-              planDispatch(workspace, sessionId, { kind: 'accept', id: value.batch.id });
-              await flushStateWrites();
+              const notes = verificationNotes(workspace, value.batch);
+              value.notes = notes.map((note) => note.file);
+              if (notes.length === 0) {
+                value.child = null;
+              } else {
+                value.child = await launchAcceptance(rpc, sessionId, workspace, value.batch, notes);
+                if (value.child?.id) bindChildSession(workspace, value.batch.id, value.child.id);
+                planDispatch(workspace, sessionId, { kind: 'accept', id: value.batch.id });
+                await flushStateWrites();
+              }
             } catch (error) {
               try {
                 finishAcceptance(workspace, value.batch.id, 'rejected');
@@ -168,7 +190,7 @@ export function apply(ctx) {
 const activeWrite = { workspace: '', session: undefined };
 const acceptanceSignals = new Set();
 
-async function launchAcceptance(rpc, sessionId, workspace, batch) {
+async function launchAcceptance(rpc, sessionId, workspace, batch, notes) {
   const parent = rpc.agents?.get?.(sessionId);
   if (parent?.session === undefined) throw new Error('找不到主会话，无法拉起验收子代理');
   if (typeof rpc.subagents?.startActivation !== 'function') throw new Error('子代理服务不可用');
@@ -178,6 +200,7 @@ async function launchAcceptance(rpc, sessionId, workspace, batch) {
   const controller = new AbortController();
   acceptanceSignals.add(controller);
   const name = acceptanceName(batch.id);
+  const guide = notes.map((note) => `文件 ${note.file}\n${note.text.slice(0, 8000)}`).join('\n\n');
   const started = await rpc.subagents.startActivation({
     provider: 'spawn',
     label: `验收 ${batch.id}`,
@@ -192,15 +215,67 @@ async function launchAcceptance(rpc, sessionId, workspace, batch) {
         type: 'text',
         text: [
           '你是验收子代理。不要改任务代码，不要合并，不要推送。',
-          '在下面每个验收槽位里启动该项目自己的开发服务，监听分配的端口，并保持服务运行。',
+          '不要在本会话启动开发服务或任何需要一直运行的进程。子代理结束后这些进程会被回收。',
+          '如果验收说明要求启动服务，不要自己启动。在回复里通知父会话启动，写清验收槽位目录、端口和说明里的启动命令，然后结束。',
+          '说明没有要求启动服务时，只按说明检查。',
           ...lines,
-          '服务起来后，在回复里给出可打开的地址。',
+          '',
+          guide,
         ].join('\n'),
       }],
     },
   });
   started.result.finally(() => acceptanceSignals.delete(controller));
   return { id: started.childId, name: started.name };
+}
+
+function workspaceOf(cwd) {
+  let dir = typeof cwd === 'string' ? cwd : '';
+  while (dir !== '' && dir !== dirname(dir)) {
+    if (existsSync(statePath(dir))) return dir;
+    dir = dirname(dir);
+  }
+  return null;
+}
+
+function usageOf(event) {
+  if (event?.type !== 'assistant/message' && event?.type !== 'assistant/attempt') return null;
+  const direct = normalizeUsage(event.data?.usage);
+  if (direct) return direct;
+  const stream = event.data?.stream;
+  if (!Array.isArray(stream)) return null;
+  for (let index = stream.length - 1; index >= 0; index -= 1) {
+    const sample = normalizeUsage(stream[index]?.usage);
+    if (sample && (stream[index]?.type === 'usage' || stream[index]?.usage)) return sample;
+  }
+  return null;
+}
+
+function observeUsage(session, event) {
+  try {
+    const cwd = session?.header?.cwd;
+    const workspace = workspaceOf(cwd);
+    if (workspace === null) return;
+    const sessionId = session?.header?.id ?? session?.id;
+    const state = loadState(workspace);
+    const target = findUsageTarget(state, {
+      id: sessionId,
+      cwd,
+      parentSession: session?.header?.parentSession,
+    });
+    if (target?.taskId && session?.header?.parentSession) attachLiveAgent(workspace, target.taskId, sessionId);
+    const usage = usageOf(event);
+    if (usage === null || target === null) return;
+    const turn = event.data?.turn ?? 0;
+    const step = event.data?.step ?? 0;
+    recordUsage(workspace, {
+      ...target,
+      stepKey: `${session?.header?.id ?? session?.id ?? 'session'}:${turn}:${step}`,
+      usage,
+    });
+  } catch {
+    /* 用量没记上时，任务本身继续。 */
+  }
 }
 
 function acceptanceName(id) {
@@ -293,9 +368,11 @@ export function leadGate(session, cwd) {
   return [
     '本会话已启用 dev-flow 工作流。你是主会话，不是实现者。',
     '用户要求改代码、修复、实现或重构时，禁止编辑文件，禁止在主会话里完成实现。',
-    '先用 skill 工具加载 dev-flow，再分配开发槽位，并用 subagent 把实现交给一个子代理。',
-    '子代理的 cwd 必须是 dispatch 返回的目录。拉起后立刻结束本轮。',
+    '先用 skill 工具加载 dev-flow，再分配开发槽位，并用 subagent 把实现交给子代理。',
+    '拆分任务时，每个任务只涉及一个服务。没有依赖关系的任务要并行派发，直到子代理上限，不要等前一个结束。',
+    '子代理的 cwd 必须是 dispatch 返回的目录。能派发的都派完后，在主会话说明创建的任务、依赖并入和槽位，再结束本轮。',
     '只读的解释、查看状态可以留在主会话。',
+    '验收子代理通知需要启动服务时，在本会话启动并保持运行。不要让子代理启动，也不要再开一个子代理去启动。',
   ].join('\n');
 }
 
@@ -315,6 +392,17 @@ function leadContext(scope, context, cli) {
 }
 
 /** Agent 和 Session 都能进来；工作目录服务只接受 Session。 */
+function withState(dir) {
+  if (typeof dir !== 'string' || dir === '') return dir;
+  if (existsSync(statePath(dir))) return dir;
+  let current = dir;
+  while (current !== dirname(current)) {
+    current = dirname(current);
+    if (existsSync(statePath(current))) return current;
+  }
+  return dir;
+}
+
 export function resolveWorkspace(rpc, sessionId) {
   const session = asSession(rpc?.agents?.get?.(sessionId)) ?? asSession(rpc?.sessions?.get?.(sessionId));
   if (session === undefined) return null;

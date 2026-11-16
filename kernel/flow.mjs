@@ -21,6 +21,32 @@ export function scan(workspace, settings) {
  * @param {string} workspace
  * @param {{ id: string, title: string, repos: string[], dependsOn?: string[], settings?: object }} request
  */
+/**
+ * 主会话在主干上开始一次调度时创建。开发任务和子代理都挂在它下面。
+ * @param {string} workspace
+ * @param {{ id: string, title?: string, sessionId?: string }} request
+ */
+export function startSchedule(workspace, request) {
+  const state = loadState(workspace);
+  if (state.schedules === undefined) state.schedules = {};
+  const id = request.id;
+  assertId(id);
+  if (state.schedules[id] !== undefined) throw new FlowError(`调度任务 ${id} 已存在`, 'exists');
+  const now = new Date().toISOString();
+  state.schedules[id] = {
+    id,
+    title: request.title || id,
+    status: 'scheduling',
+    sessionId: request.sessionId ?? null,
+    taskIds: [],
+    agentIds: [],
+    createdAt: now,
+    updatedAt: now,
+  };
+  saveState(workspace, state);
+  return state.schedules[id];
+}
+
 export function createDevTask(workspace, request) {
   const settings = resolveSettings(request.settings);
   const state = loadState(workspace);
@@ -28,6 +54,7 @@ export function createDevTask(workspace, request) {
   assertId(id);
   if (state.tasks[id] !== undefined) throw new FlowError(`任务 ${id} 已存在`, 'exists');
   const repos = resolveRepos(workspace, request.repos);
+  if (repos.length !== 1) throw new FlowError('一个任务只能涉及一个服务，请按服务拆开', 'scope');
   const dependsOn = request.dependsOn ?? [];
   for (const dep of dependsOn) {
     const task = state.tasks[dep];
@@ -36,9 +63,11 @@ export function createDevTask(workspace, request) {
   }
   const blocked = dependsOn.filter((dep) => !READY.has(state.tasks[dep].status));
   const now = new Date().toISOString();
+  if (request.scheduleId) assertSchedule(state, request.scheduleId);
   if (blocked.length > 0 || runningAgents(state) >= settings.agentLimit) {
     state.tasks[id] = baseTask(request, repos, dependsOn, blocked.length > 0 ? 'waiting' : 'waiting', now);
     state.tasks[id].wait = blocked.length > 0 ? { kind: 'dependency', tasks: blocked } : { kind: 'capacity' };
+    linkSchedule(state, request.scheduleId, id, now);
     saveState(workspace, state);
     return { task: state.tasks[id], warnings: [] };
   }
@@ -65,6 +94,7 @@ export function createDevTask(workspace, request) {
       slots,
       warnings,
     };
+    linkSchedule(state, request.scheduleId, id, now);
     saveState(workspace, state);
     return { task: state.tasks[id], warnings };
   } catch (error) {
@@ -133,6 +163,45 @@ export function abandonDevTask(workspace, id) {
 }
 
 /**
+ * 删除验收任务，并删掉它占用的验收分支。验收槽位目录保留在磁盘上，只解除占用。
+ * 里面还没合入的开发任务退回待验收，可以重新发起。
+ * @param {string} workspace
+ * @param {string[]} ids
+ */
+export function deleteAcceptances(workspace, ids) {
+  const state = loadState(workspace);
+  const catalog = new Map(discoverRepos(workspace).map((repo) => [repoName(workspace, repo), repo]));
+  const removed = [];
+  for (const id of ids) {
+    const batch = state.batches[id];
+    if (batch === undefined) continue;
+    if (batch.status === 'accepting') throw new FlowError(`验收任务 ${id} 还在进行中，不能删除`, 'status');
+    for (const [name, slot] of Object.entries(batch.repos ?? {})) {
+      if (slot.branch) {
+        if (slot.path && slotExists(slot.path)) gitResult(slot.path, ['checkout', '-f', '--detach']);
+        const repoPath = catalog.get(name);
+        if (repoPath !== undefined) gitResult(repoPath, ['branch', '-D', slot.branch]);
+      }
+      const record = state.acceptSlots[name];
+      if (record && record.batchId === id) record.batchId = null;
+    }
+    for (const taskId of batch.taskIds ?? []) {
+      const task = state.tasks[taskId];
+      if (task === undefined) continue;
+      if (task.batchId === id) task.batchId = null;
+      if (task.status === 'pending-merge') {
+        task.status = 'pending-acceptance';
+        task.acceptance = null;
+      }
+    }
+    delete state.batches[id];
+    removed.push(id);
+  }
+  saveState(workspace, state);
+  return removed;
+}
+
+/**
  * @param {string} workspace
  * @param {{ id: string, taskIds: string[], settings?: object }} request
  */
@@ -153,6 +222,7 @@ export function startAcceptance(workspace, request) {
   }
   const catalog = new Map(discoverRepos(workspace).map((repo) => [repoName(workspace, repo), repo]));
   const created = [];
+  const registered = repoNames.filter((name) => state.acceptSlots[name] !== undefined);
   try {
     const repos = {};
     const branch = branchName(settings.acceptBranch, request.id);
@@ -175,44 +245,123 @@ export function startAcceptance(workspace, request) {
       createdAt: now,
     };
     for (const task of tasks) task.batchId = request.id;
+    for (const name of repoNames) {
+      if (state.acceptSlots[name]) state.acceptSlots[name].batchId = request.id;
+    }
     saveState(workspace, state);
     return state.batches[request.id];
   } catch (error) {
     rollbackAccept(state, created);
+    releaseReservations(state, repoNames, registered);
     saveState(workspace, state);
     throw error;
   }
 }
 
+/** 创建失败时，把这次占位但还没登记成批次的槽位放开。 */
+function releaseReservations(state, repoNames, registered) {
+  for (const name of repoNames) {
+    const record = state.acceptSlots[name];
+    if (record === undefined) continue;
+    if (!registered.includes(name)) {
+      delete state.acceptSlots[name];
+      continue;
+    }
+    if (record.batchId === 'reserving') record.batchId = null;
+  }
+}
+
 /**
- * 验收通过后把任务分支合入主干。主干不干净或冲突时，任务停在待合入。
- * 批次要等里面每个开发任务都合入后才算完成。
+ * 对验收批次里的一个开发任务给出通过或不通过。
+ * 全部剩余任务都通过，并且都已合入主干后，验收任务才标成通过。
+ * @param {string} workspace
+ * @param {string} batchId
+ * @param {string} taskId
+ * @param {'accepted' | 'rejected'} result
+ */
+export function finishTaskAcceptance(workspace, batchId, taskId, result) {
+  const state = loadState(workspace);
+  const batch = requireAcceptingBatch(state, batchId);
+  if (!batch.taskIds.includes(taskId)) throw new FlowError(`任务 ${taskId} 不在验收批次 ${batchId} 里`, 'missing');
+  const task = requireTask(state, taskId);
+  const now = new Date().toISOString();
+  task.updatedAt = now;
+  if (result === 'accepted') {
+    task.acceptance = 'accepted';
+    task.batchId = batchId;
+    applyTrunkMerge(workspace, state, task);
+  } else {
+    task.acceptance = null;
+    task.status = 'pending-acceptance';
+    task.batchId = null;
+    batch.taskIds = batch.taskIds.filter((id) => id !== taskId);
+  }
+  closeBatchIfReady(state, batch, now);
+  saveState(workspace, state);
+  return batch;
+}
+
+/**
+ * 一次给整批剩余任务同一个结果。面板按单个任务调用 finishTaskAcceptance。
  * @param {string} workspace
  * @param {string} id
  * @param {'accepted' | 'rejected'} result
  */
 export function finishAcceptance(workspace, id, result) {
-  const state = loadState(workspace);
+  const existing = loadState(workspace);
+  requireAcceptingBatch(existing, id);
+  for (const taskId of [...existing.batches[id].taskIds]) {
+    finishTaskAcceptance(workspace, id, taskId, result);
+  }
+  return loadState(workspace).batches[id];
+}
+
+function requireAcceptingBatch(state, id) {
   const batch = state.batches[id];
   if (batch === undefined || batch.status !== 'accepting') throw new FlowError(`验收批次 ${id} 不在进行中`, 'status');
-  const now = new Date().toISOString();
+  return batch;
+}
+
+function closeBatchIfReady(state, batch, now) {
+  const tasks = batch.taskIds.map((id) => state.tasks[id]).filter(Boolean);
+  if (tasks.length > 0 && !tasks.every((task) => task.acceptance === 'accepted')) return;
   batch.finishedAt = now;
   batch.agentStatus = 'idle';
   noteAgent(state, 'accept', batch.id, 'idle');
-  for (const taskId of batch.taskIds) {
-    const task = state.tasks[taskId];
-    task.updatedAt = now;
-    task.batchId = id;
-    if (result === 'accepted') applyTrunkMerge(workspace, state, task);
-    else task.batchId = null;
-  }
-  batch.status = result === 'accepted' && batchDone(state, batch) ? 'accepted' : result === 'accepted' ? 'pending-merge' : 'rejected';
+  batch.status = tasks.length === 0 ? 'rejected' : batchDone(state, batch) ? 'accepted' : 'pending-merge';
   for (const name of Object.keys(batch.repos)) {
     const slot = state.acceptSlots[name];
     if (slot) slot.batchId = null;
   }
+}
+
+/** 手动把一条待合入任务再合进主干。失败时仍保持待合入，并写上原因。 */
+export function mergePendingTask(workspace, taskId) {
+  const state = loadState(workspace);
+  const task = requireTask(state, taskId);
+  if (task.status !== 'pending-merge') throw new FlowError(`任务 ${taskId} 不是待合入`, 'status');
+  applyTrunkMerge(workspace, state, task);
+  promoteBatch(state, task.batchId);
   saveState(workspace, state);
-  return batch;
+  return task;
+}
+
+/** 进程中断留下的占位没有对应批次时，把验收槽位放开。 */
+export function settleStaleAcceptSlots(workspace) {
+  const state = loadState(workspace);
+  const busy = new Set();
+  for (const batch of Object.values(state.batches ?? {})) {
+    if (batch.status !== 'accepting') continue;
+    for (const name of Object.keys(batch.repos ?? {})) busy.add(name);
+  }
+  let changed = false;
+  for (const [name, slot] of Object.entries(state.acceptSlots ?? {})) {
+    if (slot.batchId !== 'reserving' || busy.has(name)) continue;
+    slot.batchId = null;
+    changed = true;
+  }
+  if (changed) saveState(workspace, state);
+  return state;
 }
 
 /** 主干变干净后，把仍待合入的任务再试一次。 */
@@ -235,6 +384,12 @@ export function settlePendingMerges(workspace) {
   return state;
 }
 
+function promoteBatch(state, batchId) {
+  if (!batchId) return;
+  const batch = state.batches[batchId];
+  if (batch?.status === 'pending-merge' && batchDone(state, batch)) batch.status = 'accepted';
+}
+
 function batchDone(state, batch) {
   return batch.taskIds.every((id) => state.tasks[id]?.status === 'merged');
 }
@@ -246,10 +401,55 @@ function applyTrunkMerge(workspace, state, task) {
     task.status = 'merged';
     task.warnings = [];
     markHistory(state, task, 'merged');
+    cascadeAcceptedDependencies(state, task);
     return;
   }
   task.status = 'pending-merge';
   task.warnings = failures;
+}
+
+/**
+ * 一条任务合入主干后，它依赖的任务如果代码也已经进了主干，就一起算作验收通过。
+ * 顺着依赖继续往上，已经在主干里的都收尾。
+ */
+function cascadeAcceptedDependencies(state, task) {
+  const seen = new Set([task.id]);
+  const queue = [...(task.dependsOn ?? [])];
+  while (queue.length > 0) {
+    const id = queue.shift();
+    if (seen.has(id)) continue;
+    seen.add(id);
+    const dep = state.tasks[id];
+    if (dep === undefined) continue;
+    if (dep.status === 'merged' || dep.status === 'accepted') {
+      queue.push(...(dep.dependsOn ?? []));
+      continue;
+    }
+    if (dep.status !== 'pending-acceptance' && dep.status !== 'pending-merge') continue;
+    const batch = dep.batchId ? state.batches[dep.batchId] : undefined;
+    if (batch?.status === 'accepting') continue;
+    if (!taskInTrunk(dep)) continue;
+    dep.status = 'merged';
+    dep.acceptance = 'accepted';
+    dep.warnings = [];
+    dep.agentStatus = 'idle';
+    dep.updatedAt = new Date().toISOString();
+    markHistory(state, dep, 'merged');
+    promoteBatch(state, dep.batchId);
+    queue.push(...(dep.dependsOn ?? []));
+  }
+}
+
+function taskInTrunk(task) {
+  const repos = task.repos ?? [];
+  if (repos.length === 0) return false;
+  for (const repo of repos) {
+    const slot = task.slots?.[repo.name];
+    const tip = slot?.end ?? slot?.base;
+    if (!tip) return false;
+    if (!gitResult(repo.path, ['merge-base', '--is-ancestor', tip, 'HEAD']).ok) return false;
+  }
+  return true;
 }
 
 function mergeTaskIntoTrunk(task) {
@@ -266,8 +466,8 @@ function mergeTaskIntoTrunk(task) {
       failures.push(`${repo.name} 主干不干净`);
       continue;
     }
-    if (described.branch !== described.defaultBranch) {
-      failures.push(`${repo.name} 主干不在 ${described.defaultBranch}`);
+    if (!described.branch) {
+      failures.push(`${repo.name} 主干没有检出分支`);
       continue;
     }
     const branch = task.slots?.[repo.name]?.branch;
@@ -318,6 +518,7 @@ export function planDispatch(workspace, sessionId, request) {
     task.agentStatus = 'running';
     task.updatedAt = new Date().toISOString();
     const agentId = noteAgent(state, 'dev', task.id, 'running');
+    linkScheduleAgent(state, task.scheduleId, agentId);
     saveState(workspace, state);
     const slotPaths = Object.values(task.slots).map((slot) => slot.path);
     return {
@@ -368,6 +569,40 @@ function noteAgent(state, kind, taskId, status) {
   return agent.id;
 }
 
+/** 子代理实际在槽位里工作时补记，不依赖主会话有没有调用 dispatch。 */
+export function attachLiveAgent(workspace, taskId, sessionId) {
+  if (!sessionId) return null;
+  const state = loadState(workspace);
+  const task = state.tasks[taskId];
+  if (task === undefined || (task.status !== 'developing' && task.status !== 'failed')) return null;
+  if (task.agentStatus === 'running' && task.agentSessionId === sessionId) return null;
+  task.agentStatus = 'running';
+  task.agentSessionId = sessionId;
+  task.updatedAt = new Date().toISOString();
+  const agentId = noteAgent(state, 'dev', taskId, 'running');
+  const agent = state.agents.find((item) => item.id === agentId);
+  if (agent) agent.sessionId = sessionId;
+  linkScheduleAgent(state, task.scheduleId, agentId);
+  saveState(workspace, state);
+  return agentId;
+}
+
+/** 子代理会话结束后放开占用，任务仍停留在原状态。 */
+export function releaseLiveAgent(workspace, sessionId) {
+  if (!sessionId) return;
+  const state = loadState(workspace);
+  let changed = false;
+  for (const task of Object.values(state.tasks)) {
+    if (task.agentSessionId !== sessionId || task.agentStatus !== 'running') continue;
+    task.agentStatus = 'idle';
+    task.updatedAt = new Date().toISOString();
+    noteAgent(state, 'dev', task.id, 'idle');
+    if (task.scheduleId) refreshSchedule(state, task.scheduleId);
+    changed = true;
+  }
+  if (changed) saveState(workspace, state);
+}
+
 function runningAgents(state) {
   const tasks = Object.values(state.tasks).filter((task) => task.agentStatus === 'running').length;
   const batches = Object.values(state.batches).filter((batch) => batch.agentStatus === 'running').length;
@@ -385,9 +620,52 @@ function baseTask(request, repos, dependsOn, status, now) {
     warnings: [],
     batchId: null,
     agentStatus: 'idle',
+    scheduleId: request.scheduleId ?? null,
     createdAt: now,
     updatedAt: now,
   };
+}
+
+function assertSchedule(state, id) {
+  assertId(id);
+  if (state.schedules?.[id] === undefined) throw new FlowError(`调度任务 ${id} 不存在`, 'missing-schedule');
+}
+
+function linkSchedule(state, scheduleId, taskId, now) {
+  if (!scheduleId) return;
+  const schedule = state.schedules[scheduleId];
+  if (!schedule.taskIds.includes(taskId)) schedule.taskIds.push(taskId);
+  schedule.updatedAt = now;
+  refreshSchedule(state, scheduleId);
+}
+
+function linkScheduleAgent(state, scheduleId, agentId) {
+  if (!scheduleId) return;
+  const schedule = state.schedules?.[scheduleId];
+  if (schedule === undefined) return;
+  if (!schedule.agentIds.includes(agentId)) schedule.agentIds.push(agentId);
+  schedule.updatedAt = new Date().toISOString();
+  refreshSchedule(state, scheduleId);
+}
+
+export function refreshSchedules(workspace) {
+  const state = loadState(workspace);
+  let changed = false;
+  for (const id of Object.keys(state.schedules ?? {})) {
+    const before = state.schedules[id].status;
+    refreshSchedule(state, id);
+    if (state.schedules[id].status !== before) changed = true;
+  }
+  if (changed) saveState(workspace, state);
+  return state;
+}
+
+function refreshSchedule(state, scheduleId) {
+  const schedule = state.schedules?.[scheduleId];
+  if (schedule === undefined) return;
+  const tasks = schedule.taskIds.map((id) => state.tasks[id]).filter(Boolean);
+  const stillScheduling = tasks.length === 0 || tasks.some((task) => task.status === 'waiting' || (task.status === 'developing' && task.agentStatus !== 'running'));
+  schedule.status = stillScheduling ? 'scheduling' : 'dispatched';
 }
 
 function requireTask(state, id) {
@@ -476,7 +754,7 @@ function describeRepo(workspace, repo) {
 }
 
 function requireCommit(repo) {
-  const start = gitResult(repo.path, ['rev-parse', repo.defaultBranch || 'HEAD']);
+  const start = gitResult(repo.path, ['rev-parse', 'HEAD']);
   if (!start.ok) throw new FlowError(`${repo.name || repo.path} 还没有提交，不能创建槽位`, 'empty');
   return start.stdout;
 }
@@ -503,7 +781,7 @@ function claimDevSlot(workspace, state, settings, repo, taskId) {
   const numbers = Object.keys(records).map((number) => Number(number)).filter((number) => number >= 1);
   const idle = numbers.filter((number) => records[pad(number)]?.taskId == null).sort((a, b) => a - b);
   const number = pad(idle[0] ?? Math.max(0, ...numbers) + 1);
-  const slotPath = path.resolve(workspace, settings.devDir, repo.name, number);
+  const slotPath = records[number]?.path ?? path.resolve(workspace, settings.devDir, number, `${repo.name}-${number}`);
   assertOutside(repo.path, slotPath);
   const branch = branchName(settings.taskBranch, taskId);
   const start = requireCommit(repo);
@@ -519,10 +797,12 @@ function claimAcceptSlot(workspace, state, settings, repo, branch) {
   const existing = state.acceptSlots[repo.name];
   const fromPath = existing?.path ? path.basename(existing.path) : '';
   const number = existing?.number ?? (/^\d{2}$/u.test(fromPath) ? fromPath : pad(1));
-  const slotPath = existing?.path ?? path.resolve(workspace, settings.acceptDir, repo.name, number);
+  const slotPath = existing?.path ?? path.resolve(workspace, settings.acceptDir, number, `${repo.name}-${number}`);
   assertOutside(repo.path, slotPath);
   const port = existing?.port ?? nextPort(state, settings.portBase);
   const fresh = existing === undefined;
+  const start = requireCommit(repo);
+  checkoutSlot(repo.path, slotPath, branch, start, !fresh && existsSync(path.join(slotPath, '.git')));
   state.acceptSlots[repo.name] = {
     number,
     path: slotPath,
@@ -530,8 +810,6 @@ function claimAcceptSlot(workspace, state, settings, repo, branch) {
     batchId: 'reserving',
     history: existing?.history ?? [],
   };
-  const start = requireCommit(repo);
-  checkoutSlot(repo.path, slotPath, branch, start, !fresh && existsSync(path.join(slotPath, '.git')));
   return { number, path: slotPath, port, branch, repo: repo.name, repoPath: repo.path, fresh };
 }
 

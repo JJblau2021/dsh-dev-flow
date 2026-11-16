@@ -22,6 +22,7 @@ export function snapshot(workspace, sessionId) {
       tasks: [],
       repos: [],
       agents: [],
+      schedules: [],
     };
   }
   const state = loadState(workspace);
@@ -54,17 +55,27 @@ export function snapshot(workspace, sessionId) {
       acceptSlots: { used: acceptUsed, total: acceptRecords.length },
       dirtyTrunks: repos.filter((repo) => repo.dirty).length,
     },
-    trunks: repos.map((repo) => ({ name: repo.name, dirty: repo.dirty, branch: repo.defaultBranch })),
+    trunks: repos.map((repo) => ({
+      name: repo.name,
+      dirty: repo.dirty,
+      branch: repo.branch || repo.defaultBranch,
+      defaultBranch: repo.defaultBranch,
+    })),
     tasks: [
       ...Object.values(state.tasks).map((task) => ({
         id: task.id,
         title: task.title,
         kind: 'dev',
         status: task.status,
+        agentStatus: task.agentStatus ?? 'idle',
         batchId: task.batchId,
         repos: task.repos.map((repo) => repo.name),
         slots: task.slots,
         warnings: task.warnings ?? [],
+        usage: task.usage ?? null,
+        acceptance: task.acceptance ?? null,
+        createdAt: task.createdAt ?? null,
+        dependsOn: (task.dependsOn ?? []).map((depId) => dependencyView(state, task, depId)),
         selectable: task.status === 'pending-acceptance' && task.batchId == null,
       })),
       ...Object.values(state.batches).map((batch) => ({
@@ -76,6 +87,8 @@ export function snapshot(workspace, sessionId) {
         taskIds: batch.taskIds ?? [],
         repos: Object.keys(batch.repos ?? {}),
         slots: batch.repos,
+        usage: batch.usage ?? null,
+        createdAt: batch.createdAt ?? null,
         selectable: false,
       })),
     ],
@@ -98,5 +111,52 @@ export function snapshot(workspace, sessionId) {
         : null,
     })),
     agents: state.agents ?? [],
+    schedules: Object.values(state.schedules ?? {}).map((schedule) => scheduleView(state, schedule)),
+  };
+}
+
+function scheduleView(state, schedule) {
+  const tasks = (schedule.taskIds ?? []).map((id) => state.tasks[id]).filter(Boolean);
+  const slots = tasks.flatMap((task) => Object.entries(task.slots ?? {}).map(([repo, slot]) => ({
+    repo,
+    number: slot.number,
+    branch: slot.branch ?? null,
+    taskId: task.id,
+  })));
+  return {
+    id: schedule.id,
+    title: schedule.title,
+    status: schedule.status,
+    taskIds: schedule.taskIds ?? [],
+    agentIds: schedule.agentIds ?? [],
+    usage: schedule.usage ?? null,
+    createdAt: schedule.createdAt ?? null,
+    slots,
+    tasks: tasks.map((task) => ({
+      id: task.id,
+      title: task.title,
+      status: task.status,
+      createdAt: task.createdAt ?? null,
+      agentStatus: task.agentStatus ?? 'idle',
+      dependsOn: (task.dependsOn ?? []).map((depId) => dependencyView(state, task, depId)),
+      slots: Object.entries(task.slots ?? {}).map(([repo, slot]) => ({
+        repo,
+        number: slot.number,
+        branch: slot.branch ?? null,
+      })),
+    })),
+  };
+}
+
+function dependencyView(state, task, depId) {
+  const dep = state.tasks[depId];
+  const mergedBranches = Object.values(task.slots ?? {}).flatMap((slot) => (slot.dependencies ?? []).map((item) => item.branch));
+  const branch = Object.values(dep?.slots ?? {}).map((slot) => slot.branch).find((item) => mergedBranches.includes(item)) ?? null;
+  return {
+    id: depId,
+    title: dep?.title ?? depId,
+    status: dep?.status ?? 'missing',
+    merged: branch !== null,
+    branch,
   };
 }

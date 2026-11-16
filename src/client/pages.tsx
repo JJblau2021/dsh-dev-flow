@@ -102,16 +102,17 @@ function PanelView({ ui, sessionId, call, t }: { ui: UiKit, sessionId?: string, 
         <ActionButton ui={ui} variant="ghost" onClick={() => { void load() }}>{t('action.refresh')}</ActionButton>
       </div>
       {!data ? null : data.problem ? null : !data.initialized
-        ? <Uninitialized ui={ui} t={t} sessionId={sessionId} call={call} reload={load} />
+        ? <Uninitialized ui={ui} t={t} sessionId={sessionId} call={call} reload={load} workspace={data.workspace} />
         : <PageBody ui={ui} page={page} data={data} t={t} picked={picked} setPicked={setPicked} sessionId={sessionId} call={call} reload={load} show={show} />}
     </div>
   )
 }
 
-function Uninitialized({ ui, t, sessionId, call, reload }: { ui: UiKit, t: Translate, sessionId?: string, call: Call, reload: (failure?: unknown) => unknown }) {
+function Uninitialized({ ui, t, sessionId, call, reload, workspace }: { ui: UiKit, t: Translate, sessionId?: string, call: Call, reload: (failure?: unknown) => unknown, workspace?: string }) {
   return (
     <div className="df-empty">
       <p>{t('empty.init')}</p>
+      {workspace ? <p className="df-meta">{workspace}</p> : null}
       <ActionButton ui={ui} variant="primary" onClick={() => { call('init', { sessionId }).then(() => reload()).catch((reason: unknown) => reload(reason)) }}>
         {t('action.init')}
       </ActionButton>
@@ -161,25 +162,42 @@ function Overview({ ui, data, t }: { ui: UiKit, data: Snapshot, t: Translate }) 
       </div>
       <h3 className="df-section">{t('section.trunks')}</h3>
       <div className="df-card">
-        {(data.trunks ?? []).map((repo) => (
-          <div key={repo.name} className="df-line">
-            <span className="df-name">{repo.name}</span>
-            <span className={repo.dirty ? 'df-warn' : 'df-ok'}>{repo.dirty ? t('trunk.dirty') : t('trunk.clean')}</span>
-          </div>
-        ))}
+        {(data.trunks ?? []).map((repo) => {
+          const active = trunkActivity(data, repo.name)
+          const phase = trunkPhase(active)
+          return (
+            <div key={repo.name} className={phase === 'idle' ? 'df-line' : 'df-line df-trunk-live'}>
+              <span className="df-name">
+                {phase === 'idle' ? null : <span className="df-live" aria-hidden="true" />}
+                {repo.name}
+                {repo.branch ? <span className="df-branch">{repo.branch}</span> : null}
+              </span>
+              <span className="df-trunk-states">
+                <StatusTag ui={ui} t={t} status={phase} />
+                <span className={repo.dirty ? 'df-warn' : 'df-ok'}>{repo.dirty ? t('trunk.dirty') : t('trunk.clean')}</span>
+              </span>
+            </div>
+          )
+        })}
       </div>
       <h3 className="df-section">{t('section.active')}</h3>
-      {running.length === 0 ? <p className="df-note">{t('section.none')}</p> : (
-        <div className="df-card">
+      {running.length === 0 ? <p className="df-empty-line">{t('section.none')}</p> : (
+        <div className="df-active">
           {running.map((agent) => (
-            <div key={agent.id} className="df-line">
-              <span>{agent.id} · {agent.kind === 'accept' ? t('slot.accept') : t('slot.dev')} · {taskTitle(data, agent.taskId)}</span>
-              <span className="df-meta">{slotSummary(data, agent)}</span>
-            </div>
+            <article key={agent.id} className="df-active-card">
+              <div className="df-active-top">
+                <span className="df-name"><span className="df-live" aria-hidden="true" />{agent.id}</span>
+                <StatusTag ui={ui} t={t} status={agentPhase(agent)} />
+              </div>
+              <div className="df-active-title">{taskTitle(data, agent.taskId)}</div>
+              <div className="df-chips">
+                {agentSlots(data, agent).map((slot) => <span key={slot} className="df-chip">{slot}</span>)}
+              </div>
+            </article>
           ))}
         </div>
       )}
-      {dev || accept ? <p className="df-note">{`${t('slot.dev')} ${dev?.used ?? 0}/${dev?.total ?? 0} · ${t('slot.accept')} ${accept?.used ?? 0}/${accept?.total ?? 0}`}</p> : null}
+      {dev || accept ? <p className="df-meta">{`${t('slot.dev')} ${dev?.used ?? 0}/${dev?.total ?? 0} · ${t('slot.accept')} ${accept?.used ?? 0}/${accept?.total ?? 0}`}</p> : null}
     </>
   )
 }
@@ -200,11 +218,24 @@ function Tasks({
   const [filter, setFilter] = useState('all')
   const [busy, setBusy] = useState(false)
   const [opened, setOpened] = useState<Record<string, boolean>>({})
-  const [devHeight, setDevHeight] = useState(240)
+  const [scheduleOpen, setScheduleOpen] = useState<Record<string, boolean>>({})
+  const [pickedBatches, setPickedBatches] = useState<string[]>([])
+  const [removing, setRemoving] = useState(false)
+  const [details, setDetails] = useState<Record<string, boolean>>({})
+  const detailProps = (id: string) => ({
+    detailsOpen: details[id] === true,
+    onToggleDetails: () => setDetails({ ...details, [id]: !details[id] }),
+  })
+  const [layout, setLayout] = useState(loadPaneLayout)
+  const [dropY, setDropY] = useState<number | null>(null)
+  const dragged = useRef(false)
+  const dropAt = useRef<number | null>(null)
   const splitRef = useRef<HTMLDivElement | null>(null)
-  const devAll = data.tasks.filter((task) => task.kind !== 'accept')
+  const { order, open, heights } = layout
+  const newest = (left: TaskRow, right: TaskRow) => String(right.createdAt ?? '').localeCompare(String(left.createdAt ?? ''))
+  const devAll = data.tasks.filter((task) => task.kind !== 'accept').sort(newest)
   const devRows = devAll.filter((task) => matchFilter(filter, task))
-  const acceptRows = data.tasks.filter((task) => task.kind === 'accept')
+  const acceptRows = data.tasks.filter((task) => task.kind === 'accept').sort(newest)
   const reason = acceptReason(data, picked, t)
   const selected = data.tasks.filter((task) => task.selectable && picked.includes(task.id))
   const filters = [
@@ -221,13 +252,18 @@ function Tasks({
       .catch(() => undefined)
       .finally(() => setBusy(false))
   }
-  const dragSplit = (event: React.PointerEvent<HTMLButtonElement>) => {
+  const resizePane = (id: PaneId, event: React.PointerEvent<HTMLDivElement>) => {
+    event.preventDefault()
+    event.stopPropagation()
+    const section = event.currentTarget.parentElement
+    const parent = splitRef.current
+    if (!section || !parent) return
     const startY = event.clientY
-    const startHeight = devHeight
-    const bounds = splitRef.current?.getBoundingClientRect()
-    const limit = bounds ? bounds.height - 140 : 480
+    const startHeight = section.getBoundingClientRect().height
+    const limit = parent.getBoundingClientRect().height
     const move = (next: PointerEvent) => {
-      setDevHeight(Math.min(limit, Math.max(120, startHeight + next.clientY - startY)))
+      const height = Math.round(Math.min(Math.max(120, limit - 80), Math.max(120, startHeight + next.clientY - startY)))
+      setLayout((prev) => ({ ...prev, heights: { ...prev.heights, [id]: height } }))
     }
     const stop = () => {
       window.removeEventListener('pointermove', move)
@@ -237,9 +273,91 @@ function Tasks({
     window.addEventListener('pointermove', move)
     window.addEventListener('pointerup', stop)
   }
+  const pressHeader = (id: PaneId, event: React.PointerEvent<HTMLButtonElement>) => {
+    if (event.button !== 0) return
+    const startY = event.clientY
+    let moved = false
+    const move = (next: PointerEvent) => {
+      if (!moved && Math.abs(next.clientY - startY) < 4) return
+      moved = true
+      dragged.current = true
+      const parent = splitRef.current
+      if (!parent) return
+      const parentRect = parent.getBoundingClientRect()
+      const sections = [...parent.querySelectorAll<HTMLElement>('[data-pane]')]
+      let index = sections.length
+      let line = parentRect.height
+      for (let i = 0; i < sections.length; i += 1) {
+        const rect = sections[i].getBoundingClientRect()
+        if (next.clientY < rect.top + rect.height / 2) {
+          index = i
+          line = rect.top - parentRect.top
+          break
+        }
+      }
+      dropAt.current = index
+      setDropY(line)
+    }
+    const stop = () => {
+      window.removeEventListener('pointermove', move)
+      window.removeEventListener('pointerup', stop)
+      const index = dropAt.current
+      dropAt.current = null
+      setDropY(null)
+      if (!moved || index === null) return
+      setLayout((prev) => {
+        const from = prev.order.indexOf(id)
+        if (from < 0 || index === from || index === from + 1) return prev
+        const next = prev.order.filter((item) => item !== id)
+        next.splice(index > from ? index - 1 : index, 0, id)
+        return { ...prev, order: next }
+      })
+    }
+    window.addEventListener('pointermove', move)
+    window.addEventListener('pointerup', stop)
+  }
+  useEffect(() => { savePaneLayout(layout) }, [layout])
+  const schedules = [...(data.schedules ?? [])].sort((left, right) => String(right.createdAt ?? '').localeCompare(String(left.createdAt ?? '')))
+  const visible = order.filter((id) => open[id])
+  const paneStyle = (id: PaneId) => {
+    if (!open[id] || visible.length < 2 || id === visible[visible.length - 1]) return undefined
+    return { flex: `0 0 ${heights[id] ?? 220}px` }
+  }
+  const togglePane = (id: PaneId) => {
+    if (dragged.current) {
+      dragged.current = false
+      return
+    }
+    setLayout((prev) => ({ ...prev, open: { ...prev.open, [id]: !prev.open[id] } }))
+  }
   return (
-    <div className="df-split" ref={splitRef}>
-      <div className="df-pane" style={{ height: devHeight }}>
+    <div className="df-views" ref={splitRef}>
+      {dropY !== null ? <div className="df-drop" style={{ top: dropY }} /> : null}
+      {order.map((id) => {
+        const laterOpen = order.slice(order.indexOf(id) + 1).some((next) => open[next])
+        const title = id === 'schedule' ? t('section.scheduleTasks') : id === 'dev' ? t('section.devTasks') : t('section.acceptTasks')
+        const count = id === 'schedule' ? schedules.length : id === 'dev' ? devAll.length : acceptRows.length
+        return (
+      <section key={id} className="df-view" data-pane={id} data-open={open[id] ? 'true' : 'false'} style={paneStyle(id)}>
+        <button
+          type="button"
+          className="df-view-head"
+          aria-expanded={open[id]}
+          onClick={() => togglePane(id)}
+          onPointerDown={(event) => pressHeader(id, event)}
+        >
+          <span className="df-view-chev" aria-hidden="true"><Chevron /></span>
+          {title}
+          <span className="df-view-count">{count}</span>
+        </button>
+        {id === 'schedule' && open.schedule ? (
+          <div className="df-view-body">
+            {schedules.length === 0 ? <div className="df-empty"><p>{t('section.emptySchedule')}</p></div> : schedules.map((schedule) => (
+              <ScheduleItem key={schedule.id} ui={ui} t={t} schedule={schedule} open={scheduleOpen[schedule.id] === true} onToggle={() => setScheduleOpen({ ...scheduleOpen, [schedule.id]: scheduleOpen[schedule.id] !== true })} />
+            ))}
+          </div>
+        ) : null}
+        {id === 'dev' && open.dev ? <>
       <div className="df-filters">
         {filters.map(([value, label]) => {
           const count = devAll.filter((task) => matchFilter(value, task)).length
@@ -249,58 +367,227 @@ function Tasks({
             : <button key={value} type="button" aria-pressed={filter === value} onClick={() => setFilter(value)}>{text}</button>
         })}
       </div>
-      <h3 className="df-section">{t('section.devTasks')}</h3>
+      <div className="df-view-body">
       <div className="df-card">
         {devRows.length === 0 ? <div className="df-empty"><p>{t('section.emptyDev')}</p></div> : devRows.map((task) => (
-          <TaskLine key={task.id} ui={ui} t={t} task={task} picked={picked} setPicked={setPicked} />
+          <DevTaskItem key={task.id} ui={ui} t={t} task={task} picked={picked} setPicked={setPicked} sessionId={sessionId} call={call} reload={reload} show={show} {...detailProps(task.id)} />
         ))}
       </div>
-      <div className="df-foot">
-        <ActionButton ui={ui} className="df-go" variant="primary" disabled={busy || reason !== ''} title={reason} onClick={launch}>
-          {busy ? t('action.working') : t('action.accept')}
-        </ActionButton>
-        <p className="df-hint">{reason !== '' ? reason : selected.length > 0 ? `${t('hint.order')}：${selected.map((task) => task.title).join(' → ')}` : t('hint.pick')}</p>
       </div>
-      </div>
-      <button type="button" className="df-split-bar" aria-label="调整开发任务和验收任务的高度" onPointerDown={dragSplit} />
-      <div className="df-pane df-pane-accept">
-      <h3 className="df-section">{t('section.acceptTasks')}</h3>
+      {selected.length > 0 ? (
+        <div className="df-foot">
+          <ActionButton ui={ui} className="df-go" variant="primary" disabled={busy || reason !== ''} title={reason} onClick={launch}>
+            {busy ? t('action.working') : t('action.accept')}
+          </ActionButton>
+          <p className="df-hint">{reason !== '' ? reason : `${t('hint.order')}：${selected.map((task) => task.title).join(' → ')}`}</p>
+        </div>
+      ) : null}
+        </> : null}
+        {id === 'accept' && open.accept ? <>
+      <div className="df-view-body">
       <div className="df-card">
         {acceptRows.length === 0 ? <div className="df-empty"><p>{t('section.emptyAccept')}</p></div> : acceptRows.map((batch) => {
-          const open = opened[batch.id] ?? batch.status === 'accepting'
           const children = containedTasks(data, batch)
+          const open = children.length > 0 && (opened[batch.id] ?? batch.status === 'accepting')
+          const deletable = batch.status !== 'accepting'
           return (
-            <div key={batch.id}>
-              <TaskLine
-                ui={ui}
-                t={t}
-                task={batch}
-                picked={picked}
-                setPicked={setPicked}
-                sessionId={sessionId}
-                call={call}
-                reload={reload}
-                open={open}
-                onToggle={() => setOpened({ ...opened, [batch.id]: !open })}
-              />
-              {open ? (
-                <div className="df-nested">
-                  {children.map((task) => (
-                    <TaskLine key={task.id} ui={ui} t={t} task={task} picked={picked} setPicked={setPicked} nested />
-                  ))}
-                </div>
-              ) : null}
-            </div>
+            <AcceptTaskItem
+              key={batch.id}
+              ui={ui}
+              t={t}
+              batch={batch}
+              picked={picked}
+              setPicked={setPicked}
+              sessionId={sessionId}
+              call={call}
+              reload={reload}
+              show={show}
+              pickedBatches={pickedBatches}
+              setPickedBatches={setPickedBatches}
+              open={open}
+              onToggle={children.length > 0 ? () => setOpened({ ...opened, [batch.id]: !open }) : undefined}
+              children={children}
+            />
           )
         })}
       </div>
       </div>
+      {pickedBatches.length > 0 ? (
+        <div className="df-foot">
+          <ActionButton ui={ui} className="df-go" disabled={removing} onClick={() => removeBatches(call, sessionId, pickedBatches, setPickedBatches, setRemoving, reload, show)}>
+            {removing ? t('action.deleting') : t('action.delete')}
+          </ActionButton>
+          <p className="df-hint">{`${pickedBatches.length} 个验收任务，删除时一并删掉验收分支`}</p>
+        </div>
+      ) : null}
+        </> : null}
+      {open[id] && laterOpen ? <div className="df-sash" role="separator" aria-orientation="horizontal" aria-label="调整面板高度" onPointerDown={(event) => resizePane(id, event)} /> : null}
+      </section>
+        )
+      })}
     </div>
   )
 }
 
-function TaskLine({
-  ui, t, task, picked, setPicked, sessionId, call, reload, nested = false, open, onToggle,
+const PANE_KEY = 'dsh-dev-flow.task-panes'
+const PANE_IDS = ['schedule', 'dev', 'accept'] as const
+type PaneId = typeof PANE_IDS[number]
+
+function isPaneId(value: string): value is PaneId {
+  return (PANE_IDS as readonly string[]).includes(value)
+}
+
+function loadPaneLayout() {
+  const fallback = { order: [...PANE_IDS], open: { schedule: true, dev: true, accept: true }, heights: { schedule: 220, dev: 260, accept: 220 } }
+  try {
+    const raw = localStorage.getItem(PANE_KEY)
+    if (!raw) return fallback
+    const parsed = JSON.parse(raw) as { order?: string[], open?: Record<string, boolean>, heights?: Partial<Record<PaneId, number>> }
+    const order = (parsed.order ?? []).filter(isPaneId)
+    for (const id of PANE_IDS) if (!order.includes(id)) order.push(id)
+    return {
+      order,
+      open: { schedule: parsed.open?.schedule !== false, dev: parsed.open?.dev !== false, accept: parsed.open?.accept !== false },
+      heights: { ...fallback.heights, ...parsed.heights },
+    }
+  } catch {
+    return fallback
+  }
+}
+
+function savePaneLayout(layout: ReturnType<typeof loadPaneLayout>) {
+  try { localStorage.setItem(PANE_KEY, JSON.stringify(layout)) } catch { /* 浏览器不允许写入时，本次会话仍保持调整结果。 */ }
+}
+
+function toneOf(status: string) {
+  if (status === 'merged' || status === 'accepted' || status === 'dispatched') return 'success'
+  if (status === 'failed' || status === 'rejected') return 'error'
+  if (status === 'pending-merge' || status === 'waiting' || status === 'pending-acceptance' || status === 'accepting' || status === 'awaiting-agent') return 'warn'
+  if (status === 'developing' || status === 'running' || status === 'scheduling') return 'info'
+  return 'neutral'
+}
+
+function Chevron() {
+  return (
+    <svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true" focusable="false">
+      <path d="M1.6 3.6 L5 7 L8.4 3.6" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  )
+}
+
+/** 三种任务共用的树行：左侧展开箭头，整行为热区。 */
+function TreeItem({
+  kind, title, chips, leading, actions, facts, expanded = false, expandable = false, onToggle, onClick, children, depth = 0, tone,
+}: {
+  kind: 'schedule' | 'dev' | 'accept'
+  title: string
+  chips: string[]
+  leading?: React.ReactNode
+  actions?: React.ReactNode
+  facts?: { slot: string, detail: string }[]
+  expanded?: boolean
+  expandable?: boolean
+  onToggle?: () => void
+  onClick?: () => void
+  children?: React.ReactNode
+  depth?: number
+  tone?: string
+}) {
+  const row = onToggle ?? onClick
+  return (
+    <div className={`df-tree df-tree-${kind}`} data-tone={tone ?? 'neutral'} data-open={expanded ? 'true' : 'false'} data-clickable={row ? 'true' : 'false'} data-depth={depth} tabIndex={row ? 0 : undefined} onKeyDown={(event) => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); row?.() } }}>
+      <div className="df-tree-head" onClick={(event) => {
+        const target = event.target as Element | null
+        if (target && target.closest('.df-tree') !== event.currentTarget.parentElement) return
+        row?.()
+      }}>
+        {expandable ? (
+          <button type="button" className="df-chev" data-expanded={expanded ? 'true' : 'false'} aria-expanded={expanded} onClick={(event) => { event.stopPropagation(); onToggle?.() }}>
+            <Chevron />
+          </button>
+        ) : <span className="df-chev-space" aria-hidden="true" />}
+        {leading}
+        <span className="df-tree-content">
+          <span className="df-tree-title">{title}</span>
+          {chips.length > 0 ? (
+            <span className="df-chips df-task-chips">
+              {chips.map((chip) => <span key={chip} className="df-chip">{chip}</span>)}
+            </span>
+          ) : null}
+        </span>
+        <span className="df-actions">{actions}</span>
+      </div>
+      {expanded && facts && facts.length > 0 ? (
+        <div className="df-facts">
+          {facts.map((fact, index) => (
+            <div key={`${index}-${fact.slot}-${fact.detail}`} className="df-fact">
+              <span className="df-fact-slot">{fact.slot}</span>
+              {fact.detail ? <span className="df-fact-detail">{fact.detail}</span> : null}
+            </div>
+          ))}
+        </div>
+      ) : null}
+      {expanded && children ? <div className="df-tree-children">{children}</div> : null}
+    </div>
+  )
+}
+
+/** 调度任务：展开后列出它创建的任务。 */
+function ScheduleItem({ ui, t, schedule, open, onToggle, depth = 0 }: {
+  ui: UiKit
+  t: Translate
+  schedule: ScheduleRow
+  open: boolean
+  onToggle: () => void
+  depth?: number
+}) {
+  const tasks = [...(schedule.tasks ?? [])].sort((left, right) => String(right.createdAt ?? '').localeCompare(String(left.createdAt ?? '')))
+  const [openTasks, setOpenTasks] = useState<Record<string, boolean>>({})
+  return (
+    <TreeItem
+      kind="schedule"
+      title={schedule.title}
+      chips={schedule.usage?.totalTokens ? [formatTokens(schedule.usage.totalTokens)] : []}
+      actions={<StatusTag ui={ui} t={t} status={schedule.status} />}
+      expandable
+      expanded={open}
+      onToggle={onToggle}
+      depth={depth}
+      tone={toneOf(schedule.status)}
+    >
+      {tasks.map((task) => {
+        const facts = [
+          {
+            slot: '依赖',
+            detail: task.dependsOn.length === 0 ? '无' : task.dependsOn.map((dep) => `${dep.title}${dep.merged ? `，已并入 ${dep.branch}` : '，未并入'}`).join('；'),
+          },
+          ...task.slots.map((slot) => ({
+            slot: '槽位',
+            detail: `${slot.number ? `${slot.repo}-${slot.number}` : slot.repo}${slot.branch ? ` · ${slot.branch}` : ''}`,
+          })),
+        ]
+        return (
+          <TreeItem
+            key={task.id}
+            kind="dev"
+            title={task.title}
+            chips={task.slots.map((slot) => (slot.number ? `${slot.repo}-${slot.number}` : slot.repo))}
+            actions={<StatusTag ui={ui} t={t} status={shownStatus({ ...task, kind: 'dev', repos: [] } as TaskRow)} />}
+            facts={facts}
+            expandable
+            expanded={openTasks[task.id] === true}
+            onToggle={() => setOpenTasks({ ...openTasks, [task.id]: openTasks[task.id] !== true })}
+            depth={depth + 1}
+          />
+        )
+      })}
+    </TreeItem>
+  )
+}
+
+/** 开发任务。 */
+function DevTaskItem({
+  ui, t, task, picked, setPicked, sessionId, call, reload, show, detailsOpen = false, onToggleDetails, nested = false, reviewing = false, batchId, depth = 0,
 }: {
   ui: UiKit
   t: Translate
@@ -310,34 +597,117 @@ function TaskLine({
   sessionId?: string
   call?: Call
   reload?: (failure?: unknown) => unknown
+  show?: (text: string, tone?: string) => void
+  detailsOpen?: boolean
+  onToggleDetails?: () => void
   nested?: boolean
-  open?: boolean
-  onToggle?: () => void
+  reviewing?: boolean
+  batchId?: string
+  depth?: number
 }) {
-  const chosen = !nested && task.selectable && picked.includes(task.id)
-  const toggle = () => { if (!nested && task.selectable) setPicked(togglePick(picked, task.id)) }
+  const facts = taskFacts(task, t)
+  const deps = task.dependsOn ?? []
+  const [openDeps, setOpenDeps] = useState<Record<string, boolean>>({})
+  const [selfOpen, setSelfOpen] = useState(false)
+  const openDetails = onToggleDetails === undefined ? selfOpen : detailsOpen
+  const toggleDetails = onToggleDetails ?? (() => setSelfOpen(!selfOpen))
+  const expandable = facts.length > 0 || deps.length > 0
+  const selectable = !nested && task.selectable === true
+  const leading = selectable
+    ? <input className="df-check" type="checkbox" checked={picked.includes(task.id)} onClick={(event) => event.stopPropagation()} onChange={() => setPicked(togglePick(picked, task.id))} />
+    : undefined
   return (
-    <div className="df-task" data-pick={!nested && task.selectable ? 'true' : 'false'} data-on={chosen ? 'true' : 'false'} onClick={toggle}>
-      {!nested && task.selectable
-        ? <input className="df-check" type="checkbox" checked={chosen} onClick={(event) => event.stopPropagation()} onChange={toggle} />
-        : <Dot ui={ui} state={dotOf(task.status)} />}
-      <div>
-        <div className="df-name">
-          {onToggle ? <button type="button" className="df-chev" aria-expanded={open} onClick={(event) => { event.stopPropagation(); onToggle() }}>{open ? '▾' : '▸'}</button> : null}
-          {task.title}
-        </div>
-        <div className="df-meta">{taskMeta(task, t)}</div>
-      </div>
-      <div className="df-actions">
-        <StatusTag ui={ui} t={t} status={task.status} />
-        {!nested && task.kind === 'accept' && task.status === 'accepting' && call && reload ? (
-          <>
-            <ActionButton ui={ui} onClick={(event) => { event.stopPropagation(); finish(call, sessionId, task.id, 'accepted', reload) }}>{t('action.pass')}</ActionButton>
-            <ActionButton ui={ui} onClick={(event) => { event.stopPropagation(); finish(call, sessionId, task.id, 'rejected', reload) }}>{t('action.fail')}</ActionButton>
-          </>
-        ) : null}
-      </div>
-    </div>
+    <TreeItem
+      kind="dev"
+      title={task.title}
+      chips={taskChips(task)}
+      leading={leading}
+      actions={(
+        <>
+          <StatusTag ui={ui} t={t} status={shownStatus(task)} />
+          {task.status === 'pending-merge' && task.kind !== 'accept' && call && reload ? (
+            <ActionButton ui={ui} onClick={(event) => { event.stopPropagation(); mergeTask(call, sessionId, task.id, reload, show) }}>{t('action.merge')}</ActionButton>
+          ) : null}
+          {nested && reviewing && task.acceptance !== 'accepted' && batchId && call && reload ? (
+            <>
+              <ActionButton ui={ui} onClick={(event) => { event.stopPropagation(); finishTask(call, sessionId, batchId, task.id, 'accepted', reload) }}>{t('action.pass')}</ActionButton>
+              <ActionButton ui={ui} onClick={(event) => { event.stopPropagation(); finishTask(call, sessionId, batchId, task.id, 'rejected', reload) }}>{t('action.fail')}</ActionButton>
+            </>
+          ) : null}
+        </>
+      )}
+      facts={facts}
+      expandable={expandable}
+      expanded={openDetails}
+      onToggle={expandable ? toggleDetails : undefined}
+      onClick={selectable ? () => setPicked(togglePick(picked, task.id)) : undefined}
+      depth={depth}
+      tone={toneOf(shownStatus(task))}
+    >
+      {deps.map((dep) => (
+        <TreeItem
+          key={`dep-${dep.id}`}
+          kind="dev"
+          title={dep.title}
+          chips={[]}
+          actions={<StatusTag ui={ui} t={t} status={dep.status} />}
+          facts={[
+            { slot: t('fact.state'), detail: t(`status.${dep.status}`) || dep.status },
+            { slot: t('fact.merged'), detail: dep.merged ? (dep.branch ?? '') : t('fact.notMerged') },
+          ]}
+          expandable
+          expanded={openDeps[dep.id] === true}
+          onToggle={() => setOpenDeps({ ...openDeps, [dep.id]: openDeps[dep.id] !== true })}
+          depth={depth + 1}
+          tone={toneOf(dep.status)}
+        />
+      ))}
+    </TreeItem>
+  )
+}
+
+/** 验收任务：展开后列出这批里的开发任务。 */
+function AcceptTaskItem({
+  ui, t, batch, picked, setPicked, sessionId, call, reload, show, pickedBatches, setPickedBatches, open, onToggle, children, depth = 0,
+}: {
+  ui: UiKit
+  t: Translate
+  batch: TaskRow
+  picked: string[]
+  setPicked: (next: string[]) => void
+  sessionId?: string
+  call?: Call
+  reload?: (failure?: unknown) => unknown
+  show?: (text: string, tone?: string) => void
+  pickedBatches: string[]
+  setPickedBatches: (next: string[]) => void
+  open: boolean
+  onToggle?: () => void
+  children: TaskRow[]
+  depth?: number
+}) {
+  const deletable = batch.status !== 'accepting'
+  const leading = deletable
+    ? <input className="df-check" type="checkbox" checked={pickedBatches.includes(batch.id)} onClick={(event) => event.stopPropagation()} onChange={() => setPickedBatches(togglePick(pickedBatches, batch.id))} />
+    : undefined
+  return (
+    <TreeItem
+      kind="accept"
+      title={batch.title}
+      chips={taskChips(batch)}
+      leading={leading}
+      actions={<StatusTag ui={ui} t={t} status={shownStatus(batch)} />}
+      expandable={onToggle !== undefined}
+      expanded={open}
+      onToggle={onToggle}
+      onClick={deletable ? () => setPickedBatches(togglePick(pickedBatches, batch.id)) : undefined}
+      depth={depth}
+      tone={toneOf(shownStatus(batch))}
+    >
+      {children.map((task) => (
+        <DevTaskItem key={task.id} ui={ui} t={t} task={task} picked={picked} setPicked={setPicked} sessionId={sessionId} call={call} reload={reload} show={show} nested reviewing={batch.status === 'accepting'} batchId={batch.id} depth={depth + 1} />
+      ))}
+    </TreeItem>
   )
 }
 
@@ -346,8 +716,8 @@ function containedTasks(data: Snapshot, batch: TaskRow) {
   const fromIds = ids
     .map((id) => data.tasks.find((task) => task.kind !== 'accept' && task.id === id))
     .filter((task): task is TaskRow => task !== undefined)
-  if (fromIds.length > 0) return fromIds
-  return data.tasks.filter((task) => task.kind !== 'accept' && task.batchId === batch.id)
+  const rows = fromIds.length > 0 ? fromIds : data.tasks.filter((task) => task.kind !== 'accept' && task.batchId === batch.id)
+  return rows.sort((left, right) => String(right.createdAt ?? '').localeCompare(String(left.createdAt ?? '')))
 }
 
 function Slots({ ui, data, t }: { ui: UiKit, data: Snapshot, t: Translate }) {
@@ -355,7 +725,7 @@ function Slots({ ui, data, t }: { ui: UiKit, data: Snapshot, t: Translate }) {
   const accept = data.counts.acceptSlots
   return (
     <>
-      <p className="df-note">{`${t('slot.dev')} ${dev?.used ?? 0}/${dev?.total ?? 0} · ${t('slot.accept')} ${accept?.used ?? 0}/${accept?.total ?? 0}`}</p>
+      <p className="df-meta">{`${t('slot.dev')} ${dev?.used ?? 0}/${dev?.total ?? 0} · ${t('slot.accept')} ${accept?.used ?? 0}/${accept?.total ?? 0}`}</p>
       {data.repos.map((repo) => (
         <section key={repo.name} className="df-card">
           <div className="df-repo">
@@ -364,11 +734,12 @@ function Slots({ ui, data, t }: { ui: UiKit, data: Snapshot, t: Translate }) {
             <span className={repo.dirty ? 'df-warn' : 'df-ok'}>{repo.dirty ? t('trunk.dirty') : t('trunk.clean')}</span>
           </div>
           {repo.devSlots.length === 0 ? <SlotLine t={t} kind="dev" state="missing" detail={t('slot.noDev')} /> : repo.devSlots.map((slot) => (
-            <SlotLine key={slot.number} t={t} kind="dev" number={slot.number} state={slot.taskId ? 'busy' : 'free'} detail={devDetail(data, repo, slot, t)} />
+            <SlotLine key={slot.number} t={t} kind="dev" repo={repo.name} number={slot.number} state={slot.taskId ? 'busy' : 'free'} detail={devDetail(data, repo, slot, t)} />
           ))}
           <SlotLine
             t={t}
             kind="accept"
+            repo={repo.name}
             number={repo.acceptSlot?.number}
             state={repo.acceptSlot ? (repo.acceptSlot.batchId ? 'busy' : 'free') : 'missing'}
             detail={acceptDetail(repo, t)}
@@ -379,8 +750,8 @@ function Slots({ ui, data, t }: { ui: UiKit, data: Snapshot, t: Translate }) {
   )
 }
 
-function SlotLine({ t, kind, number, state, detail }: { t: Translate, kind: 'dev' | 'accept', number?: string, state: 'busy' | 'free' | 'missing', detail: string }) {
-  const label = `${kind === 'dev' ? t('slot.dev') : t('slot.accept')} ${number ?? ''}`.trim()
+function SlotLine({ t, kind, repo, number, state, detail }: { t: Translate, kind: 'dev' | 'accept', repo?: string, number?: string, state: 'busy' | 'free' | 'missing', detail: string }) {
+  const label = repo && number ? `${repo}-${number}` : `${kind === 'dev' ? t('slot.dev') : t('slot.accept')} ${number ?? ''}`.trim()
   const tone = state === 'busy' ? 'df-warn' : state === 'free' ? 'df-ok' : 'df-muted'
   const text = state === 'busy' ? t('slot.busy') : state === 'free' ? t('slot.free') : t('slot.missing')
   return (
@@ -406,7 +777,7 @@ function Agents({ ui, data, t }: { ui: UiKit, data: Snapshot, t: Translate }) {
   const rows: AgentRow[] = [{ id: t('agent.lead'), status: 'lead', kind: 'lead' }, ...visibleAgents(data.agents)]
   return (
     <>
-      <p className="df-note">{`${t('metric.agents')} ${data.counts.activeAgents}/${data.counts.agentLimit}`}</p>
+      <p className="df-meta">{`${t('metric.agents')} ${data.counts.activeAgents}/${data.counts.agentLimit}`}</p>
       <div className="df-card">
         {rows.map((agent) => (
           <div key={agent.id} className="df-agent">
@@ -415,7 +786,7 @@ function Agents({ ui, data, t }: { ui: UiKit, data: Snapshot, t: Translate }) {
               <div className="df-name">{agent.id}</div>
               <div className="df-meta">{agentDetail(data, agent, t)}</div>
             </div>
-            <StatusTag ui={ui} t={t} status={agent.status === 'running' ? 'running' : agent.status === 'lead' ? 'lead' : 'idle'} />
+            <StatusTag ui={ui} t={t} status={agent.status === 'lead' ? 'lead' : agentPhase(agent)} />
           </div>
         ))}
       </div>
@@ -427,8 +798,8 @@ function StatusTag({ ui, t, status }: { ui: UiKit, t: Translate, status: string 
   const label = status === 'running' ? t('agent.running') : status === 'idle' ? t('agent.idle') : status === 'lead' ? t('agent.dispatch') : (t(`status.${status}`) || status)
   const tone = status === 'failed' || status === 'rejected' ? 'danger'
     : status === 'accepted' || status === 'merged' ? 'success'
-      : status === 'pending-merge' ? 'warning'
-      : status === 'developing' || status === 'running' ? 'info'
+      : status === 'pending-merge' || status === 'awaiting-agent' ? 'warning'
+      : status === 'developing' || status === 'running' || status === 'scheduling' ? 'info'
         : status === 'pending-acceptance' || status === 'waiting' || status === 'accepting' ? 'warning'
           : 'neutral'
   return ui.Tag ? <ui.Tag tone={tone}>{label}</ui.Tag> : <span className="df-meta">{label}</span>
@@ -446,7 +817,7 @@ export function SettingsForm({ ui, view, call, t }: { ui: UiKit, view?: string, 
     return () => controller.abort()
   }, [view, call])
   if (view === 'summary') return <span className="df-meta">{t('settings.summary')}</span>
-  if (!draft) return <p className="df-note">{message || '…'}</p>
+  if (!draft) return <p className="df-meta">{message || '…'}</p>
   const fields: [keyof Settings, string][] = [
     ['devModel', '开发任务模型'],
     ['acceptModel', '验收任务模型'],
@@ -514,16 +885,47 @@ function start(call: Call, sessionId: string | undefined, picked: string[], setP
     })
 }
 
-function finish(call: Call, sessionId: string | undefined, id: string, result: 'accepted' | 'rejected', reload: (failure?: unknown) => unknown) {
-  call('accept-finish', { sessionId, id, result }).then(() => reload()).catch((reason: unknown) => reload(reason))
+function removeBatches(
+  call: Call,
+  sessionId: string | undefined,
+  ids: string[],
+  setPicked: (next: string[]) => void,
+  setBusy: (next: boolean) => void,
+  reload: (failure?: unknown) => unknown,
+  show?: (text: string, tone?: string) => void,
+) {
+  setBusy(true)
+  call('accept-delete', { sessionId, ids })
+    .then(() => { setPicked([]); show?.(`已删除 ${ids.length} 个验收任务`, 'info'); return reload() })
+    .catch((reason: unknown) => reload(reason))
+    .finally(() => setBusy(false))
+}
+
+function mergeTask(call: Call, sessionId: string | undefined, taskId: string, reload: (failure?: unknown) => unknown, show?: (text: string, tone?: string) => void) {
+  call('task-merge', { sessionId, taskId }).then((value) => {
+    const task = (value as Snapshot | undefined)?.tasks?.find((item) => item.id === taskId)
+    if (task?.status === 'pending-merge') show?.(task.warnings?.join('，') || '没有合入', 'error')
+    else show?.('已合入主干', 'info')
+    return reload()
+  }).catch((reason: unknown) => reload(reason))
+}
+
+function finishTask(call: Call, sessionId: string | undefined, id: string, taskId: string, result: 'accepted' | 'rejected', reload: (failure?: unknown) => unknown) {
+  call('accept-task', { sessionId, id, taskId, result }).then(() => reload()).catch((reason: unknown) => reload(reason))
 }
 
 function togglePick(picked: string[], id: string) {
   return picked.includes(id) ? picked.filter((item) => item !== id) : [...picked, id]
 }
 
+function shownStatus(task: TaskRow) {
+  if (task.kind !== 'accept' && task.status === 'developing' && task.agentStatus !== 'running') return 'awaiting-agent'
+  return task.status
+}
+
 function dotOf(status: string) {
   if (status === 'developing') return 'ongoing'
+  if (status === 'awaiting-agent') return 'warning'
   if (status === 'failed') return 'error'
   if (status === 'accepted' || status === 'merged') return 'done'
   if (status === 'pending-merge') return 'warning'
@@ -553,20 +955,64 @@ function taskTitle(data: Snapshot, id?: string | null) {
   return data.tasks.find((task) => task.id === id)?.title ?? id
 }
 
-function slotSummary(data: Snapshot, agent: AgentRow) {
-  const task = data.tasks.find((item) => item.id === agent.taskId)
-  if (!task?.slots) return ''
-  return Object.entries(task.slots).map(([repo, slot]) => slot.number ? `${repo}-${slot.number}` : `${repo} ${slot.port ?? ''}`).join('、')
+function trunkPhase(active: { kind?: string }[]) {
+  if (active.some((item) => item.kind === 'accept')) return 'accepting'
+  if (active.some((item) => item.kind === 'schedule')) return 'scheduling'
+  if (active.length > 0) return 'developing'
+  return 'idle'
 }
 
-function taskMeta(task: TaskRow, t: Translate) {
-  const slots = Object.entries(task.slots ?? {}).map(([repo, slot]) => {
-    if (slot.port) return `${repo} ${t('slot.accept')} · ${t('status.accepting') === '待确认' ? '端口' : 'port'} ${slot.port}`
-    return [slot.number ? `${repo}-${slot.number}` : repo, slot.branch].filter(Boolean).join(' · ')
+function agentPhase(agent: AgentRow) {
+  if (agent.status !== 'running') return 'idle'
+  if (agent.kind === 'accept') return 'accepting'
+  if (agent.kind === 'schedule') return 'scheduling'
+  return 'developing'
+}
+
+function trunkActivity(data: Snapshot, repoName: string) {
+  return (data.agents ?? []).flatMap((agent) => {
+    if (agent.status !== 'running') return []
+    const task = data.tasks.find((item) => item.id === agent.taskId)
+    if (!task) return []
+    const slots = Object.entries(task.slots ?? {})
+      .filter(([repo]) => repo === repoName)
+      .map(([, slot]) => slot.number ? `${repoName}-${slot.number}` : repoName)
+    const involved = task.repos?.includes(repoName) || slots.length > 0
+    if (!involved) return []
+    return [{ agent: agent.id, title: task.title, kind: agent.kind, slots }]
   })
-  if (task.batchId && task.kind === 'dev') slots.push(`${t('status.accepting') === '待确认' ? '批次' : 'batch'} ${task.batchId}`)
-  if (task.warnings?.length) slots.push(task.warnings.join('，'))
-  return slots.join(' · ')
+}
+
+function agentSlots(data: Snapshot, agent: AgentRow) {
+  const task = data.tasks.find((item) => item.id === agent.taskId || item.id === agent.lastTaskId)
+  if (!task?.slots) return []
+  return Object.entries(task.slots).map(([repo, slot]) => slot.number ? `${repo}-${slot.number}` : `${repo} ${slot.port ?? ''}`.trim())
+}
+
+function taskChips(task: TaskRow) {
+  return Object.entries(task.slots ?? {}).map(([repo, slot]) => {
+    if (slot.port) return `${repo} · ${slot.port}`
+    return slot.number ? `${repo}-${slot.number}` : repo
+  })
+}
+
+function taskFacts(task: TaskRow, t: Translate) {
+  const zh = t('page.tasks') === '任务'
+  const batchLabel = zh ? '批次' : 'batch'
+  const rows: { slot: string, detail: string }[] = []
+  for (const [repo, slot] of Object.entries(task.slots ?? {})) {
+    if (slot.branch) rows.push({ slot: repo, detail: slot.branch })
+  }
+  if (task.batchId && task.kind === 'dev') rows.push({ slot: batchLabel, detail: task.batchId })
+  if (task.warnings?.length) rows.push({ slot: t('status.pending-merge'), detail: task.warnings.join('，') })
+  if (task.usage?.totalTokens) rows.push({ slot: 'token', detail: formatTokens(task.usage.totalTokens) })
+  return rows
+}
+
+function formatTokens(total) {
+  if (total >= 10000) return `${Math.round(total / 1000)}k`
+  if (total >= 1000) return `${(total / 1000).toFixed(1)}k`
+  return String(total)
 }
 
 function devDetail(data: Snapshot, repo: RepoRow, slot: DevSlot, t: Translate) {
@@ -577,8 +1023,9 @@ function devDetail(data: Snapshot, repo: RepoRow, slot: DevSlot, t: Translate) {
 
 function acceptDetail(repo: RepoRow, t: Translate) {
   if (!repo.acceptSlot) return t('slot.noAccept')
-  if (!repo.acceptSlot.batchId) return repo.acceptSlot.port ? `${t('status.accepting') === '待确认' ? '端口' : 'port'} ${repo.acceptSlot.port}` : t('slot.free')
-  return [`${t('status.accepting') === '待确认' ? '端口' : 'port'} ${repo.acceptSlot.port ?? ''}`, repo.acceptSlot.batchId].filter(Boolean).join(' · ')
+  const portLabel = t('page.tasks') === '任务' ? '端口' : 'port'
+  if (!repo.acceptSlot.batchId) return repo.acceptSlot.port ? `${portLabel} ${repo.acceptSlot.port}` : t('slot.free')
+  return [`${portLabel} ${repo.acceptSlot.port ?? ''}`, repo.acceptSlot.batchId].filter(Boolean).join(' · ')
 }
 
 function agentDetail(data: Snapshot, agent: AgentRow, t: Translate) {

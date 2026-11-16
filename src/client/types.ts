@@ -21,6 +21,8 @@ export interface Counts {
 export interface Trunk {
   name: string
   dirty: boolean
+  branch?: string
+  defaultBranch?: string
 }
 
 export interface TaskRow {
@@ -28,12 +30,25 @@ export interface TaskRow {
   title: string
   kind: 'dev' | 'accept'
   status: string
+  agentStatus?: string
   batchId?: string | null
   taskIds?: string[]
   repos: string[]
   slots?: Record<string, { number?: string, path?: string, branch?: string | null, port?: number }>
   warnings?: string[]
+  usage?: TokenUsage | null
+  acceptance?: 'accepted' | null
+  createdAt?: string | null
+  dependsOn?: { id: string, title: string, status: string, merged: boolean, branch?: string | null }[]
   selectable?: boolean
+}
+
+export interface TokenUsage {
+  inputTokens: number
+  outputTokens: number
+  cacheReadTokens: number
+  cacheWriteTokens: number
+  totalTokens: number
 }
 
 export interface DevSlot {
@@ -63,6 +78,35 @@ export interface AgentRow {
   lastTaskId?: string | null
 }
 
+export interface ScheduleSlot {
+  repo: string
+  number?: string
+  branch?: string | null
+  taskId: string
+}
+
+export interface ScheduleTask {
+  id: string
+  title: string
+  status: string
+  createdAt?: string | null
+  agentStatus?: string
+  dependsOn: { id: string, title: string, status: string, merged: boolean, branch?: string | null }[]
+  slots: { repo: string, number?: string, branch?: string | null }[]
+}
+
+export interface ScheduleRow {
+  id: string
+  title: string
+  status: string
+  taskIds: string[]
+  agentIds: string[]
+  usage?: TokenUsage | null
+  createdAt?: string | null
+  slots: ScheduleSlot[]
+  tasks?: ScheduleTask[]
+}
+
 export interface Snapshot {
   initialized?: boolean
   enabled?: boolean
@@ -72,6 +116,7 @@ export interface Snapshot {
   tasks: TaskRow[]
   repos: RepoRow[]
   agents: AgentRow[]
+  schedules?: ScheduleRow[]
 }
 
 export interface Settings {
