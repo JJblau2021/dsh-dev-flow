@@ -477,7 +477,7 @@ function Chevron() {
 
 /** 三种任务共用的树行：左侧展开箭头，整行为热区。 */
 function TreeItem({
-  kind, title, chips, leading, actions, facts, expanded = false, expandable = false, onToggle, onClick, children, depth = 0, tone,
+  kind, title, chips, leading, actions, facts, expanded = false, expandable = false, onToggle, onClick, children, depth = 0, tone, time,
 }: {
   kind: 'schedule' | 'dev' | 'accept'
   title: string
@@ -492,6 +492,7 @@ function TreeItem({
   children?: React.ReactNode
   depth?: number
   tone?: string
+  time?: string
 }) {
   const row = onToggle ?? onClick
   return (
@@ -515,7 +516,10 @@ function TreeItem({
             </span>
           ) : null}
         </span>
-        <span className="df-actions">{actions}</span>
+        <span className="df-actions">
+          {time ? <span className="df-tree-time">{time}</span> : null}
+          {actions}
+        </span>
       </div>
       {expanded && facts && facts.length > 0 ? (
         <div className="df-facts">
@@ -548,6 +552,7 @@ function ScheduleItem({ ui, t, schedule, open, onToggle, depth = 0 }: {
       kind="schedule"
       title={schedule.title}
       chips={schedule.usage?.totalTokens ? [formatTokens(schedule.usage.totalTokens)] : []}
+      time={createdText(schedule.createdAt)}
       actions={<StatusTag ui={ui} t={t} status={schedule.status} />}
       expandable
       expanded={open}
@@ -609,6 +614,18 @@ function DevTaskItem({
   const deps = task.dependsOn ?? []
   const [openDeps, setOpenDeps] = useState<Record<string, boolean>>({})
   const [selfOpen, setSelfOpen] = useState(false)
+  const [diff, setDiff] = useState<TaskDiff | null>(null)
+  const [openFile, setOpenFile] = useState<string | null>(null)
+  const loadDiff = () => {
+    if (diff !== null || !call || nested) return
+    call('task-diff', { sessionId, taskId: task.id })
+      .then((value) => setDiff(value as TaskDiff))
+      .catch(() => setDiff({ files: [], repos: [] }))
+  }
+  const toggle = () => {
+    if (!openDetails) loadDiff()
+    toggleDetails()
+  }
   const openDetails = onToggleDetails === undefined ? selfOpen : detailsOpen
   const toggleDetails = onToggleDetails ?? (() => setSelfOpen(!selfOpen))
   const expandable = facts.length > 0 || deps.length > 0
@@ -620,7 +637,8 @@ function DevTaskItem({
     <TreeItem
       kind="dev"
       title={task.title}
-      chips={taskChips(task)}
+      chips={[...taskBranchChips(task), ...taskChips(task)]}
+      time={createdText(task.createdAt)}
       leading={leading}
       actions={(
         <>
@@ -639,11 +657,37 @@ function DevTaskItem({
       facts={facts}
       expandable={expandable}
       expanded={openDetails}
-      onToggle={expandable ? toggleDetails : undefined}
+      onToggle={expandable ? toggle : undefined}
       onClick={selectable ? () => setPicked(togglePick(picked, task.id)) : undefined}
       depth={depth}
       tone={toneOf(shownStatus(task))}
     >
+      {diff !== null && diff.files.length > 0 ? (
+        <div className="df-diff-list">
+          {diff.files.map((file) => {
+            const key = `${file.repo}:${file.path}`
+            return (
+              <div key={key} className="df-diff-item">
+                <div
+                  className="df-diff-row"
+                  onClick={(event) => { event.stopPropagation(); setOpenFile(openFile === key ? null : key) }}
+                >
+                  <span className="df-diff-path">{file.path}</span>
+                  {file.binary
+                    ? <span className="df-meta">binary</span>
+                    : (
+                      <span className="df-diff-counts">
+                        <span className="df-diff-add">{`+${file.added}`}</span>
+                        <span className="df-diff-del">{`-${file.deleted}`}</span>
+                      </span>
+                    )}
+                </div>
+                {openFile === key ? <pre className="df-diff-patch">{file.patch}</pre> : null}
+              </div>
+            )
+          })}
+        </div>
+      ) : null}
       {deps.map((dep) => (
         <TreeItem
           key={`dep-${dep.id}`}
@@ -695,6 +739,7 @@ function AcceptTaskItem({
       kind="accept"
       title={batch.title}
       chips={taskChips(batch)}
+      time={createdText(batch.createdAt)}
       leading={leading}
       actions={<StatusTag ui={ui} t={t} status={shownStatus(batch)} />}
       expandable={onToggle !== undefined}
@@ -992,8 +1037,20 @@ function agentSlots(data: Snapshot, agent: AgentRow) {
 function taskChips(task: TaskRow) {
   return Object.entries(task.slots ?? {}).map(([repo, slot]) => {
     if (slot.port) return `${repo} · ${slot.port}`
-    return slot.number ? `${repo}-${slot.number}` : repo
+    return slot.number ?? repo
   })
+}
+
+function createdText(createdAt?: string | null) {
+  if (!createdAt) return undefined
+  const date = new Date(createdAt)
+  if (Number.isNaN(date.getTime())) return undefined
+  const pad = (value: number) => String(value).padStart(2, '0')
+  return `${pad(date.getMonth() + 1)}-${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}`
+}
+
+function taskBranchChips(task: TaskRow) {
+  return Object.values(task.slots ?? {}).map((slot) => slot.branch).filter((branch): branch is string => typeof branch === 'string' && branch !== '')
 }
 
 function taskFacts(task: TaskRow, t: Translate) {

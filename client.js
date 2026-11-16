@@ -299,6 +299,7 @@ var panelSheet = `
 .df-chev svg { display: block; }
 .df-chev-space { width: 12px; flex: none; }
 .df-tree .df-actions { display: flex; align-items: center; gap: 7px; flex: none; }
+.df-tree-time { color: var(--dsw-alias-label-tertiary); font-size: 11px; line-height: 17px; font-variant-numeric: tabular-nums; white-space: nowrap; }
 .df-tree .df-chips { flex: 0 1 auto; min-width: 0; flex-wrap: nowrap; overflow: hidden; display: flex; gap: 5px; }
 .df-tree .df-chips .df-chip { flex: none; max-width: 150px; }
 .df-tree-children { display: flex; flex-direction: column; padding-left: 20px; }
@@ -318,6 +319,16 @@ var panelSheet = `
 .df-fact { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 8px; align-items: baseline; }
 .df-fact-slot { color: var(--dsw-alias-label-tertiary); font-size: 11px; line-height: 17px; white-space: nowrap; }
 .df-fact-detail { color: var(--dsw-alias-label-secondary); font-size: 11px; line-height: 17px; overflow-wrap: anywhere; }
+
+/* \u6587\u4EF6\u6539\u52A8 */
+.df-diff-list { display: flex; flex-direction: column; gap: 2px; padding: 2px 16px 6px 36px; }
+.df-diff-row { display: flex; align-items: center; gap: 8px; padding: 3px 6px; border-radius: 4px; cursor: pointer; }
+.df-diff-row:hover { background: var(--dsw-alias-interactive-bg-hover, rgba(38, 49, 72, 0.06)); }
+.df-diff-path { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-family: var(--ds-font-family-code, ui-monospace, monospace); font-size: 11px; color: var(--dsw-alias-label-secondary); }
+.df-diff-counts { flex: none; display: inline-flex; gap: 8px; font-family: var(--ds-font-family-code, ui-monospace, monospace); font-size: 11px; font-variant-numeric: tabular-nums; }
+.df-diff-add { color: var(--dsw-alias-state-success-primary); }
+.df-diff-del { color: var(--dsw-alias-state-error-primary); }
+.df-diff-patch { margin: 2px 0 6px; padding: 8px 10px; max-height: 320px; overflow: auto; border-radius: 6px; background: var(--dsw-alias-bg-layer-2); color: var(--dsw-alias-label-secondary); font-family: var(--ds-font-family-code, ui-monospace, monospace); font-size: 11px; line-height: 1.5; white-space: pre; }
 
 /* \u540D\u79F0\u3001\u6807\u7B7E\u3001\u836F\u4E38 */
 .df-name { font-weight: 560; display: flex; align-items: center; gap: 6px; min-width: 0; }
@@ -873,7 +884,8 @@ function TreeItem({
   onClick,
   children,
   depth = 0,
-  tone
+  tone,
+  time
 }) {
   const row = onToggle ?? onClick;
   return /* @__PURE__ */ React.createElement("div", { className: `df-tree df-tree-${kind}`, "data-tone": tone ?? "neutral", "data-open": expanded ? "true" : "false", "data-clickable": row ? "true" : "false", "data-depth": depth, tabIndex: row ? 0 : void 0, onKeyDown: (event) => {
@@ -888,7 +900,7 @@ function TreeItem({
   } }, expandable ? /* @__PURE__ */ React.createElement("button", { type: "button", className: "df-chev", "data-expanded": expanded ? "true" : "false", "aria-expanded": expanded, onClick: (event) => {
     event.stopPropagation();
     onToggle?.();
-  } }, /* @__PURE__ */ React.createElement(Chevron, null)) : /* @__PURE__ */ React.createElement("span", { className: "df-chev-space", "aria-hidden": "true" }), leading, /* @__PURE__ */ React.createElement("span", { className: "df-tree-content" }, /* @__PURE__ */ React.createElement("span", { className: "df-tree-title" }, title), chips.length > 0 ? /* @__PURE__ */ React.createElement("span", { className: "df-chips df-task-chips" }, chips.map((chip) => /* @__PURE__ */ React.createElement("span", { key: chip, className: "df-chip" }, chip))) : null), /* @__PURE__ */ React.createElement("span", { className: "df-actions" }, actions)), expanded && facts && facts.length > 0 ? /* @__PURE__ */ React.createElement("div", { className: "df-facts" }, facts.map((fact, index) => /* @__PURE__ */ React.createElement("div", { key: `${index}-${fact.slot}-${fact.detail}`, className: "df-fact" }, /* @__PURE__ */ React.createElement("span", { className: "df-fact-slot" }, fact.slot), fact.detail ? /* @__PURE__ */ React.createElement("span", { className: "df-fact-detail" }, fact.detail) : null))) : null, expanded && children ? /* @__PURE__ */ React.createElement("div", { className: "df-tree-children" }, children) : null);
+  } }, /* @__PURE__ */ React.createElement(Chevron, null)) : /* @__PURE__ */ React.createElement("span", { className: "df-chev-space", "aria-hidden": "true" }), leading, /* @__PURE__ */ React.createElement("span", { className: "df-tree-content" }, /* @__PURE__ */ React.createElement("span", { className: "df-tree-title" }, title), chips.length > 0 ? /* @__PURE__ */ React.createElement("span", { className: "df-chips df-task-chips" }, chips.map((chip) => /* @__PURE__ */ React.createElement("span", { key: chip, className: "df-chip" }, chip))) : null), /* @__PURE__ */ React.createElement("span", { className: "df-actions" }, time ? /* @__PURE__ */ React.createElement("span", { className: "df-tree-time" }, time) : null, actions)), expanded && facts && facts.length > 0 ? /* @__PURE__ */ React.createElement("div", { className: "df-facts" }, facts.map((fact, index) => /* @__PURE__ */ React.createElement("div", { key: `${index}-${fact.slot}-${fact.detail}`, className: "df-fact" }, /* @__PURE__ */ React.createElement("span", { className: "df-fact-slot" }, fact.slot), fact.detail ? /* @__PURE__ */ React.createElement("span", { className: "df-fact-detail" }, fact.detail) : null))) : null, expanded && children ? /* @__PURE__ */ React.createElement("div", { className: "df-tree-children" }, children) : null);
 }
 function ScheduleItem({ ui, t, schedule, open, onToggle, depth = 0 }) {
   const tasks = [...schedule.tasks ?? []].sort((left, right) => String(right.createdAt ?? "").localeCompare(String(left.createdAt ?? "")));
@@ -899,6 +911,7 @@ function ScheduleItem({ ui, t, schedule, open, onToggle, depth = 0 }) {
       kind: "schedule",
       title: schedule.title,
       chips: schedule.usage?.totalTokens ? [formatTokens(schedule.usage.totalTokens)] : [],
+      time: createdText(schedule.createdAt),
       actions: /* @__PURE__ */ React.createElement(StatusTag, { ui, t, status: schedule.status }),
       expandable: true,
       expanded: open,
@@ -956,6 +969,16 @@ function DevTaskItem({
   const deps = task.dependsOn ?? [];
   const [openDeps, setOpenDeps] = useState({});
   const [selfOpen, setSelfOpen] = useState(false);
+  const [diff, setDiff] = useState(null);
+  const [openFile, setOpenFile] = useState(null);
+  const loadDiff = () => {
+    if (diff !== null || !call || nested) return;
+    call("task-diff", { sessionId, taskId: task.id }).then((value) => setDiff(value)).catch(() => setDiff({ files: [], repos: [] }));
+  };
+  const toggle = () => {
+    if (!openDetails) loadDiff();
+    toggleDetails();
+  };
   const openDetails = onToggleDetails === void 0 ? selfOpen : detailsOpen;
   const toggleDetails = onToggleDetails ?? (() => setSelfOpen(!selfOpen));
   const expandable = facts.length > 0 || deps.length > 0;
@@ -966,7 +989,8 @@ function DevTaskItem({
     {
       kind: "dev",
       title: task.title,
-      chips: taskChips(task),
+      chips: [...taskBranchChips(task), ...taskChips(task)],
+      time: createdText(task.createdAt),
       leading,
       actions: /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement(StatusTag, { ui, t, status: shownStatus(task) }), task.status === "pending-merge" && task.kind !== "accept" && call && reload ? /* @__PURE__ */ React.createElement(ActionButton, { ui, onClick: (event) => {
         event.stopPropagation();
@@ -981,11 +1005,26 @@ function DevTaskItem({
       facts,
       expandable,
       expanded: openDetails,
-      onToggle: expandable ? toggleDetails : void 0,
+      onToggle: expandable ? toggle : void 0,
       onClick: selectable ? () => setPicked(togglePick(picked, task.id)) : void 0,
       depth,
       tone: toneOf(shownStatus(task))
     },
+    diff !== null && diff.files.length > 0 ? /* @__PURE__ */ React.createElement("div", { className: "df-diff-list" }, diff.files.map((file) => {
+      const key = `${file.repo}:${file.path}`;
+      return /* @__PURE__ */ React.createElement("div", { key, className: "df-diff-item" }, /* @__PURE__ */ React.createElement(
+        "div",
+        {
+          className: "df-diff-row",
+          onClick: (event) => {
+            event.stopPropagation();
+            setOpenFile(openFile === key ? null : key);
+          }
+        },
+        /* @__PURE__ */ React.createElement("span", { className: "df-diff-path" }, file.path),
+        file.binary ? /* @__PURE__ */ React.createElement("span", { className: "df-meta" }, "binary") : /* @__PURE__ */ React.createElement("span", { className: "df-diff-counts" }, /* @__PURE__ */ React.createElement("span", { className: "df-diff-add" }, `+${file.added}`), /* @__PURE__ */ React.createElement("span", { className: "df-diff-del" }, `-${file.deleted}`))
+      ), openFile === key ? /* @__PURE__ */ React.createElement("pre", { className: "df-diff-patch" }, file.patch) : null);
+    })) : null,
     deps.map((dep) => /* @__PURE__ */ React.createElement(
       TreeItem,
       {
@@ -1032,6 +1071,7 @@ function AcceptTaskItem({
       kind: "accept",
       title: batch.title,
       chips: taskChips(batch),
+      time: createdText(batch.createdAt),
       leading,
       actions: /* @__PURE__ */ React.createElement(StatusTag, { ui, t, status: shownStatus(batch) }),
       expandable: onToggle !== void 0,
@@ -1223,8 +1263,18 @@ function agentSlots(data, agent) {
 function taskChips(task) {
   return Object.entries(task.slots ?? {}).map(([repo, slot]) => {
     if (slot.port) return `${repo} \xB7 ${slot.port}`;
-    return slot.number ? `${repo}-${slot.number}` : repo;
+    return slot.number ?? repo;
   });
+}
+function createdText(createdAt) {
+  if (!createdAt) return void 0;
+  const date = new Date(createdAt);
+  if (Number.isNaN(date.getTime())) return void 0;
+  const pad = (value) => String(value).padStart(2, "0");
+  return `${pad(date.getMonth() + 1)}-${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}`;
+}
+function taskBranchChips(task) {
+  return Object.values(task.slots ?? {}).map((slot) => slot.branch).filter((branch) => typeof branch === "string" && branch !== "");
 }
 function taskFacts(task, t) {
   const zh2 = t("page.tasks") === "\u4EFB\u52A1";

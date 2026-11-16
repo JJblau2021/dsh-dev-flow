@@ -99,6 +99,7 @@ export const panelSheet = `
 .df-chev svg { display: block; }
 .df-chev-space { width: 12px; flex: none; }
 .df-tree .df-actions { display: flex; align-items: center; gap: 7px; flex: none; }
+.df-tree-time { color: var(--dsw-alias-label-tertiary); font-size: 11px; line-height: 17px; font-variant-numeric: tabular-nums; white-space: nowrap; }
 .df-tree .df-chips { flex: 0 1 auto; min-width: 0; flex-wrap: nowrap; overflow: hidden; display: flex; gap: 5px; }
 .df-tree .df-chips .df-chip { flex: none; max-width: 150px; }
 .df-tree-children { display: flex; flex-direction: column; padding-left: 20px; }
@@ -118,6 +119,16 @@ export const panelSheet = `
 .df-fact { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 8px; align-items: baseline; }
 .df-fact-slot { color: var(--dsw-alias-label-tertiary); font-size: 11px; line-height: 17px; white-space: nowrap; }
 .df-fact-detail { color: var(--dsw-alias-label-secondary); font-size: 11px; line-height: 17px; overflow-wrap: anywhere; }
+
+/* 文件改动 */
+.df-diff-list { display: flex; flex-direction: column; gap: 2px; padding: 2px 16px 6px 36px; }
+.df-diff-row { display: flex; align-items: center; gap: 8px; padding: 3px 6px; border-radius: 4px; cursor: pointer; }
+.df-diff-row:hover { background: var(--dsw-alias-interactive-bg-hover, rgba(38, 49, 72, 0.06)); }
+.df-diff-path { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-family: var(--ds-font-family-code, ui-monospace, monospace); font-size: 11px; color: var(--dsw-alias-label-secondary); }
+.df-diff-counts { flex: none; display: inline-flex; gap: 8px; font-family: var(--ds-font-family-code, ui-monospace, monospace); font-size: 11px; font-variant-numeric: tabular-nums; }
+.df-diff-add { color: var(--dsw-alias-state-success-primary); }
+.df-diff-del { color: var(--dsw-alias-state-error-primary); }
+.df-diff-patch { margin: 2px 0 6px; padding: 8px 10px; max-height: 320px; overflow: auto; border-radius: 6px; background: var(--dsw-alias-bg-layer-2); color: var(--dsw-alias-label-secondary); font-family: var(--ds-font-family-code, ui-monospace, monospace); font-size: 11px; line-height: 1.5; white-space: pre; }
 
 /* 名称、标签、药丸 */
 .df-name { font-weight: 560; display: flex; align-items: center; gap: 6px; min-width: 0; }

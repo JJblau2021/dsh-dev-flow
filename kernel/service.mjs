@@ -1,4 +1,5 @@
 import { deleteAcceptances, finishAcceptance, finishTaskAcceptance, mergePendingTask, refreshSchedules, sessionEnabled, setSessionEnabled, settlePendingMerges, settleStaleAcceptSlots, startAcceptance } from './flow.mjs';
+import { diffTask } from './diff.mjs';
 import { loadPluginSettings, savePluginSettings } from './plugin-settings.mjs';
 import { hasState, initializeWorkspace } from './state.mjs';
 import { snapshot } from './view.mjs';
@@ -43,6 +44,9 @@ export function handle(workspace, sessionId, endpoint, payload = {}, settingsHom
       settings,
     });
     return { batch, snapshot: snapshot(workspace, sessionId) };
+  }
+  if (endpoint === 'task-diff') {
+    return diffTask(workspace, String(payload.taskId ?? ''));
   }
   if (endpoint === 'accept-delete') {
     const ids = Array.isArray(payload.ids) ? payload.ids.map(String) : [];

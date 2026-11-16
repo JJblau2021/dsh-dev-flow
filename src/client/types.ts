@@ -25,6 +25,20 @@ export interface Trunk {
   defaultBranch?: string
 }
 
+export interface TaskDiffFile {
+  repo: string
+  path: string
+  added: number
+  deleted: number
+  binary: boolean
+  patch: string
+}
+
+export interface TaskDiff {
+  files: TaskDiffFile[]
+  repos: string[]
+}
+
 export interface TaskRow {
   id: string
   title: string
