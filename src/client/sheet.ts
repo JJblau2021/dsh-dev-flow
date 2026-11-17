@@ -121,14 +121,40 @@ export const panelSheet = `
 .df-fact-detail { color: var(--dsw-alias-label-secondary); font-size: 11px; line-height: 17px; overflow-wrap: anywhere; }
 
 /* 文件改动 */
-.df-diff-list { display: flex; flex-direction: column; gap: 2px; padding: 2px 16px 6px 36px; }
-.df-diff-row { display: flex; align-items: center; gap: 8px; padding: 3px 6px; border-radius: 4px; cursor: pointer; }
-.df-diff-row:hover { background: var(--dsw-alias-interactive-bg-hover, rgba(38, 49, 72, 0.06)); }
-.df-diff-path { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-family: var(--ds-font-family-code, ui-monospace, monospace); font-size: 11px; color: var(--dsw-alias-label-secondary); }
+.df-files { margin: 2px 16px 8px 36px; border: 0.5px solid var(--dsw-alias-border-l3); border-radius: 8px; overflow: visible; background: var(--dsw-alias-bg-base); }
+.df-file-item { position: relative; border-top: 0.5px solid var(--dsw-alias-border-l2); }
+.df-file-item:first-child { border-top: 0; }
+.df-file-row { display: flex; align-items: center; gap: 8px; min-width: 0; padding: 6px 10px; cursor: pointer; }
+.df-file-row:hover { background: var(--dsw-alias-interactive-bg-hover, rgba(38, 49, 72, 0.06)); }
+.df-file-path { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-family: var(--ds-font-family-code, ui-monospace, Menlo, monospace); font-size: 11px; line-height: 1.6; color: var(--dsw-alias-label-secondary); }
 .df-diff-counts { flex: none; display: inline-flex; gap: 8px; font-family: var(--ds-font-family-code, ui-monospace, monospace); font-size: 11px; font-variant-numeric: tabular-nums; }
 .df-diff-add { color: var(--dsw-alias-state-success-primary); }
 .df-diff-del { color: var(--dsw-alias-state-error-primary); }
-.df-diff-patch { margin: 2px 0 6px; padding: 8px 10px; max-height: 320px; overflow: auto; border-radius: 6px; background: var(--dsw-alias-bg-layer-2); color: var(--dsw-alias-label-secondary); font-family: var(--ds-font-family-code, ui-monospace, monospace); font-size: 11px; line-height: 1.5; white-space: pre; }
+
+/* 悬停气泡 */
+.df-hover-card { display: none; position: absolute; left: 12px; top: calc(100% + 4px); z-index: 20; width: min(520px, calc(100% - 24px)); max-height: 240px; overflow: hidden; border: 0.5px solid var(--dsw-alias-border-l3); border-radius: 10px; background: var(--dsw-alias-bg-layer-1, var(--dsw-alias-bg-base)); box-shadow: var(--dsw-elevation-panel, 0 12px 32px #0003); }
+.df-file-item:hover .df-hover-card { display: flex; flex-direction: column; }
+.df-hover-head { display: flex; align-items: baseline; gap: 8px; min-width: 0; padding: 8px 10px; border-bottom: 0.5px solid var(--dsw-alias-border-l3); background: var(--dsw-alias-bg-layer-2); }
+.df-hover-path { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-family: var(--ds-font-family-code, ui-monospace, monospace); font-size: 11px; color: var(--dsw-alias-label-secondary); }
+.df-hover-body { flex: 1; min-height: 0; max-height: 200px; overflow: auto; }
+
+/* diff 详情 */
+.df-diff-page { margin: 2px 16px 8px 36px; border: 0.5px solid var(--dsw-alias-border-l3); border-radius: 8px; overflow: hidden; background: var(--dsw-alias-bg-base); }
+.df-diff-header { display: flex; align-items: center; gap: 6px; height: 32px; padding: 0 8px; border-bottom: 0.5px solid var(--dsw-alias-border-l3); background: var(--dsw-alias-bg-layer-2); }
+.df-diff-back { display: inline-flex; align-items: center; justify-content: center; width: 20px; height: 20px; padding: 0; border: 0; border-radius: 4px; background: transparent; color: var(--dsw-alias-label-tertiary); font-size: 15px; line-height: 1; cursor: pointer; }
+.df-diff-back:hover { background: var(--dsw-alias-interactive-bg-hover, rgba(38, 49, 72, 0.06)); color: var(--dsw-alias-label-primary); }
+.df-diff-title { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-family: var(--ds-font-family-code, ui-monospace, monospace); font-size: 11px; color: var(--dsw-alias-label-secondary); }
+.df-diff-body { max-height: 360px; overflow: auto; padding: 4px 0; }
+.df-difflines { min-width: max-content; font-family: var(--ds-font-family-code, ui-monospace, Menlo, monospace); font-size: 11px; line-height: 1.6; color: var(--dsw-alias-label-secondary); }
+.df-diffline { display: grid; grid-template-columns: 3.2em 3.2em 1.2em minmax(0, 1fr); white-space: pre; }
+.df-diffline-no { text-align: right; padding-right: 8px; color: var(--dsw-alias-label-tertiary); font-variant-numeric: tabular-nums; user-select: none; }
+.df-diffline-sign { text-align: center; color: var(--dsw-alias-label-tertiary); user-select: none; }
+.df-diffline[data-kind='add'] { background: color-mix(in srgb, var(--dsw-alias-state-success-primary) 12%, transparent); }
+.df-diffline[data-kind='del'] { background: color-mix(in srgb, var(--dsw-alias-state-error-primary) 12%, transparent); }
+.df-diffline[data-kind='add'] .df-diffline-sign { color: var(--dsw-alias-state-success-primary); }
+.df-diffline[data-kind='del'] .df-diffline-sign { color: var(--dsw-alias-state-error-primary); }
+.df-diffline[data-kind='hunk'] { background: var(--dsw-alias-bg-layer-2); color: var(--dsw-alias-label-tertiary); }
+.df-diffline[data-kind='meta'] { color: var(--dsw-alias-label-tertiary); }
 
 /* 名称、标签、药丸 */
 .df-name { font-weight: 560; display: flex; align-items: center; gap: 6px; min-width: 0; }

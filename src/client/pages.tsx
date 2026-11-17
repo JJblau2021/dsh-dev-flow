@@ -616,6 +616,7 @@ function DevTaskItem({
   const [selfOpen, setSelfOpen] = useState(false)
   const [diff, setDiff] = useState<TaskDiff | null>(null)
   const [openFile, setOpenFile] = useState<string | null>(null)
+  const selectedFile = diff?.files.find((item) => `${item.repo}:${item.path}` === openFile) ?? null
   const loadDiff = () => {
     if (diff !== null || !call || nested) return
     call('task-diff', { sessionId, taskId: task.id })
@@ -663,30 +664,48 @@ function DevTaskItem({
       tone={toneOf(shownStatus(task))}
     >
       {diff !== null && diff.files.length > 0 ? (
-        <div className="df-diff-list">
-          {diff.files.map((file) => {
-            const key = `${file.repo}:${file.path}`
-            return (
-              <div key={key} className="df-diff-item">
-                <div
-                  className="df-diff-row"
-                  onClick={(event) => { event.stopPropagation(); setOpenFile(openFile === key ? null : key) }}
-                >
-                  <span className="df-diff-path">{file.path}</span>
-                  {file.binary
-                    ? <span className="df-meta">binary</span>
-                    : (
-                      <span className="df-diff-counts">
-                        <span className="df-diff-add">{`+${file.added}`}</span>
-                        <span className="df-diff-del">{`-${file.deleted}`}</span>
-                      </span>
-                    )}
+        openFile !== null ? (
+          <div className="df-diff-page">
+            <div className="df-diff-header">
+              <button type="button" className="df-diff-back" onClick={(event) => { event.stopPropagation(); setOpenFile(null) }}>‹</button>
+              <span className="df-diff-title">{openFile}</span>
+            </div>
+            <div className="df-diff-body">{selectedFile ? <DiffLines patch={selectedFile.patch} /> : null}</div>
+          </div>
+        ) : (
+          <div className="df-files">
+            {diff.files.map((file) => {
+              const key = `${file.repo}:${file.path}`
+              return (
+                <div key={key} className="df-file-item">
+                  <div className="df-file-row" onClick={(event) => { event.stopPropagation(); setOpenFile(key) }}>
+                    <span className="df-file-path">{file.path}</span>
+                    {file.binary
+                      ? <span className="df-meta">binary</span>
+                      : (
+                        <span className="df-diff-counts">
+                          <span className="df-diff-add">{`+${file.added}`}</span>
+                          <span className="df-diff-del">{`-${file.deleted}`}</span>
+                        </span>
+                      )}
+                  </div>
+                  {file.binary ? null : (
+                    <div className="df-hover-card" aria-hidden="true">
+                      <div className="df-hover-head">
+                        <span className="df-hover-path">{file.path}</span>
+                        <span className="df-diff-counts">
+                          <span className="df-diff-add">{`+${file.added}`}</span>
+                          <span className="df-diff-del">{`-${file.deleted}`}</span>
+                        </span>
+                      </div>
+                      <div className="df-hover-body"><DiffLines patch={file.patch} maxLines={24} /></div>
+                    </div>
+                  )}
                 </div>
-                {openFile === key ? <pre className="df-diff-patch">{file.patch}</pre> : null}
-              </div>
-            )
-          })}
-        </div>
+              )
+            })}
+          </div>
+        )
       ) : null}
       {deps.map((dep) => (
         <TreeItem
@@ -1039,6 +1058,48 @@ function taskChips(task: TaskRow) {
     if (slot.port) return `${repo} · ${slot.port}`
     return slot.number ?? repo
   })
+}
+
+function diffRows(patch: string) {
+  const rows: { kind: string, text: string, oldNo: number | '', newNo: number | '' }[] = []
+  let oldNo = 0
+  let newNo = 0
+  for (const line of patch.split('\n')) {
+    if (line.startsWith('@@')) {
+      const match = /@@ -(\d+)(?:,\d+)? \+(\d+)/.exec(line)
+      oldNo = match ? Number(match[1]) : oldNo
+      newNo = match ? Number(match[2]) : newNo
+      rows.push({ kind: 'hunk', text: line, oldNo: '', newNo: '' })
+      continue
+    }
+    if (line.startsWith('diff --git') || line.startsWith('index ') || line.startsWith('--- ') || line.startsWith('+++ ')) {
+      rows.push({ kind: 'meta', text: line, oldNo: '', newNo: '' })
+      continue
+    }
+    if (line.startsWith('-')) { rows.push({ kind: 'del', text: line.slice(1), oldNo: oldNo || '', newNo: '' }); oldNo += 1; continue }
+    if (line.startsWith('+')) { rows.push({ kind: 'add', text: line.slice(1), oldNo: '', newNo: newNo || '' }); newNo += 1; continue }
+    rows.push({ kind: 'context', text: line.slice(1), oldNo: oldNo || '', newNo: newNo || '' })
+    oldNo += 1
+    newNo += 1
+  }
+  return rows
+}
+
+function DiffLines({ patch, maxLines }: { patch: string, maxLines?: number }) {
+  const rows = diffRows(patch)
+  const shown = maxLines === undefined ? rows : rows.slice(0, maxLines)
+  return (
+    <div className="df-difflines">
+      {shown.map((row, index) => (
+        <div key={index} className="df-diffline" data-kind={row.kind}>
+          <span className="df-diffline-no">{row.oldNo}</span>
+          <span className="df-diffline-no">{row.newNo}</span>
+          <span className="df-diffline-sign">{row.kind === 'add' ? '+' : row.kind === 'del' ? '-' : ' '}</span>
+          <span className="df-diffline-text">{row.text}</span>
+        </div>
+      ))}
+    </div>
+  )
 }
 
 function createdText(createdAt?: string | null) {

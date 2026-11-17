@@ -321,14 +321,40 @@ var panelSheet = `
 .df-fact-detail { color: var(--dsw-alias-label-secondary); font-size: 11px; line-height: 17px; overflow-wrap: anywhere; }
 
 /* \u6587\u4EF6\u6539\u52A8 */
-.df-diff-list { display: flex; flex-direction: column; gap: 2px; padding: 2px 16px 6px 36px; }
-.df-diff-row { display: flex; align-items: center; gap: 8px; padding: 3px 6px; border-radius: 4px; cursor: pointer; }
-.df-diff-row:hover { background: var(--dsw-alias-interactive-bg-hover, rgba(38, 49, 72, 0.06)); }
-.df-diff-path { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-family: var(--ds-font-family-code, ui-monospace, monospace); font-size: 11px; color: var(--dsw-alias-label-secondary); }
+.df-files { margin: 2px 16px 8px 36px; border: 0.5px solid var(--dsw-alias-border-l3); border-radius: 8px; overflow: visible; background: var(--dsw-alias-bg-base); }
+.df-file-item { position: relative; border-top: 0.5px solid var(--dsw-alias-border-l2); }
+.df-file-item:first-child { border-top: 0; }
+.df-file-row { display: flex; align-items: center; gap: 8px; min-width: 0; padding: 6px 10px; cursor: pointer; }
+.df-file-row:hover { background: var(--dsw-alias-interactive-bg-hover, rgba(38, 49, 72, 0.06)); }
+.df-file-path { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-family: var(--ds-font-family-code, ui-monospace, Menlo, monospace); font-size: 11px; line-height: 1.6; color: var(--dsw-alias-label-secondary); }
 .df-diff-counts { flex: none; display: inline-flex; gap: 8px; font-family: var(--ds-font-family-code, ui-monospace, monospace); font-size: 11px; font-variant-numeric: tabular-nums; }
 .df-diff-add { color: var(--dsw-alias-state-success-primary); }
 .df-diff-del { color: var(--dsw-alias-state-error-primary); }
-.df-diff-patch { margin: 2px 0 6px; padding: 8px 10px; max-height: 320px; overflow: auto; border-radius: 6px; background: var(--dsw-alias-bg-layer-2); color: var(--dsw-alias-label-secondary); font-family: var(--ds-font-family-code, ui-monospace, monospace); font-size: 11px; line-height: 1.5; white-space: pre; }
+
+/* \u60AC\u505C\u6C14\u6CE1 */
+.df-hover-card { display: none; position: absolute; left: 12px; top: calc(100% + 4px); z-index: 20; width: min(520px, calc(100% - 24px)); max-height: 240px; overflow: hidden; border: 0.5px solid var(--dsw-alias-border-l3); border-radius: 10px; background: var(--dsw-alias-bg-layer-1, var(--dsw-alias-bg-base)); box-shadow: var(--dsw-elevation-panel, 0 12px 32px #0003); }
+.df-file-item:hover .df-hover-card { display: flex; flex-direction: column; }
+.df-hover-head { display: flex; align-items: baseline; gap: 8px; min-width: 0; padding: 8px 10px; border-bottom: 0.5px solid var(--dsw-alias-border-l3); background: var(--dsw-alias-bg-layer-2); }
+.df-hover-path { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-family: var(--ds-font-family-code, ui-monospace, monospace); font-size: 11px; color: var(--dsw-alias-label-secondary); }
+.df-hover-body { flex: 1; min-height: 0; max-height: 200px; overflow: auto; }
+
+/* diff \u8BE6\u60C5 */
+.df-diff-page { margin: 2px 16px 8px 36px; border: 0.5px solid var(--dsw-alias-border-l3); border-radius: 8px; overflow: hidden; background: var(--dsw-alias-bg-base); }
+.df-diff-header { display: flex; align-items: center; gap: 6px; height: 32px; padding: 0 8px; border-bottom: 0.5px solid var(--dsw-alias-border-l3); background: var(--dsw-alias-bg-layer-2); }
+.df-diff-back { display: inline-flex; align-items: center; justify-content: center; width: 20px; height: 20px; padding: 0; border: 0; border-radius: 4px; background: transparent; color: var(--dsw-alias-label-tertiary); font-size: 15px; line-height: 1; cursor: pointer; }
+.df-diff-back:hover { background: var(--dsw-alias-interactive-bg-hover, rgba(38, 49, 72, 0.06)); color: var(--dsw-alias-label-primary); }
+.df-diff-title { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-family: var(--ds-font-family-code, ui-monospace, monospace); font-size: 11px; color: var(--dsw-alias-label-secondary); }
+.df-diff-body { max-height: 360px; overflow: auto; padding: 4px 0; }
+.df-difflines { min-width: max-content; font-family: var(--ds-font-family-code, ui-monospace, Menlo, monospace); font-size: 11px; line-height: 1.6; color: var(--dsw-alias-label-secondary); }
+.df-diffline { display: grid; grid-template-columns: 3.2em 3.2em 1.2em minmax(0, 1fr); white-space: pre; }
+.df-diffline-no { text-align: right; padding-right: 8px; color: var(--dsw-alias-label-tertiary); font-variant-numeric: tabular-nums; user-select: none; }
+.df-diffline-sign { text-align: center; color: var(--dsw-alias-label-tertiary); user-select: none; }
+.df-diffline[data-kind='add'] { background: color-mix(in srgb, var(--dsw-alias-state-success-primary) 12%, transparent); }
+.df-diffline[data-kind='del'] { background: color-mix(in srgb, var(--dsw-alias-state-error-primary) 12%, transparent); }
+.df-diffline[data-kind='add'] .df-diffline-sign { color: var(--dsw-alias-state-success-primary); }
+.df-diffline[data-kind='del'] .df-diffline-sign { color: var(--dsw-alias-state-error-primary); }
+.df-diffline[data-kind='hunk'] { background: var(--dsw-alias-bg-layer-2); color: var(--dsw-alias-label-tertiary); }
+.df-diffline[data-kind='meta'] { color: var(--dsw-alias-label-tertiary); }
 
 /* \u540D\u79F0\u3001\u6807\u7B7E\u3001\u836F\u4E38 */
 .df-name { font-weight: 560; display: flex; align-items: center; gap: 6px; min-width: 0; }
@@ -971,6 +997,7 @@ function DevTaskItem({
   const [selfOpen, setSelfOpen] = useState(false);
   const [diff, setDiff] = useState(null);
   const [openFile, setOpenFile] = useState(null);
+  const selectedFile = diff?.files.find((item) => `${item.repo}:${item.path}` === openFile) ?? null;
   const loadDiff = () => {
     if (diff !== null || !call || nested) return;
     call("task-diff", { sessionId, taskId: task.id }).then((value) => setDiff(value)).catch(() => setDiff({ files: [], repos: [] }));
@@ -1010,20 +1037,15 @@ function DevTaskItem({
       depth,
       tone: toneOf(shownStatus(task))
     },
-    diff !== null && diff.files.length > 0 ? /* @__PURE__ */ React.createElement("div", { className: "df-diff-list" }, diff.files.map((file) => {
+    diff !== null && diff.files.length > 0 ? openFile !== null ? /* @__PURE__ */ React.createElement("div", { className: "df-diff-page" }, /* @__PURE__ */ React.createElement("div", { className: "df-diff-header" }, /* @__PURE__ */ React.createElement("button", { type: "button", className: "df-diff-back", onClick: (event) => {
+      event.stopPropagation();
+      setOpenFile(null);
+    } }, "\u2039"), /* @__PURE__ */ React.createElement("span", { className: "df-diff-title" }, openFile)), /* @__PURE__ */ React.createElement("div", { className: "df-diff-body" }, selectedFile ? /* @__PURE__ */ React.createElement(DiffLines, { patch: selectedFile.patch }) : null)) : /* @__PURE__ */ React.createElement("div", { className: "df-files" }, diff.files.map((file) => {
       const key = `${file.repo}:${file.path}`;
-      return /* @__PURE__ */ React.createElement("div", { key, className: "df-diff-item" }, /* @__PURE__ */ React.createElement(
-        "div",
-        {
-          className: "df-diff-row",
-          onClick: (event) => {
-            event.stopPropagation();
-            setOpenFile(openFile === key ? null : key);
-          }
-        },
-        /* @__PURE__ */ React.createElement("span", { className: "df-diff-path" }, file.path),
-        file.binary ? /* @__PURE__ */ React.createElement("span", { className: "df-meta" }, "binary") : /* @__PURE__ */ React.createElement("span", { className: "df-diff-counts" }, /* @__PURE__ */ React.createElement("span", { className: "df-diff-add" }, `+${file.added}`), /* @__PURE__ */ React.createElement("span", { className: "df-diff-del" }, `-${file.deleted}`))
-      ), openFile === key ? /* @__PURE__ */ React.createElement("pre", { className: "df-diff-patch" }, file.patch) : null);
+      return /* @__PURE__ */ React.createElement("div", { key, className: "df-file-item" }, /* @__PURE__ */ React.createElement("div", { className: "df-file-row", onClick: (event) => {
+        event.stopPropagation();
+        setOpenFile(key);
+      } }, /* @__PURE__ */ React.createElement("span", { className: "df-file-path" }, file.path), file.binary ? /* @__PURE__ */ React.createElement("span", { className: "df-meta" }, "binary") : /* @__PURE__ */ React.createElement("span", { className: "df-diff-counts" }, /* @__PURE__ */ React.createElement("span", { className: "df-diff-add" }, `+${file.added}`), /* @__PURE__ */ React.createElement("span", { className: "df-diff-del" }, `-${file.deleted}`))), file.binary ? null : /* @__PURE__ */ React.createElement("div", { className: "df-hover-card", "aria-hidden": "true" }, /* @__PURE__ */ React.createElement("div", { className: "df-hover-head" }, /* @__PURE__ */ React.createElement("span", { className: "df-hover-path" }, file.path), /* @__PURE__ */ React.createElement("span", { className: "df-diff-counts" }, /* @__PURE__ */ React.createElement("span", { className: "df-diff-add" }, `+${file.added}`), /* @__PURE__ */ React.createElement("span", { className: "df-diff-del" }, `-${file.deleted}`))), /* @__PURE__ */ React.createElement("div", { className: "df-hover-body" }, /* @__PURE__ */ React.createElement(DiffLines, { patch: file.patch, maxLines: 24 }))));
     })) : null,
     deps.map((dep) => /* @__PURE__ */ React.createElement(
       TreeItem,
@@ -1265,6 +1287,43 @@ function taskChips(task) {
     if (slot.port) return `${repo} \xB7 ${slot.port}`;
     return slot.number ?? repo;
   });
+}
+function diffRows(patch) {
+  const rows = [];
+  let oldNo = 0;
+  let newNo = 0;
+  for (const line of patch.split("\n")) {
+    if (line.startsWith("@@")) {
+      const match = /@@ -(\d+)(?:,\d+)? \+(\d+)/.exec(line);
+      oldNo = match ? Number(match[1]) : oldNo;
+      newNo = match ? Number(match[2]) : newNo;
+      rows.push({ kind: "hunk", text: line, oldNo: "", newNo: "" });
+      continue;
+    }
+    if (line.startsWith("diff --git") || line.startsWith("index ") || line.startsWith("--- ") || line.startsWith("+++ ")) {
+      rows.push({ kind: "meta", text: line, oldNo: "", newNo: "" });
+      continue;
+    }
+    if (line.startsWith("-")) {
+      rows.push({ kind: "del", text: line.slice(1), oldNo: oldNo || "", newNo: "" });
+      oldNo += 1;
+      continue;
+    }
+    if (line.startsWith("+")) {
+      rows.push({ kind: "add", text: line.slice(1), oldNo: "", newNo: newNo || "" });
+      newNo += 1;
+      continue;
+    }
+    rows.push({ kind: "context", text: line.slice(1), oldNo: oldNo || "", newNo: newNo || "" });
+    oldNo += 1;
+    newNo += 1;
+  }
+  return rows;
+}
+function DiffLines({ patch, maxLines }) {
+  const rows = diffRows(patch);
+  const shown = maxLines === void 0 ? rows : rows.slice(0, maxLines);
+  return /* @__PURE__ */ React.createElement("div", { className: "df-difflines" }, shown.map((row, index) => /* @__PURE__ */ React.createElement("div", { key: index, className: "df-diffline", "data-kind": row.kind }, /* @__PURE__ */ React.createElement("span", { className: "df-diffline-no" }, row.oldNo), /* @__PURE__ */ React.createElement("span", { className: "df-diffline-no" }, row.newNo), /* @__PURE__ */ React.createElement("span", { className: "df-diffline-sign" }, row.kind === "add" ? "+" : row.kind === "del" ? "-" : " "), /* @__PURE__ */ React.createElement("span", { className: "df-diffline-text" }, row.text))));
 }
 function createdText(createdAt) {
   if (!createdAt) return void 0;
