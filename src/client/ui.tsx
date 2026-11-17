@@ -1,6 +1,7 @@
 import type React from 'react'
 
 export interface UiKit {
+  DiffBlock?: React.ComponentType<{ diffs: { path: string, oldText: string, newText: string }[], labels: Record<string, unknown>, maxLines?: number }>
   Switch?: React.ComponentType<{ checked?: boolean, label?: string, onChange?: (next: boolean) => void }>
   SegmentedTabs?: React.ComponentType<{
     size?: 'sm' | 'md'

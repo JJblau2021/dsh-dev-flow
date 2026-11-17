@@ -338,7 +338,7 @@ function Tasks({
           <button type="button" className="df-diff-back" onClick={() => setDiffPage(null)}>‹</button>
           <span className="df-diff-title">{diffPage.path}</span>
         </div>
-        <div className="df-diff-body"><DiffLines patch={diffPage.patch} /></div>
+        <div className="df-diff-body">{ui.DiffBlock ? <ui.DiffBlock diffs={[{ path: diffPage.path, ...textsFromPatch(diffPage.patch) }]} labels={diffLabels(t)} maxLines={400} /> : <DiffLines patch={diffPage.patch} />}</div>
       </div>
     )
   }
@@ -703,7 +703,7 @@ function DevTaskItem({
                           <span className="df-diff-del">{`-${file.deleted}`}</span>
                         </span>
                       </div>
-                      <div className="df-hover-body"><DiffLines patch={file.patch} maxLines={24} /></div>
+                      <div className="df-hover-body">{ui.DiffBlock ? <ui.DiffBlock diffs={[{ path: file.path, ...textsFromPatch(file.patch) }]} labels={diffLabels(t)} maxLines={24} /> : <DiffLines patch={file.patch} maxLines={24} />}</div>
                     </div>
                   )}
                 </div>
@@ -1088,6 +1088,34 @@ function diffRows(patch: string) {
     newNo += 1
   }
   return rows
+}
+
+function textsFromPatch(patch: string) {
+  const oldLines: string[] = []
+  const newLines: string[] = []
+  for (const line of patch.split('\n')) {
+    if (line.startsWith('diff --git') || line.startsWith('index ') || line.startsWith('--- ') || line.startsWith('+++ ') || line.startsWith('@@')) continue
+    if (line.startsWith('-')) { oldLines.push(line.slice(1)); continue }
+    if (line.startsWith('+')) { newLines.push(line.slice(1)); continue }
+    const text = line.startsWith(' ') ? line.slice(1) : line
+    oldLines.push(text)
+    newLines.push(text)
+  }
+  return { oldText: oldLines.join('\n'), newText: newLines.join('\n') }
+}
+
+function diffLabels(t: Translate) {
+  return {
+    codeLabel: 'text',
+    wrapLabel: 'wrap',
+    unwrapLabel: 'nowrap',
+    copy: t('diff.copy'),
+    copied: t('diff.copied'),
+    collapseAria: t('diff.collapse'),
+    expandAria: (hidden: number) => `+${hidden}`,
+    collapse: t('diff.collapse'),
+    expand: (hidden: number) => `+${hidden}`,
+  }
 }
 
 function DiffLines({ patch, maxLines }: { patch: string, maxLines?: number }) {
