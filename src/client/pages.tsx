@@ -222,6 +222,7 @@ function Tasks({
   const [pickedBatches, setPickedBatches] = useState<string[]>([])
   const [removing, setRemoving] = useState(false)
   const [details, setDetails] = useState<Record<string, boolean>>({})
+  const [diffPage, setDiffPage] = useState<{ path: string, patch: string } | null>(null)
   const detailProps = (id: string) => ({
     detailsOpen: details[id] === true,
     onToggleDetails: () => setDetails({ ...details, [id]: !details[id] }),
@@ -330,6 +331,17 @@ function Tasks({
     }
     setLayout((prev) => ({ ...prev, open: { ...prev.open, [id]: !prev.open[id] } }))
   }
+  if (diffPage !== null) {
+    return (
+      <div className="df-diff-page df-diff-standalone">
+        <div className="df-diff-header">
+          <button type="button" className="df-diff-back" onClick={() => setDiffPage(null)}>‹</button>
+          <span className="df-diff-title">{diffPage.path}</span>
+        </div>
+        <div className="df-diff-body"><DiffLines patch={diffPage.patch} /></div>
+      </div>
+    )
+  }
   return (
     <div className="df-views" ref={splitRef}>
       {dropY !== null ? <div className="df-drop" style={{ top: dropY }} /> : null}
@@ -370,7 +382,7 @@ function Tasks({
       <div className="df-view-body">
       <div className="df-card">
         {devRows.length === 0 ? <div className="df-empty"><p>{t('section.emptyDev')}</p></div> : devRows.map((task) => (
-          <DevTaskItem key={task.id} ui={ui} t={t} task={task} picked={picked} setPicked={setPicked} sessionId={sessionId} call={call} reload={reload} show={show} {...detailProps(task.id)} />
+          <DevTaskItem key={task.id} ui={ui} t={t} task={task} picked={picked} setPicked={setPicked} sessionId={sessionId} call={call} reload={reload} show={show} {...detailProps(task.id)} onOpenDiff={setDiffPage} />
         ))}
       </div>
       </div>
@@ -609,6 +621,7 @@ function DevTaskItem({
   reviewing?: boolean
   batchId?: string
   depth?: number
+  onOpenDiff?: (file: { path: string, patch: string }) => void
 }) {
   const facts = taskFacts(task, t)
   const deps = task.dependsOn ?? []
@@ -664,21 +677,13 @@ function DevTaskItem({
       tone={toneOf(shownStatus(task))}
     >
       {diff !== null && diff.files.length > 0 ? (
-        openFile !== null ? (
-          <div className="df-diff-page">
-            <div className="df-diff-header">
-              <button type="button" className="df-diff-back" onClick={(event) => { event.stopPropagation(); setOpenFile(null) }}>‹</button>
-              <span className="df-diff-title">{openFile}</span>
-            </div>
-            <div className="df-diff-body">{selectedFile ? <DiffLines patch={selectedFile.patch} /> : null}</div>
-          </div>
-        ) : (
+        false ? null : (
           <div className="df-files">
             {diff.files.map((file) => {
               const key = `${file.repo}:${file.path}`
               return (
                 <div key={key} className="df-file-item">
-                  <div className="df-file-row" onClick={(event) => { event.stopPropagation(); setOpenFile(key) }}>
+                  <div className="df-file-row" onClick={(event) => { event.stopPropagation(); onOpenDiff?.({ path: file.path, patch: file.patch }) }}>
                     <span className="df-file-path">{file.path}</span>
                     {file.binary
                       ? <span className="df-meta">binary</span>

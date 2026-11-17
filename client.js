@@ -340,6 +340,9 @@ var panelSheet = `
 
 /* diff \u8BE6\u60C5 */
 .df-diff-page { margin: 2px 16px 8px 36px; border: 0.5px solid var(--dsw-alias-border-l3); border-radius: 8px; overflow: hidden; background: var(--dsw-alias-bg-base); }
+.df-diff-standalone { display: flex; flex-direction: column; min-height: 0; height: 100%; margin: 0; border: 0; border-radius: 0; background: transparent; }
+.df-diff-standalone .df-diff-header { height: 34px; background: transparent; }
+.df-diff-standalone .df-diff-body { flex: 1; min-height: 0; max-height: none; }
 .df-diff-header { display: flex; align-items: center; gap: 6px; height: 32px; padding: 0 8px; border-bottom: 0.5px solid var(--dsw-alias-border-l3); background: var(--dsw-alias-bg-layer-2); }
 .df-diff-back { display: inline-flex; align-items: center; justify-content: center; width: 20px; height: 20px; padding: 0; border: 0; border-radius: 4px; background: transparent; color: var(--dsw-alias-label-tertiary); font-size: 15px; line-height: 1; cursor: pointer; }
 .df-diff-back:hover { background: var(--dsw-alias-interactive-bg-hover, rgba(38, 49, 72, 0.06)); color: var(--dsw-alias-label-primary); }
@@ -705,6 +708,7 @@ function Tasks({
   const [pickedBatches, setPickedBatches] = useState([]);
   const [removing, setRemoving] = useState(false);
   const [details, setDetails] = useState({});
+  const [diffPage, setDiffPage] = useState(null);
   const detailProps = (id) => ({
     detailsOpen: details[id] === true,
     onToggleDetails: () => setDetails({ ...details, [id]: !details[id] })
@@ -812,6 +816,9 @@ function Tasks({
     }
     setLayout((prev) => ({ ...prev, open: { ...prev.open, [id]: !prev.open[id] } }));
   };
+  if (diffPage !== null) {
+    return /* @__PURE__ */ React.createElement("div", { className: "df-diff-page df-diff-standalone" }, /* @__PURE__ */ React.createElement("div", { className: "df-diff-header" }, /* @__PURE__ */ React.createElement("button", { type: "button", className: "df-diff-back", onClick: () => setDiffPage(null) }, "\u2039"), /* @__PURE__ */ React.createElement("span", { className: "df-diff-title" }, diffPage.path)), /* @__PURE__ */ React.createElement("div", { className: "df-diff-body" }, /* @__PURE__ */ React.createElement(DiffLines, { patch: diffPage.patch })));
+  }
   return /* @__PURE__ */ React.createElement("div", { className: "df-views", ref: splitRef }, dropY !== null ? /* @__PURE__ */ React.createElement("div", { className: "df-drop", style: { top: dropY } }) : null, order.map((id) => {
     const laterOpen = order.slice(order.indexOf(id) + 1).some((next) => open[next]);
     const title = id === "schedule" ? t("section.scheduleTasks") : id === "dev" ? t("section.devTasks") : t("section.acceptTasks");
@@ -832,7 +839,7 @@ function Tasks({
       const count2 = devAll.filter((task) => matchFilter(value, task)).length;
       const text = `${label} ${count2}`;
       return ui.Pill ? /* @__PURE__ */ React.createElement(ui.Pill, { key: value, active: filter === value, onClick: () => setFilter(value) }, text) : /* @__PURE__ */ React.createElement("button", { key: value, type: "button", "aria-pressed": filter === value, onClick: () => setFilter(value) }, text);
-    })), /* @__PURE__ */ React.createElement("div", { className: "df-view-body" }, /* @__PURE__ */ React.createElement("div", { className: "df-card" }, devRows.length === 0 ? /* @__PURE__ */ React.createElement("div", { className: "df-empty" }, /* @__PURE__ */ React.createElement("p", null, t("section.emptyDev"))) : devRows.map((task) => /* @__PURE__ */ React.createElement(DevTaskItem, { key: task.id, ui, t, task, picked, setPicked, sessionId, call, reload, show, ...detailProps(task.id) })))), selected.length > 0 ? /* @__PURE__ */ React.createElement("div", { className: "df-foot" }, /* @__PURE__ */ React.createElement(ActionButton, { ui, className: "df-go", variant: "primary", disabled: busy || reason !== "", title: reason, onClick: launch }, busy ? t("action.working") : t("action.accept")), /* @__PURE__ */ React.createElement("p", { className: "df-hint" }, reason !== "" ? reason : `${t("hint.order")}\uFF1A${selected.map((task) => task.title).join(" \u2192 ")}`)) : null) : null, id === "accept" && open.accept ? /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("div", { className: "df-view-body" }, /* @__PURE__ */ React.createElement("div", { className: "df-card" }, acceptRows.length === 0 ? /* @__PURE__ */ React.createElement("div", { className: "df-empty" }, /* @__PURE__ */ React.createElement("p", null, t("section.emptyAccept"))) : acceptRows.map((batch) => {
+    })), /* @__PURE__ */ React.createElement("div", { className: "df-view-body" }, /* @__PURE__ */ React.createElement("div", { className: "df-card" }, devRows.length === 0 ? /* @__PURE__ */ React.createElement("div", { className: "df-empty" }, /* @__PURE__ */ React.createElement("p", null, t("section.emptyDev"))) : devRows.map((task) => /* @__PURE__ */ React.createElement(DevTaskItem, { key: task.id, ui, t, task, picked, setPicked, sessionId, call, reload, show, ...detailProps(task.id), onOpenDiff: setDiffPage })))), selected.length > 0 ? /* @__PURE__ */ React.createElement("div", { className: "df-foot" }, /* @__PURE__ */ React.createElement(ActionButton, { ui, className: "df-go", variant: "primary", disabled: busy || reason !== "", title: reason, onClick: launch }, busy ? t("action.working") : t("action.accept")), /* @__PURE__ */ React.createElement("p", { className: "df-hint" }, reason !== "" ? reason : `${t("hint.order")}\uFF1A${selected.map((task) => task.title).join(" \u2192 ")}`)) : null) : null, id === "accept" && open.accept ? /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("div", { className: "df-view-body" }, /* @__PURE__ */ React.createElement("div", { className: "df-card" }, acceptRows.length === 0 ? /* @__PURE__ */ React.createElement("div", { className: "df-empty" }, /* @__PURE__ */ React.createElement("p", null, t("section.emptyAccept"))) : acceptRows.map((batch) => {
       const children = containedTasks(data, batch);
       const open2 = children.length > 0 && (opened[batch.id] ?? batch.status === "accepting");
       const deletable = batch.status !== "accepting";
@@ -1037,14 +1044,11 @@ function DevTaskItem({
       depth,
       tone: toneOf(shownStatus(task))
     },
-    diff !== null && diff.files.length > 0 ? openFile !== null ? /* @__PURE__ */ React.createElement("div", { className: "df-diff-page" }, /* @__PURE__ */ React.createElement("div", { className: "df-diff-header" }, /* @__PURE__ */ React.createElement("button", { type: "button", className: "df-diff-back", onClick: (event) => {
-      event.stopPropagation();
-      setOpenFile(null);
-    } }, "\u2039"), /* @__PURE__ */ React.createElement("span", { className: "df-diff-title" }, openFile)), /* @__PURE__ */ React.createElement("div", { className: "df-diff-body" }, selectedFile ? /* @__PURE__ */ React.createElement(DiffLines, { patch: selectedFile.patch }) : null)) : /* @__PURE__ */ React.createElement("div", { className: "df-files" }, diff.files.map((file) => {
+    diff !== null && diff.files.length > 0 ? false ? null : /* @__PURE__ */ React.createElement("div", { className: "df-files" }, diff.files.map((file) => {
       const key = `${file.repo}:${file.path}`;
       return /* @__PURE__ */ React.createElement("div", { key, className: "df-file-item" }, /* @__PURE__ */ React.createElement("div", { className: "df-file-row", onClick: (event) => {
         event.stopPropagation();
-        setOpenFile(key);
+        onOpenDiff?.({ path: file.path, patch: file.patch });
       } }, /* @__PURE__ */ React.createElement("span", { className: "df-file-path" }, file.path), file.binary ? /* @__PURE__ */ React.createElement("span", { className: "df-meta" }, "binary") : /* @__PURE__ */ React.createElement("span", { className: "df-diff-counts" }, /* @__PURE__ */ React.createElement("span", { className: "df-diff-add" }, `+${file.added}`), /* @__PURE__ */ React.createElement("span", { className: "df-diff-del" }, `-${file.deleted}`))), file.binary ? null : /* @__PURE__ */ React.createElement("div", { className: "df-hover-card", "aria-hidden": "true" }, /* @__PURE__ */ React.createElement("div", { className: "df-hover-head" }, /* @__PURE__ */ React.createElement("span", { className: "df-hover-path" }, file.path), /* @__PURE__ */ React.createElement("span", { className: "df-diff-counts" }, /* @__PURE__ */ React.createElement("span", { className: "df-diff-add" }, `+${file.added}`), /* @__PURE__ */ React.createElement("span", { className: "df-diff-del" }, `-${file.deleted}`))), /* @__PURE__ */ React.createElement("div", { className: "df-hover-body" }, /* @__PURE__ */ React.createElement(DiffLines, { patch: file.patch, maxLines: 24 }))));
     })) : null,
     deps.map((dep) => /* @__PURE__ */ React.createElement(

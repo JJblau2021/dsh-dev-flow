@@ -140,6 +140,9 @@ export const panelSheet = `
 
 /* diff 详情 */
 .df-diff-page { margin: 2px 16px 8px 36px; border: 0.5px solid var(--dsw-alias-border-l3); border-radius: 8px; overflow: hidden; background: var(--dsw-alias-bg-base); }
+.df-diff-standalone { display: flex; flex-direction: column; min-height: 0; height: 100%; margin: 0; border: 0; border-radius: 0; background: transparent; }
+.df-diff-standalone .df-diff-header { height: 34px; background: transparent; }
+.df-diff-standalone .df-diff-body { flex: 1; min-height: 0; max-height: none; }
 .df-diff-header { display: flex; align-items: center; gap: 6px; height: 32px; padding: 0 8px; border-bottom: 0.5px solid var(--dsw-alias-border-l3); background: var(--dsw-alias-bg-layer-2); }
 .df-diff-back { display: inline-flex; align-items: center; justify-content: center; width: 20px; height: 20px; padding: 0; border: 0; border-radius: 4px; background: transparent; color: var(--dsw-alias-label-tertiary); font-size: 15px; line-height: 1; cursor: pointer; }
 .df-diff-back:hover { background: var(--dsw-alias-interactive-bg-hover, rgba(38, 49, 72, 0.06)); color: var(--dsw-alias-label-primary); }
