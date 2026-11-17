@@ -1,3 +1,5 @@
+import { all as allCss } from 'dev-flow:css-registry'
+
 export const PANEL_STYLE_ID = 'dev-flow-panel'
 
 export const panelSheet = `
@@ -360,5 +362,5 @@ export function ensureSheet() {
     style.id = PANEL_STYLE_ID
     document.head.appendChild(style)
   }
-  style.textContent = panelSheet
+  style.textContent = `${panelSheet}\n${allCss()}`
 }

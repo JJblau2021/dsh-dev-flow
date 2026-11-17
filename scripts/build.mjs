@@ -1,4 +1,4 @@
-import { writeFileSync } from 'node:fs'
+import { readFileSync, writeFileSync } from 'node:fs'
 import { createRequire } from 'node:module'
 import { dirname, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -6,6 +6,35 @@ import { fileURLToPath } from 'node:url'
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 const require = createRequire(import.meta.url)
 const esbuild = require('esbuild')
+
+const REGISTRY = 'dev-flow:css-registry'
+
+const cssRegistry = {
+  name: 'css-registry',
+  setup(build) {
+    build.onResolve({ filter: /^dev-flow:css-registry$/ }, () => ({ path: REGISTRY, namespace: 'df' }))
+    build.onLoad({ filter: /.*/, namespace: 'df' }, () => ({
+      contents: 'const chunks = []; export function register(text) { chunks.push(text) } export function all() { return chunks.join("\\n") }',
+      loader: 'js',
+    }))
+  },
+}
+
+const cssModules = {
+  name: 'css-modules',
+  setup(build) {
+    build.onLoad({ filter: /\.css$/ }, async (args) => {
+      const source = readFileSync(args.path, 'utf8')
+      const names = new Set()
+      for (const match of source.matchAll(/\.([A-Za-z_][\w-]*)/g)) names.add(match[1])
+      const mapping = Object.fromEntries([...names].map((name) => [name, name]))
+      return {
+        contents: `import { register } from '${REGISTRY}'; register(${JSON.stringify(source)}); export default ${JSON.stringify(mapping)};`,
+        loader: 'js',
+      }
+    })
+  },
+}
 
 const result = await esbuild.build({
   absWorkingDir: root,
@@ -20,6 +49,7 @@ const result = await esbuild.build({
   external: ['react', '@deepseek-ai/dsh-client-ui-primitives'],
   write: false,
   legalComments: 'none',
+  plugins: [cssRegistry, cssModules],
 })
 
 const bundled = result.outputFiles[0].text

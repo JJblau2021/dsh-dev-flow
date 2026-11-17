@@ -17,6 +17,25 @@ function git(cwd, args) {
  * @param {string} workspace
  * @param {string} taskId
  */
+function hunksOf(patch) {
+  const hunks = [];
+  let current = null;
+  for (const line of patch.split('\n')) {
+    const head = /^@@ -(\d+)(?:,(\d+))? \+(\d+)(?:,(\d+))? @@/.exec(line);
+    if (head) {
+      current = { oldStart: Number(head[1]), oldLines: Number(head[2] ?? 1), newStart: Number(head[3]), newLines: Number(head[4] ?? 1), lines: [] };
+      hunks.push(current);
+      continue;
+    }
+    if (current === null) continue;
+    if (line.startsWith('\\')) continue;
+    if (line.startsWith('diff --git') || line.startsWith('index ') || line.startsWith('--- ') || line.startsWith('+++ ')) { current = null; continue }
+    if (line === '') continue;
+    current.lines.push(line);
+  }
+  return hunks;
+}
+
 export function diffTask(workspace, taskId) {
   const state = loadState(workspace);
   const task = state.tasks?.[taskId];
@@ -46,6 +65,7 @@ export function diffTask(workspace, taskId) {
         deleted: deleted === '-' ? 0 : Number(deleted),
         binary: added === '-' || deleted === '-',
         patch: text.length > LIMIT ? `${text.slice(0, LIMIT)}\n…（diff 过长，已截断）` : text,
+        hunks: hunksOf(text),
       });
     }
   }

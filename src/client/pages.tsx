@@ -222,7 +222,7 @@ function Tasks({
   const [pickedBatches, setPickedBatches] = useState<string[]>([])
   const [removing, setRemoving] = useState(false)
   const [details, setDetails] = useState<Record<string, boolean>>({})
-  const [diffPage, setDiffPage] = useState<{ path: string, patch: string } | null>(null)
+  const [diffPage, setDiffPage] = useState<TaskDiffFile | null>(null)
   const detailProps = (id: string) => ({
     detailsOpen: details[id] === true,
     onToggleDetails: () => setDetails({ ...details, [id]: !details[id] }),
@@ -338,7 +338,7 @@ function Tasks({
           <button type="button" className="df-diff-back" onClick={() => setDiffPage(null)}>‹</button>
           <span className="df-diff-title">{diffPage.path}</span>
         </div>
-        <div className="df-diff-body">{ui.DiffBlock ? <ui.DiffBlock diffs={[{ path: diffPage.path, ...textsFromPatch(diffPage.patch) }]} labels={diffLabels(t)} maxLines={400} /> : <DiffLines patch={diffPage.patch} />}</div>
+        <div className="df-diff-body"><FileDiff state={diffStateOf(diffPage)} split={false} wrap={false} retry={() => undefined} t={diffLabelsOf(t)} /></div>
       </div>
     )
   }
@@ -621,7 +621,7 @@ function DevTaskItem({
   reviewing?: boolean
   batchId?: string
   depth?: number
-  onOpenDiff?: (file: { path: string, patch: string }) => void
+  onOpenDiff?: (file: TaskDiffFile) => void
 }) {
   const facts = taskFacts(task, t)
   const deps = task.dependsOn ?? []
@@ -683,7 +683,7 @@ function DevTaskItem({
               const key = `${file.repo}:${file.path}`
               return (
                 <div key={key} className="df-file-item">
-                  <div className="df-file-row" onClick={(event) => { event.stopPropagation(); onOpenDiff?.({ path: file.path, patch: file.patch }) }}>
+                  <div className="df-file-row" onClick={(event) => { event.stopPropagation(); onOpenDiff?.(file) }}>
                     <span className="df-file-path">{file.path}</span>
                     {file.binary
                       ? <span className="df-meta">binary</span>
@@ -703,7 +703,7 @@ function DevTaskItem({
                           <span className="df-diff-del">{`-${file.deleted}`}</span>
                         </span>
                       </div>
-                      <div className="df-hover-body">{ui.DiffBlock ? <ui.DiffBlock diffs={[{ path: file.path, ...textsFromPatch(file.patch) }]} labels={diffLabels(t)} maxLines={24} /> : <DiffLines patch={file.patch} maxLines={24} />}</div>
+                      <div className="df-hover-body"><FileDiff state={diffStateOf(file)} split={false} wrap={false} retry={() => undefined} t={diffLabelsOf(t)} /></div>
                     </div>
                   )}
                 </div>
@@ -1115,6 +1115,31 @@ function diffLabels(t: Translate) {
     expandAria: (hidden: number) => `+${hidden}`,
     collapse: t('diff.collapse'),
     expand: (hidden: number) => `+${hidden}`,
+  }
+}
+
+function diffLabelsOf(t: Translate) {
+  const strings: Record<string, string> = {
+    'diff.loading': '加载中',
+    'diff.missing': '文件已不存在',
+    'diff.error': '读取失败',
+    'presented.retry': '重试',
+    'diff.binary': '二进制文件',
+    'diff.oversized': '文件过大',
+  }
+  return (key: string) => strings[key] ?? key
+}
+
+function diffStateOf(file: TaskDiffFile) {
+  if (file.binary) return { kind: 'binary' as const, path: file.path, display: file.path }
+  return {
+    kind: 'text' as const,
+    path: file.path,
+    display: file.path,
+    before: true,
+    after: true,
+    hunks: file.hunks ?? [],
+    coarse: false,
   }
 }
 

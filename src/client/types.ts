@@ -32,6 +32,7 @@ export interface TaskDiffFile {
   deleted: number
   binary: boolean
   patch: string
+  hunks?: { oldStart: number, oldLines: number, newStart: number, newLines: number, lines: string[] }[]
 }
 
 export interface TaskDiff {

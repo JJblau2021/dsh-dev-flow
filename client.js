@@ -13,9 +13,9 @@ var __defProp = Object.defineProperty;
 var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
 var __getOwnPropNames = Object.getOwnPropertyNames;
 var __hasOwnProp = Object.prototype.hasOwnProperty;
-var __export = (target, all) => {
-  for (var name in all)
-    __defProp(target, name, { get: all[name], enumerable: true });
+var __export = (target, all2) => {
+  for (var name in all2)
+    __defProp(target, name, { get: all2[name], enumerable: true });
 };
 var __copyProps = (to, from, except, desc) => {
   if (from && typeof from === "object" || typeof from === "function") {
@@ -203,6 +203,12 @@ var en = {
   "hint.order": "Merge order follows the selection",
   "hint.pick": "Select pending tasks first"
 };
+
+// df:dev-flow:css-registry
+var chunks = [];
+function all() {
+  return chunks.join("\n");
+}
 
 // src/client/sheet.ts
 var PANEL_STYLE_ID = "dev-flow-panel";
@@ -565,7 +571,8 @@ function ensureSheet() {
     style.id = PANEL_STYLE_ID;
     document.head.appendChild(style);
   }
-  style.textContent = panelSheet;
+  style.textContent = `${panelSheet}
+${all()}`;
 }
 
 // src/client/ui.tsx
@@ -823,7 +830,7 @@ function Tasks({
     setLayout((prev) => ({ ...prev, open: { ...prev.open, [id]: !prev.open[id] } }));
   };
   if (diffPage !== null) {
-    return /* @__PURE__ */ React.createElement("div", { className: "df-diff-page df-diff-standalone" }, /* @__PURE__ */ React.createElement("div", { className: "df-diff-header" }, /* @__PURE__ */ React.createElement("button", { type: "button", className: "df-diff-back", onClick: () => setDiffPage(null) }, "\u2039"), /* @__PURE__ */ React.createElement("span", { className: "df-diff-title" }, diffPage.path)), /* @__PURE__ */ React.createElement("div", { className: "df-diff-body" }, ui.DiffBlock ? /* @__PURE__ */ React.createElement(ui.DiffBlock, { diffs: [{ path: diffPage.path, ...textsFromPatch(diffPage.patch) }], labels: diffLabels(t), maxLines: 400 }) : /* @__PURE__ */ React.createElement(DiffLines, { patch: diffPage.patch })));
+    return /* @__PURE__ */ React.createElement("div", { className: "df-diff-page df-diff-standalone" }, /* @__PURE__ */ React.createElement("div", { className: "df-diff-header" }, /* @__PURE__ */ React.createElement("button", { type: "button", className: "df-diff-back", onClick: () => setDiffPage(null) }, "\u2039"), /* @__PURE__ */ React.createElement("span", { className: "df-diff-title" }, diffPage.path)), /* @__PURE__ */ React.createElement("div", { className: "df-diff-body" }, /* @__PURE__ */ React.createElement(FileDiff, { state: diffStateOf(diffPage), split: false, wrap: false, retry: () => void 0, t: diffLabelsOf(t) })));
   }
   return /* @__PURE__ */ React.createElement("div", { className: "df-views", ref: splitRef }, dropY !== null ? /* @__PURE__ */ React.createElement("div", { className: "df-drop", style: { top: dropY } }) : null, order.map((id) => {
     const laterOpen = order.slice(order.indexOf(id) + 1).some((next) => open[next]);
@@ -1054,8 +1061,8 @@ function DevTaskItem({
       const key = `${file.repo}:${file.path}`;
       return /* @__PURE__ */ React.createElement("div", { key, className: "df-file-item" }, /* @__PURE__ */ React.createElement("div", { className: "df-file-row", onClick: (event) => {
         event.stopPropagation();
-        onOpenDiff?.({ path: file.path, patch: file.patch });
-      } }, /* @__PURE__ */ React.createElement("span", { className: "df-file-path" }, file.path), file.binary ? /* @__PURE__ */ React.createElement("span", { className: "df-meta" }, "binary") : /* @__PURE__ */ React.createElement("span", { className: "df-diff-counts" }, /* @__PURE__ */ React.createElement("span", { className: "df-diff-add" }, `+${file.added}`), /* @__PURE__ */ React.createElement("span", { className: "df-diff-del" }, `-${file.deleted}`))), file.binary ? null : /* @__PURE__ */ React.createElement("div", { className: "df-hover-card", "aria-hidden": "true" }, /* @__PURE__ */ React.createElement("div", { className: "df-hover-head" }, /* @__PURE__ */ React.createElement("span", { className: "df-hover-path" }, file.path), /* @__PURE__ */ React.createElement("span", { className: "df-diff-counts" }, /* @__PURE__ */ React.createElement("span", { className: "df-diff-add" }, `+${file.added}`), /* @__PURE__ */ React.createElement("span", { className: "df-diff-del" }, `-${file.deleted}`))), /* @__PURE__ */ React.createElement("div", { className: "df-hover-body" }, ui.DiffBlock ? /* @__PURE__ */ React.createElement(ui.DiffBlock, { diffs: [{ path: file.path, ...textsFromPatch(file.patch) }], labels: diffLabels(t), maxLines: 24 }) : /* @__PURE__ */ React.createElement(DiffLines, { patch: file.patch, maxLines: 24 }))));
+        onOpenDiff?.(file);
+      } }, /* @__PURE__ */ React.createElement("span", { className: "df-file-path" }, file.path), file.binary ? /* @__PURE__ */ React.createElement("span", { className: "df-meta" }, "binary") : /* @__PURE__ */ React.createElement("span", { className: "df-diff-counts" }, /* @__PURE__ */ React.createElement("span", { className: "df-diff-add" }, `+${file.added}`), /* @__PURE__ */ React.createElement("span", { className: "df-diff-del" }, `-${file.deleted}`))), file.binary ? null : /* @__PURE__ */ React.createElement("div", { className: "df-hover-card", "aria-hidden": "true" }, /* @__PURE__ */ React.createElement("div", { className: "df-hover-head" }, /* @__PURE__ */ React.createElement("span", { className: "df-hover-path" }, file.path), /* @__PURE__ */ React.createElement("span", { className: "df-diff-counts" }, /* @__PURE__ */ React.createElement("span", { className: "df-diff-add" }, `+${file.added}`), /* @__PURE__ */ React.createElement("span", { className: "df-diff-del" }, `-${file.deleted}`))), /* @__PURE__ */ React.createElement("div", { className: "df-hover-body" }, /* @__PURE__ */ React.createElement(FileDiff, { state: diffStateOf(file), split: false, wrap: false, retry: () => void 0, t: diffLabelsOf(t) }))));
     })) : null,
     deps.map((dep) => /* @__PURE__ */ React.createElement(
       TreeItem,
@@ -1298,74 +1305,28 @@ function taskChips(task) {
     return slot.number ?? repo;
   });
 }
-function diffRows(patch) {
-  const rows = [];
-  let oldNo = 0;
-  let newNo = 0;
-  for (const line of patch.split("\n")) {
-    if (line.startsWith("@@")) {
-      const match = /@@ -(\d+)(?:,\d+)? \+(\d+)/.exec(line);
-      oldNo = match ? Number(match[1]) : oldNo;
-      newNo = match ? Number(match[2]) : newNo;
-      rows.push({ kind: "hunk", text: line, oldNo: "", newNo: "" });
-      continue;
-    }
-    if (line.startsWith("diff --git") || line.startsWith("index ") || line.startsWith("--- ") || line.startsWith("+++ ")) {
-      rows.push({ kind: "meta", text: line, oldNo: "", newNo: "" });
-      continue;
-    }
-    if (line.startsWith("-")) {
-      rows.push({ kind: "del", text: line.slice(1), oldNo: oldNo || "", newNo: "" });
-      oldNo += 1;
-      continue;
-    }
-    if (line.startsWith("+")) {
-      rows.push({ kind: "add", text: line.slice(1), oldNo: "", newNo: newNo || "" });
-      newNo += 1;
-      continue;
-    }
-    rows.push({ kind: "context", text: line.slice(1), oldNo: oldNo || "", newNo: newNo || "" });
-    oldNo += 1;
-    newNo += 1;
-  }
-  return rows;
-}
-function textsFromPatch(patch) {
-  const oldLines = [];
-  const newLines = [];
-  for (const line of patch.split("\n")) {
-    if (line.startsWith("diff --git") || line.startsWith("index ") || line.startsWith("--- ") || line.startsWith("+++ ") || line.startsWith("@@")) continue;
-    if (line.startsWith("-")) {
-      oldLines.push(line.slice(1));
-      continue;
-    }
-    if (line.startsWith("+")) {
-      newLines.push(line.slice(1));
-      continue;
-    }
-    const text = line.startsWith(" ") ? line.slice(1) : line;
-    oldLines.push(text);
-    newLines.push(text);
-  }
-  return { oldText: oldLines.join("\n"), newText: newLines.join("\n") };
-}
-function diffLabels(t) {
-  return {
-    codeLabel: "text",
-    wrapLabel: "wrap",
-    unwrapLabel: "nowrap",
-    copy: t("diff.copy"),
-    copied: t("diff.copied"),
-    collapseAria: t("diff.collapse"),
-    expandAria: (hidden) => `+${hidden}`,
-    collapse: t("diff.collapse"),
-    expand: (hidden) => `+${hidden}`
+function diffLabelsOf(t) {
+  const strings = {
+    "diff.loading": "\u52A0\u8F7D\u4E2D",
+    "diff.missing": "\u6587\u4EF6\u5DF2\u4E0D\u5B58\u5728",
+    "diff.error": "\u8BFB\u53D6\u5931\u8D25",
+    "presented.retry": "\u91CD\u8BD5",
+    "diff.binary": "\u4E8C\u8FDB\u5236\u6587\u4EF6",
+    "diff.oversized": "\u6587\u4EF6\u8FC7\u5927"
   };
+  return (key) => strings[key] ?? key;
 }
-function DiffLines({ patch, maxLines }) {
-  const rows = diffRows(patch);
-  const shown = maxLines === void 0 ? rows : rows.slice(0, maxLines);
-  return /* @__PURE__ */ React.createElement("div", { className: "df-difflines" }, shown.map((row, index) => /* @__PURE__ */ React.createElement("div", { key: index, className: "df-diffline", "data-kind": row.kind }, /* @__PURE__ */ React.createElement("span", { className: "df-diffline-no" }, row.oldNo), /* @__PURE__ */ React.createElement("span", { className: "df-diffline-no" }, row.newNo), /* @__PURE__ */ React.createElement("span", { className: "df-diffline-sign" }, row.kind === "add" ? "+" : row.kind === "del" ? "-" : " "), /* @__PURE__ */ React.createElement("span", { className: "df-diffline-text" }, row.text))));
+function diffStateOf(file) {
+  if (file.binary) return { kind: "binary", path: file.path, display: file.path };
+  return {
+    kind: "text",
+    path: file.path,
+    display: file.path,
+    before: true,
+    after: true,
+    hunks: file.hunks ?? [],
+    coarse: false
+  };
 }
 function createdText(createdAt) {
   if (!createdAt) return void 0;
