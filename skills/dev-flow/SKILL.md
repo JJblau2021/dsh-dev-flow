@@ -29,7 +29,7 @@ node {{DEV_FLOW_CLI}} accept-start --workspace <根> --id <批次 id> --tasks <�
 node {{DEV_FLOW_CLI}} dispatch --workspace <根> --session <会话> --kind accept --id <批次 id>
 ```
 
-通过或不通过按单个开发任务记录。不要推送，不要删除分支。
+通过或不通过按单个开发任务记录。不要推送；需要清理已经结束的任务时用 `task-delete`，不要手动删分支。
 
 ## 常用命令
 
@@ -39,7 +39,10 @@ node {{DEV_FLOW_CLI}} task-create --workspace <根> --schedule <调度 id> --id 
 node {{DEV_FLOW_CLI}} base-list --workspace <根>
 node {{DEV_FLOW_CLI}} base-add --workspace <根> [--group <编号>] --repo <仓库> --branch <基线分支>
 node {{DEV_FLOW_CLI}} base-remove --workspace <根> --group <编号> --repo <仓库>
+node {{DEV_FLOW_CLI}} task-delete --workspace <根> --ids <任务>,<任务>
 node {{DEV_FLOW_CLI}} scan --workspace <根>
 node {{DEV_FLOW_CLI}} status --workspace <根>
 node {{DEV_FLOW_CLI}} session-set --workspace <根> --session <会话> --enabled true
 ```
+
+`task-delete` 只删已经结束的任务（`merged`、`abandoned`、`failed`、`rejected` 和不属于进行中验收批次的 `pending-acceptance`），会同时删掉 `df-task/<任务 id>` 分支并清理槽位、调度、代理和验收批次里的引用。子代理还在跑、任务仍在开发/等待/调度/待合入、或仍被其它未删除任务依赖时整批拒绝。分支删不掉时命令会返回 warning，任务记录仍然删除。

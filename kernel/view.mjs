@@ -7,6 +7,8 @@ import { hasState, loadState } from './state.mjs';
 
 const ACTIVE = new Set(['waiting', 'developing', 'failed']);
 const DONE = new Set(['merged', 'abandoned']);
+/** 和 kernel/flow.mjs 的删除范围保持一致；视图只按单条任务判断。 */
+const DELETABLE = new Set(['merged', 'abandoned', 'failed', 'rejected', 'pending-acceptance']);
 
 /**
  * Read-only panel model. Counts stay at zero until `.dev-flow/` exists.
@@ -90,6 +92,7 @@ export function snapshot(workspace, sessionId, settingsOverride) {
         createdAt: task.createdAt ?? null,
         dependsOn: (task.dependsOn ?? []).map((depId) => dependencyView(state, task, depId)),
         selectable: task.status === 'pending-acceptance' && task.batchId == null,
+        deletable: deletableTask(state, task),
       })),
       ...Object.values(state.batches).map((batch) => ({
         id: batch.id,
@@ -104,6 +107,7 @@ export function snapshot(workspace, sessionId, settingsOverride) {
         usage: batch.usage ?? null,
         createdAt: batch.createdAt ?? null,
         selectable: false,
+        deletable: false,
       })),
     ],
     repos: repos.map((repo) => ({
@@ -130,6 +134,23 @@ export function snapshot(workspace, sessionId, settingsOverride) {
     agents: state.agents ?? [],
     schedules: Object.values(state.schedules ?? {}).map((schedule) => scheduleView(state, schedule)),
   };
+}
+
+/**
+ * 单条任务是否可删。依赖方还在时不可删；批量删除由内核在勾选集合内互相放行。
+ * @param {ReturnType<typeof loadState>} state
+ * @param {{ id: string, status: string, agentStatus?: string, batchId?: string | null, dependsOn?: string[] }} task
+ */
+function deletableTask(state, task) {
+  if (!DELETABLE.has(task.status)) return false;
+  if (task.agentStatus === 'running') return false;
+  if (task.status === 'pending-acceptance' && task.batchId) {
+    const batch = state.batches?.[task.batchId];
+    if (batch !== undefined && (batch.status === 'accepting' || batch.status === 'pending-merge')) return false;
+  }
+  return !Object.values(state.tasks ?? {}).some(
+    (other) => other.id !== task.id && (other.dependsOn ?? []).includes(task.id),
+  );
 }
 
 /**

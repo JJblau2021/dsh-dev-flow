@@ -242,7 +242,17 @@ function Tasks({
   const devRows = devAll.filter((task) => matchFilter(filter, task))
   const acceptRows = data.tasks.filter((task) => task.kind === 'accept').sort(newest)
   const reason = acceptReason(data, picked, t)
-  const selected = data.tasks.filter((task) => task.selectable && picked.includes(task.id))
+  const pickedDev = data.tasks.filter((task) => task.kind !== 'accept' && picked.includes(task.id))
+  const acceptSelected = pickedDev.filter((task) => task.selectable === true)
+  const deleteSelected = pickedDev.filter((task) => task.deletable === true)
+  const acceptBlocked = pickedDev.filter((task) => task.selectable !== true)
+  const deleteBlocked = pickedDev.filter((task) => task.deletable !== true)
+  const showAccept = pickedDev.length > 0 && acceptBlocked.length === 0
+  const showDelete = deleteSelected.length > 0
+  const deleteHint = t('hint.deleteTasks').replace('{count}', String(deleteSelected.length))
+  const deleteReason = deleteBlocked.length === 0
+    ? ''
+    : `${t('hint.deleteBlocked')}：${deleteBlocked.map((task) => task.title).join('、')}`
   const filters = [
     ['all', t('filter.all')],
     ['pending', t('filter.pending')],
@@ -252,10 +262,16 @@ function Tasks({
   const launch = () => {
     if (busy || reason !== '') return
     setBusy(true)
-    start(call, sessionId, picked, setPicked, reload)
+    start(call, sessionId, acceptSelected.map((task) => task.id), setPicked, reload)
       .then(() => show(t('toast.started'), 'info'))
       .catch(() => undefined)
       .finally(() => setBusy(false))
+  }
+  const removeOne = (id: string) => {
+    void removeTasks(call, sessionId, [id], picked, setPicked, setRemoving, reload, show, t)
+  }
+  const removeSelected = () => {
+    void removeTasks(call, sessionId, deleteSelected.map((task) => task.id), picked, setPicked, setRemoving, reload, show, t)
   }
   const resizePane = (id: PaneId, event: React.PointerEvent<HTMLDivElement>) => {
     event.preventDefault()
@@ -375,16 +391,28 @@ function Tasks({
       <div className="df-view-body">
       <div className="df-card">
         {devRows.length === 0 ? <div className="df-empty"><p>{t('section.emptyDev')}</p></div> : devRows.map((task) => (
-          <DevTaskItem key={task.id} ui={ui} t={t} task={task} picked={picked} setPicked={setPicked} sessionId={sessionId} call={call} reload={reload} show={show} {...detailProps(task.id)} onOpenDiff={(file, index) => openDiff?.(task.id, task.title, index)} />
+          <DevTaskItem key={task.id} ui={ui} t={t} task={task} picked={picked} setPicked={setPicked} sessionId={sessionId} call={call} reload={reload} show={show} onDeleteTask={removeOne} {...detailProps(task.id)} onOpenDiff={(file, index) => openDiff?.(task.id, task.title, index)} />
         ))}
       </div>
       </div>
-      {selected.length > 0 ? (
+      {showAccept || showDelete ? (
         <div className="df-foot">
-          <ActionButton ui={ui} className="df-go" variant="primary" disabled={busy || reason !== ''} title={reason} onClick={launch}>
-            {busy ? t('action.working') : t('action.accept')}
-          </ActionButton>
-          <p className="df-hint">{reason !== '' ? reason : `${t('hint.order')}：${selected.map((task) => task.title).join(' → ')}`}</p>
+          {showAccept ? (
+            <>
+              <ActionButton ui={ui} className="df-go" variant="primary" disabled={busy || reason !== ''} title={reason} onClick={launch}>
+                {busy ? t('action.working') : t('action.accept')}
+              </ActionButton>
+              <p className="df-hint">{reason !== '' ? reason : `${t('hint.order')}：${acceptSelected.map((task) => task.title).join(' → ')}`}</p>
+            </>
+          ) : null}
+          {showDelete ? (
+            <>
+              <ActionButton ui={ui} className="df-go" disabled={removing || deleteReason !== ''} title={deleteReason || deleteHint} onClick={removeSelected}>
+                {removing ? t('action.deleting') : t('action.delete')}
+              </ActionButton>
+              <p className="df-hint">{deleteReason !== '' ? deleteReason : deleteHint}</p>
+            </>
+          ) : null}
         </div>
       ) : null}
         </> : null}
@@ -605,7 +633,7 @@ function ScheduleItem({ ui, t, schedule, open, onToggle, depth = 0 }: {
 
 /** 开发任务。 */
 function DevTaskItem({
-  ui, t, task, picked, setPicked, sessionId, call, reload, show, detailsOpen = false, onToggleDetails, onOpenDiff, nested = false, reviewing = false, batchId, depth = 0,
+  ui, t, task, picked, setPicked, sessionId, call, reload, show, detailsOpen = false, onToggleDetails, onOpenDiff, onDeleteTask, nested = false, reviewing = false, batchId, depth = 0,
 }: {
   ui: UiKit
   t: Translate
@@ -618,6 +646,7 @@ function DevTaskItem({
   show?: (text: string, tone?: string) => void
   detailsOpen?: boolean
   onToggleDetails?: () => void
+  onDeleteTask?: (id: string) => void
   nested?: boolean
   reviewing?: boolean
   batchId?: string
@@ -642,8 +671,8 @@ function DevTaskItem({
   const openDetails = onToggleDetails === undefined ? selfOpen : detailsOpen
   const toggleDetails = onToggleDetails ?? (() => setSelfOpen(!selfOpen))
   const expandable = facts.length > 0 || deps.length > 0
-  const selectable = !nested && task.selectable === true
-  const leading = selectable
+  const pickable = task.selectable === true || task.deletable === true
+  const leading = pickable
     ? <input className="df-check" type="checkbox" checked={picked.includes(task.id)} onClick={(event) => event.stopPropagation()} onChange={() => setPicked(togglePick(picked, task.id))} />
     : undefined
   return (
@@ -659,6 +688,9 @@ function DevTaskItem({
           {task.status === 'pending-merge' && task.kind !== 'accept' && call && reload ? (
             <ActionButton ui={ui} onClick={(event) => { event.stopPropagation(); mergeTask(call, sessionId, task.id, reload, show) }}>{t('action.merge')}</ActionButton>
           ) : null}
+          {task.deletable && !nested && call && reload && onDeleteTask ? (
+            <ActionButton ui={ui} title={t('hint.deleteSingle')} onClick={(event) => { event.stopPropagation(); onDeleteTask(task.id) }}>{t('action.delete')}</ActionButton>
+          ) : null}
           {nested && reviewing && task.acceptance !== 'accepted' && batchId && call && reload ? (
             <>
               <ActionButton ui={ui} onClick={(event) => { event.stopPropagation(); finishTask(call, sessionId, batchId, task.id, 'accepted', reload) }}>{t('action.pass')}</ActionButton>
@@ -671,7 +703,7 @@ function DevTaskItem({
       expandable={expandable}
       expanded={openDetails}
       onToggle={expandable ? toggle : undefined}
-      onClick={selectable ? () => setPicked(togglePick(picked, task.id)) : undefined}
+      onClick={pickable ? () => setPicked(togglePick(picked, task.id)) : undefined}
       depth={depth}
       tone={toneOf(shownStatus(task))}
     >
@@ -1150,6 +1182,37 @@ function removeBatches(
   setBusy(true)
   call('accept-delete', { sessionId, ids })
     .then(() => { setPicked([]); show?.(`已删除 ${ids.length} 个验收任务`, 'info'); return reload() })
+    .catch((reason: unknown) => reload(reason))
+    .finally(() => setBusy(false))
+}
+
+/** 删除开发任务：同时删任务分支。分支清理失败会带 error toast 回来，不静默。 */
+function removeTasks(
+  call: Call,
+  sessionId: string | undefined,
+  ids: string[],
+  picked: string[],
+  setPicked: (next: string[]) => void,
+  setBusy: (next: boolean) => void,
+  reload: (failure?: unknown) => unknown,
+  show: ((text: string, tone?: string) => void) | undefined,
+  t: Translate,
+) {
+  if (ids.length === 0) return
+  setBusy(true)
+  call('task-delete', { sessionId, ids })
+    .then((value) => {
+      const result = value as unknown as { deleted?: string[], deleteWarnings?: string[] } | undefined
+      const deleted = Array.isArray(result?.deleted) ? result.deleted : ids
+      const warnings = Array.isArray(result?.deleteWarnings) ? result.deleteWarnings : []
+      setPicked(picked.filter((id) => !deleted.includes(id)))
+      if (warnings.length > 0) {
+        show?.(t('toast.deleteWarnings').replace('{count}', String(deleted.length)).replace('{warnings}', warnings.join('；')), 'error')
+      } else {
+        show?.(t('toast.deletedTasks').replace('{count}', String(deleted.length)), 'info')
+      }
+      return reload()
+    })
     .catch((reason: unknown) => reload(reason))
     .finally(() => setBusy(false))
 }

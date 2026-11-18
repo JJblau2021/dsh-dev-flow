@@ -7,6 +7,8 @@ import { assertId, branchName, FlowError, resolveSettings } from './settings.mjs
 import { loadState, saveState } from './state.mjs';
 
 const READY = new Set(['pending-acceptance', 'accepted']);
+/** 只有已经结束、不会再有子代理往里写代码的任务才允许删除。 */
+const DELETABLE = new Set(['merged', 'abandoned', 'failed', 'rejected', 'pending-acceptance']);
 
 /**
  * @param {string} workspace
@@ -265,6 +267,99 @@ export function deleteAcceptances(workspace, ids) {
   }
   saveState(workspace, state);
   return removed;
+}
+
+/**
+ * 批量删除已经结束的开发任务，并删掉它们占用的 `df-task/<id>` 分支。
+ * 先把所有 id 校验完再动手；任何一个不合法都不会删掉半批。
+ * 分支删不掉时只记 warning，任务记录和槽位引用仍然清理。
+ * @param {string} workspace
+ * @param {string[]} ids
+ * @returns {{ removed: string[], warnings: string[] }}
+ */
+export function deleteDevTasks(workspace, ids) {
+  const state = loadState(workspace);
+  const list = [...new Set((Array.isArray(ids) ? ids : []).map((id) => String(id)))];
+  if (list.length === 0) throw new FlowError('没有要删除的任务', 'empty');
+  const deleting = new Set(list);
+  const tasks = [];
+  for (const id of list) {
+    const task = state.tasks[id];
+    if (task === undefined) throw new FlowError(`任务 ${id} 不存在`, 'missing');
+    assertDeletableTask(state, task, deleting);
+    tasks.push(task);
+  }
+  const warnings = [];
+  for (const task of tasks) {
+    for (const [repoName, slot] of Object.entries(task.slots ?? {})) {
+      removeTaskBranch(task, repoName, slot, warnings);
+    }
+    for (const records of Object.values(state.devSlots ?? {})) {
+      for (const record of Object.values(records ?? {})) {
+        if (record.taskId === task.id) record.taskId = null;
+      }
+    }
+    for (const agent of state.agents ?? []) {
+      if (agent.taskId === task.id) agent.taskId = null;
+      if (agent.lastTaskId === task.id) agent.lastTaskId = null;
+    }
+    for (const batch of Object.values(state.batches ?? {})) {
+      if (Array.isArray(batch.taskIds)) batch.taskIds = batch.taskIds.filter((item) => item !== task.id);
+    }
+    delete state.tasks[task.id];
+  }
+  for (const schedule of Object.values(state.schedules ?? {})) {
+    if (!Array.isArray(schedule.taskIds)) schedule.taskIds = [];
+    else schedule.taskIds = schedule.taskIds.filter((item) => !deleting.has(item));
+    refreshSchedule(state, schedule.id);
+  }
+  saveState(workspace, state);
+  return { removed: list, warnings };
+}
+
+/** 删除前的完整校验；deleting 是本次一起删的集合，集合内部的依赖互相放行。 */
+function assertDeletableTask(state, task, deleting) {
+  if (task.agentStatus === 'running') {
+    throw new FlowError(`任务 ${task.id} 还有子代理在运行，不能删除`, 'status');
+  }
+  if (task.status === 'pending-acceptance' && task.batchId) {
+    const batch = state.batches?.[task.batchId];
+    if (batch !== undefined && (batch.status === 'accepting' || batch.status === 'pending-merge')) {
+      throw new FlowError(`任务 ${task.id} 在验收批次 ${batch.id} 里（${batch.status}），不能删除`, 'status');
+    }
+  }
+  if (!DELETABLE.has(task.status)) {
+    throw new FlowError(`任务 ${task.id} 是 ${task.status}，只有已经结束的任务可以删除`, 'status');
+  }
+  const dependents = Object.values(state.tasks)
+    .filter((other) => other.id !== task.id && !deleting.has(other.id) && (other.dependsOn ?? []).includes(task.id))
+    .map((other) => other.id);
+  if (dependents.length > 0) {
+    throw new FlowError(`任务 ${task.id} 还被 ${dependents.join('、')} 依赖，不能删除`, 'depends');
+  }
+}
+
+/** 槽位还检在任务分支上就先 detach；分支已经不存在视为成功。 */
+function removeTaskBranch(task, repoName, slot, warnings) {
+  const branch = slot?.branch;
+  if (typeof branch !== 'string' || branch === '') return;
+  if (typeof slot.path === 'string' && slotExists(slot.path)) {
+    const current = gitResult(slot.path, ['branch', '--show-current']);
+    if (current.ok && current.stdout === branch) {
+      const detached = gitResult(slot.path, ['checkout', '-f', '--detach']);
+      if (!detached.ok) warnings.push(`${repoName} 槽位 ${slot.path} 无法脱离 ${branch}：${detached.stderr || '未知错误'}`);
+    }
+  }
+  const repo = (task.repos ?? []).find((item) => item.name === repoName);
+  if (repo === undefined || typeof repo.path !== 'string' || repo.path === '') {
+    warnings.push(`${repoName} 找不到仓库路径，分支 ${branch} 未删除`);
+    return;
+  }
+  const deleted = gitResult(repo.path, ['branch', '-D', branch]);
+  if (deleted.ok) return;
+  // 分支本来就不存在时 `git branch -D` 也会失败；这里把它当成已经清理干净。
+  if (!gitResult(repo.path, ['rev-parse', '--verify', '--quiet', `refs/heads/${branch}`]).ok) return;
+  warnings.push(`${repoName} 分支 ${branch} 删除失败：${deleted.stderr || '未知错误'}`);
 }
 
 /**

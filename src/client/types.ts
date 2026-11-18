@@ -87,6 +87,7 @@ export interface TaskRow {
   createdAt?: string | null
   dependsOn?: { id: string, title: string, status: string, merged: boolean, branch?: string | null }[]
   selectable?: boolean
+  deletable?: boolean
 }
 
 export interface TokenUsage {

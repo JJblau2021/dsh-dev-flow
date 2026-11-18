@@ -1,4 +1,4 @@
-import { deleteAcceptances, finishAcceptance, finishTaskAcceptance, mergePendingTask, refreshSchedules, saveBaseGroup, sessionEnabled, setSessionEnabled, settlePendingMerges, settleStaleAcceptSlots, startAcceptance } from './flow.mjs';
+import { deleteAcceptances, deleteDevTasks, finishAcceptance, finishTaskAcceptance, mergePendingTask, refreshSchedules, saveBaseGroup, sessionEnabled, setSessionEnabled, settlePendingMerges, settleStaleAcceptSlots, startAcceptance } from './flow.mjs';
 import { diffTask } from './diff.mjs';
 import { loadPluginSettings, savePluginSettings } from './plugin-settings.mjs';
 import { hasState, initializeWorkspace } from './state.mjs';
@@ -63,6 +63,15 @@ export function handle(workspace, sessionId, endpoint, payload = {}, settingsHom
     const ids = Array.isArray(payload.ids) ? payload.ids.map(String) : [];
     deleteAcceptances(workspace, ids);
     return snapshot(workspace, sessionId, loadPluginSettings(settingsHome));
+  }
+  if (endpoint === 'task-delete') {
+    const ids = Array.isArray(payload.ids) ? payload.ids.map(String) : [];
+    const result = deleteDevTasks(workspace, ids);
+    return {
+      deleted: result.removed,
+      deleteWarnings: result.warnings,
+      snapshot: snapshot(workspace, sessionId, loadPluginSettings(settingsHome)),
+    };
   }
   if (endpoint === 'task-merge') {
     mergePendingTask(workspace, String(payload.taskId ?? ''), loadPluginSettings(settingsHome));

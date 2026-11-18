@@ -7,6 +7,7 @@ import {
   addBase,
   completeDevTask,
   createDevTask,
+  deleteDevTasks,
   failDevTask,
   finishAcceptance,
   planDispatch,
@@ -24,6 +25,7 @@ const { values } = parseArgs({
   options: {
     workspace: { type: 'string' },
     id: { type: 'string' },
+    ids: { type: 'string' },
     title: { type: 'string' },
     repos: { type: 'string' },
     depends: { type: 'string' },
@@ -72,6 +74,7 @@ const commands = {
   'task-complete': () => completeDevTask(workspace, values.id),
   'task-fail': () => failDevTask(workspace, values.id),
   'task-abandon': () => abandonDevTask(workspace, values.id),
+  'task-delete': () => deleteDevTasks(workspace, list(values.ids ?? values.id)),
   'accept-start': () => startAcceptance(workspace, { id: values.id, taskIds: list(values.tasks), settings }),
   'accept-pass': () => finishAcceptance(workspace, values.id, 'accepted', settings),
   'accept-fail': () => finishAcceptance(workspace, values.id, 'rejected', settings),

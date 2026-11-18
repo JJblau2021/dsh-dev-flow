@@ -163,8 +163,8 @@ function all() {
 }
 
 // src/client/vendor/FileDiff.module.css
-register("/** Shared comparison layout, header, states, and numbered diff lines for previews and review tabs. */\n.df-root-22036c { --diff-empty-fill: color-mix(in srgb, var(--dsw-alias-interactive-bg-hover) 50%, transparent); display: flex; flex-direction: column; box-sizing: border-box; width: 100%; min-height: 0; color: var(--dsw-alias-label-primary); }\n.df-header-22036c { display: flex; flex: 0 0 auto; gap: 6px; align-items: center; box-sizing: border-box; height: 38px; padding: 0 6px 0 8px; border-bottom: 0.5px solid var(--dsw-alias-border-l3); }\n.df-status-22036c { display: flex; gap: 12px; align-items: center; margin: 0; padding: 16px; font-size: 13px; color: var(--dsw-alias-label-secondary); }\n.df-body-22036c { display: flex; flex: 1 1 auto; flex-direction: column; min-height: 0; overflow: auto; padding: 8px 0 16px; font: var(--dsw-font-markdown-code-block); }\n.df-columns-22036c { display: grid; flex: 1 1 auto; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); min-height: 0; }\n/* One intrinsic-width track keeps every hunk and row painted across the scrollable content. */\n.df-column-22036c, .df-body-22036c[data-review-view='unified']:not([data-review-wrap]) { display: grid; grid-template-columns: minmax(max-content, 100%); align-content: start; }\n.df-column-22036c { min-width: 0; overflow-x: scroll; overscroll-behavior: none; }\n.df-column-22036c + .df-column-22036c { border-left: 0.5px solid var(--dsw-alias-border-l3); }\n.df-sideLine-22036c { display: grid; grid-template-columns: 3.5em max-content; box-sizing: border-box; min-width: 100%; width: max-content; min-height: 22px; line-height: 22px; white-space: pre; }\n.df-note-22036c { margin: 0; padding: 4px 16px 8px; font: var(--dsw-font-xs-13); color: var(--dsw-alias-label-tertiary); }\n.df-hunk-22036c { margin-bottom: 8px; }\n.df-hunkHeader-22036c { padding: 4px 16px; color: var(--dsw-alias-label-tertiary); white-space: pre; }\n.df-line-22036c { display: grid; grid-template-columns: 3.5em 3.5em 1.2em minmax(0, 1fr); box-sizing: border-box; min-height: 22px; line-height: 22px; white-space: pre; }\n.df-splitLine-22036c { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); min-height: 22px; line-height: 22px; white-space: pre; }\n.df-cell-22036c { display: grid; grid-template-columns: 3.5em minmax(0, 1fr); box-sizing: border-box; min-width: 0; }\n.df-cell-22036c + .df-cell-22036c { border-left: 0.5px solid var(--dsw-alias-border-l3); }\n.df-number-22036c { padding-right: 8px; color: var(--dsw-alias-label-tertiary); text-align: right; user-select: none; }\n.df-sign-22036c { text-align: center; user-select: none; }\n.df-text-22036c { padding-right: 16px; }\n.df-body-22036c[data-review-wrap] .df-line-22036c, .df-body-22036c[data-review-wrap] .df-splitLine-22036c { white-space: pre-wrap; }\n.df-body-22036c[data-review-wrap] .df-text-22036c { overflow-wrap: anywhere; }\n.df-add-22036c { --diff-gutter-fill: var(--dsw-alias-file-diff-added-gutter); --diff-marker: var(--dsw-alias-file-diff-added-marker); background: var(--dsw-alias-file-diff-added-bg); }\n.df-del-22036c { --diff-gutter-fill: var(--dsw-alias-file-diff-deleted-gutter); --diff-marker: var(--dsw-alias-file-diff-deleted-marker); background: var(--dsw-alias-file-diff-deleted-bg); }\n.df-add-22036c .df-number-22036c, .df-del-22036c .df-number-22036c { background: var(--diff-gutter-fill); color: var(--diff-marker); }\n.df-add-22036c .df-number-22036c:first-child, .df-del-22036c .df-number-22036c:first-child { box-shadow: inset 3px 0 0 var(--diff-marker); }\n.df-add-22036c .df-sign-22036c, .df-del-22036c .df-sign-22036c { color: var(--diff-marker); }\n.df-context-22036c .df-text-22036c { color: var(--dsw-alias-label-secondary); }\n.df-empty-22036c { background: var(--diff-empty-fill); }\n");
-var FileDiff_default = { "root": "df-root-22036c", "header": "df-header-22036c", "status": "df-status-22036c", "body": "df-body-22036c", "columns": "df-columns-22036c", "column": "df-column-22036c", "sideLine": "df-sideLine-22036c", "note": "df-note-22036c", "hunk": "df-hunk-22036c", "hunkHeader": "df-hunkHeader-22036c", "line": "df-line-22036c", "splitLine": "df-splitLine-22036c", "cell": "df-cell-22036c", "number": "df-number-22036c", "sign": "df-sign-22036c", "text": "df-text-22036c", "add": "df-add-22036c", "del": "df-del-22036c", "context": "df-context-22036c", "empty": "df-empty-22036c" };
+register("/** Shared comparison layout, header, states, and numbered diff lines for previews and review tabs. */\n.df-root-ed1877 { --diff-empty-fill: color-mix(in srgb, var(--dsw-alias-interactive-bg-hover) 50%, transparent); display: flex; flex-direction: column; box-sizing: border-box; width: 100%; min-height: 0; color: var(--dsw-alias-label-primary); }\n.df-header-ed1877 { display: flex; flex: 0 0 auto; gap: 6px; align-items: center; box-sizing: border-box; height: 38px; padding: 0 6px 0 8px; border-bottom: 0.5px solid var(--dsw-alias-border-l3); }\n.df-status-ed1877 { display: flex; gap: 12px; align-items: center; margin: 0; padding: 16px; font-size: 13px; color: var(--dsw-alias-label-secondary); }\n.df-body-ed1877 { display: flex; flex: 1 1 auto; flex-direction: column; min-height: 0; overflow: auto; padding: 8px 0 16px; font: var(--dsw-font-markdown-code-block); }\n.df-columns-ed1877 { display: grid; flex: 1 1 auto; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); min-height: 0; }\n/* One intrinsic-width track keeps every hunk and row painted across the scrollable content. */\n.df-column-ed1877, .df-body-ed1877[data-review-view='unified']:not([data-review-wrap]) { display: grid; grid-template-columns: minmax(max-content, 100%); align-content: start; }\n.df-column-ed1877 { min-width: 0; overflow-x: scroll; overscroll-behavior: none; }\n.df-column-ed1877 + .df-column-ed1877 { border-left: 0.5px solid var(--dsw-alias-border-l3); }\n.df-sideLine-ed1877 { display: grid; grid-template-columns: 3.5em max-content; box-sizing: border-box; min-width: 100%; width: max-content; min-height: 22px; line-height: 22px; white-space: pre; }\n.df-note-ed1877 { margin: 0; padding: 4px 16px 8px; font: var(--dsw-font-xs-13); color: var(--dsw-alias-label-tertiary); }\n.df-hunk-ed1877 { margin-bottom: 8px; }\n.df-hunkHeader-ed1877 { padding: 4px 16px; color: var(--dsw-alias-label-tertiary); white-space: pre; }\n.df-line-ed1877 { display: grid; grid-template-columns: 3.5em 3.5em 1.2em minmax(0, 1fr); box-sizing: border-box; min-height: 22px; line-height: 22px; white-space: pre; }\n.df-splitLine-ed1877 { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); min-height: 22px; line-height: 22px; white-space: pre; }\n.df-cell-ed1877 { display: grid; grid-template-columns: 3.5em minmax(0, 1fr); box-sizing: border-box; min-width: 0; }\n.df-cell-ed1877 + .df-cell-ed1877 { border-left: 0.5px solid var(--dsw-alias-border-l3); }\n.df-number-ed1877 { padding-right: 8px; color: var(--dsw-alias-label-tertiary); text-align: right; user-select: none; }\n.df-sign-ed1877 { text-align: center; user-select: none; }\n.df-text-ed1877 { padding-right: 16px; }\n.df-body-ed1877[data-review-wrap] .df-line-ed1877, .df-body-ed1877[data-review-wrap] .df-splitLine-ed1877 { white-space: pre-wrap; }\n.df-body-ed1877[data-review-wrap] .df-text-ed1877 { overflow-wrap: anywhere; }\n.df-add-ed1877 { --diff-gutter-fill: var(--dsw-alias-file-diff-added-gutter); --diff-marker: var(--dsw-alias-file-diff-added-marker); background: var(--dsw-alias-file-diff-added-bg); }\n.df-del-ed1877 { --diff-gutter-fill: var(--dsw-alias-file-diff-deleted-gutter); --diff-marker: var(--dsw-alias-file-diff-deleted-marker); background: var(--dsw-alias-file-diff-deleted-bg); }\n.df-add-ed1877 .df-number-ed1877, .df-del-ed1877 .df-number-ed1877 { background: var(--diff-gutter-fill); color: var(--diff-marker); }\n.df-add-ed1877 .df-number-ed1877:first-child, .df-del-ed1877 .df-number-ed1877:first-child { box-shadow: inset 3px 0 0 var(--diff-marker); }\n.df-add-ed1877 .df-sign-ed1877, .df-del-ed1877 .df-sign-ed1877 { color: var(--diff-marker); }\n.df-context-ed1877 .df-text-ed1877 { color: var(--dsw-alias-label-secondary); }\n.df-empty-ed1877 { background: var(--diff-empty-fill); }\n");
+var FileDiff_default = { "root": "df-root-ed1877", "header": "df-header-ed1877", "status": "df-status-ed1877", "body": "df-body-ed1877", "columns": "df-columns-ed1877", "column": "df-column-ed1877", "sideLine": "df-sideLine-ed1877", "note": "df-note-ed1877", "hunk": "df-hunk-ed1877", "hunkHeader": "df-hunkHeader-ed1877", "line": "df-line-ed1877", "splitLine": "df-splitLine-ed1877", "cell": "df-cell-ed1877", "number": "df-number-ed1877", "sign": "df-sign-ed1877", "text": "df-text-ed1877", "add": "df-add-ed1877", "del": "df-del-ed1877", "context": "df-context-ed1877", "empty": "df-empty-ed1877" };
 
 // src/client/vendor/FileDiff.tsx
 var MAX_RENDERED_LINES = 5e3;
@@ -478,6 +478,11 @@ var zh = {
   "action.merge": "\u5408\u5165",
   "action.delete": "\u5220\u9664",
   "action.deleting": "\u6B63\u5728\u5220\u9664",
+  "hint.deleteSingle": "\u5220\u9664\u4EFB\u52A1\u5E76\u5220\u9664\u4EFB\u52A1\u5206\u652F\uFF0C\u65E0\u6CD5\u6062\u590D",
+  "hint.deleteTasks": "\u5220\u9664 {count} \u4E2A\u4EFB\u52A1\uFF0C\u540C\u65F6\u5220\u9664\u5BF9\u5E94\u4EFB\u52A1\u5206\u652F\uFF0C\u65E0\u6CD5\u6062\u590D",
+  "hint.deleteBlocked": "\u52FE\u9009\u91CC\u6709\u4E0D\u53EF\u5220\u9664\u7684\u4EFB\u52A1\uFF1A\u53EA\u6709\u5DF2\u7ED3\u675F\u4E14\u6CA1\u6709\u88AB\u5176\u5B83\u4EFB\u52A1\u4F9D\u8D56\u7684\u4EFB\u52A1\u53EF\u4EE5\u5220\u9664",
+  "toast.deletedTasks": "\u5DF2\u5220\u9664 {count} \u4E2A\u4EFB\u52A1",
+  "toast.deleteWarnings": "\u5DF2\u5220\u9664 {count} \u4E2A\u4EFB\u52A1\uFF0C\u4F46\u8FD9\u4E9B\u5206\u652F\u6CA1\u5220\u6389\uFF1A{warnings}",
   "action.detail": "\u8BE6\u60C5",
   "diff.copy": "\u590D\u5236",
   "diff.copied": "\u5DF2\u590D\u5236",
@@ -612,6 +617,11 @@ var en = {
   "action.merge": "Merge",
   "action.delete": "Delete",
   "action.deleting": "Deleting",
+  "hint.deleteSingle": "Delete the task and its task branch; this cannot be undone",
+  "hint.deleteTasks": "Delete {count} tasks and their task branches; this cannot be undone",
+  "hint.deleteBlocked": "Selection contains tasks that cannot be deleted; only finished tasks without other dependents can be deleted",
+  "toast.deletedTasks": "Deleted {count} tasks",
+  "toast.deleteWarnings": "Deleted {count} tasks, but these branches were not removed: {warnings}",
   "action.detail": "Details",
   "diff.copy": "Copy",
   "diff.copied": "Copied",
@@ -1261,7 +1271,15 @@ function Tasks({
   const devRows = devAll.filter((task) => matchFilter(filter, task));
   const acceptRows = data.tasks.filter((task) => task.kind === "accept").sort(newest);
   const reason = acceptReason(data, picked, t);
-  const selected = data.tasks.filter((task) => task.selectable && picked.includes(task.id));
+  const pickedDev = data.tasks.filter((task) => task.kind !== "accept" && picked.includes(task.id));
+  const acceptSelected = pickedDev.filter((task) => task.selectable === true);
+  const deleteSelected = pickedDev.filter((task) => task.deletable === true);
+  const acceptBlocked = pickedDev.filter((task) => task.selectable !== true);
+  const deleteBlocked = pickedDev.filter((task) => task.deletable !== true);
+  const showAccept = pickedDev.length > 0 && acceptBlocked.length === 0;
+  const showDelete = deleteSelected.length > 0;
+  const deleteHint = t("hint.deleteTasks").replace("{count}", String(deleteSelected.length));
+  const deleteReason = deleteBlocked.length === 0 ? "" : `${t("hint.deleteBlocked")}\uFF1A${deleteBlocked.map((task) => task.title).join("\u3001")}`;
   const filters = [
     ["all", t("filter.all")],
     ["pending", t("filter.pending")],
@@ -1271,7 +1289,13 @@ function Tasks({
   const launch = () => {
     if (busy || reason !== "") return;
     setBusy(true);
-    start(call, sessionId, picked, setPicked, reload).then(() => show(t("toast.started"), "info")).catch(() => void 0).finally(() => setBusy(false));
+    start(call, sessionId, acceptSelected.map((task) => task.id), setPicked, reload).then(() => show(t("toast.started"), "info")).catch(() => void 0).finally(() => setBusy(false));
+  };
+  const removeOne = (id) => {
+    void removeTasks(call, sessionId, [id], picked, setPicked, setRemoving, reload, show, t);
+  };
+  const removeSelected = () => {
+    void removeTasks(call, sessionId, deleteSelected.map((task) => task.id), picked, setPicked, setRemoving, reload, show, t);
   };
   const resizePane = (id, event) => {
     event.preventDefault();
@@ -1373,7 +1397,7 @@ function Tasks({
       const count2 = devAll.filter((task) => matchFilter(value, task)).length;
       const text = `${label} ${count2}`;
       return ui.Pill ? /* @__PURE__ */ React.createElement(ui.Pill, { key: value, active: filter === value, onClick: () => setFilter(value) }, text) : /* @__PURE__ */ React.createElement("button", { key: value, type: "button", "aria-pressed": filter === value, onClick: () => setFilter(value) }, text);
-    })), /* @__PURE__ */ React.createElement("div", { className: "df-view-body" }, /* @__PURE__ */ React.createElement("div", { className: "df-card" }, devRows.length === 0 ? /* @__PURE__ */ React.createElement("div", { className: "df-empty" }, /* @__PURE__ */ React.createElement("p", null, t("section.emptyDev"))) : devRows.map((task) => /* @__PURE__ */ React.createElement(DevTaskItem, { key: task.id, ui, t, task, picked, setPicked, sessionId, call, reload, show, ...detailProps(task.id), onOpenDiff: (file, index) => openDiff?.(task.id, task.title, index) })))), selected.length > 0 ? /* @__PURE__ */ React.createElement("div", { className: "df-foot" }, /* @__PURE__ */ React.createElement(ActionButton, { ui, className: "df-go", variant: "primary", disabled: busy || reason !== "", title: reason, onClick: launch }, busy ? t("action.working") : t("action.accept")), /* @__PURE__ */ React.createElement("p", { className: "df-hint" }, reason !== "" ? reason : `${t("hint.order")}\uFF1A${selected.map((task) => task.title).join(" \u2192 ")}`)) : null) : null, id === "accept" && open.accept ? /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("div", { className: "df-view-body" }, /* @__PURE__ */ React.createElement("div", { className: "df-card" }, acceptRows.length === 0 ? /* @__PURE__ */ React.createElement("div", { className: "df-empty" }, /* @__PURE__ */ React.createElement("p", null, t("section.emptyAccept"))) : acceptRows.map((batch) => {
+    })), /* @__PURE__ */ React.createElement("div", { className: "df-view-body" }, /* @__PURE__ */ React.createElement("div", { className: "df-card" }, devRows.length === 0 ? /* @__PURE__ */ React.createElement("div", { className: "df-empty" }, /* @__PURE__ */ React.createElement("p", null, t("section.emptyDev"))) : devRows.map((task) => /* @__PURE__ */ React.createElement(DevTaskItem, { key: task.id, ui, t, task, picked, setPicked, sessionId, call, reload, show, onDeleteTask: removeOne, ...detailProps(task.id), onOpenDiff: (file, index) => openDiff?.(task.id, task.title, index) })))), showAccept || showDelete ? /* @__PURE__ */ React.createElement("div", { className: "df-foot" }, showAccept ? /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement(ActionButton, { ui, className: "df-go", variant: "primary", disabled: busy || reason !== "", title: reason, onClick: launch }, busy ? t("action.working") : t("action.accept")), /* @__PURE__ */ React.createElement("p", { className: "df-hint" }, reason !== "" ? reason : `${t("hint.order")}\uFF1A${acceptSelected.map((task) => task.title).join(" \u2192 ")}`)) : null, showDelete ? /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement(ActionButton, { ui, className: "df-go", disabled: removing || deleteReason !== "", title: deleteReason || deleteHint, onClick: removeSelected }, removing ? t("action.deleting") : t("action.delete")), /* @__PURE__ */ React.createElement("p", { className: "df-hint" }, deleteReason !== "" ? deleteReason : deleteHint)) : null) : null) : null, id === "accept" && open.accept ? /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("div", { className: "df-view-body" }, /* @__PURE__ */ React.createElement("div", { className: "df-card" }, acceptRows.length === 0 ? /* @__PURE__ */ React.createElement("div", { className: "df-empty" }, /* @__PURE__ */ React.createElement("p", null, t("section.emptyAccept"))) : acceptRows.map((batch) => {
       const children = containedTasks(data, batch);
       const open2 = children.length > 0 && (opened[batch.id] ?? batch.status === "accepting");
       const deletable = batch.status !== "accepting";
@@ -1536,6 +1560,7 @@ function DevTaskItem({
   detailsOpen = false,
   onToggleDetails,
   onOpenDiff,
+  onDeleteTask,
   nested = false,
   reviewing = false,
   batchId,
@@ -1557,8 +1582,8 @@ function DevTaskItem({
   const openDetails = onToggleDetails === void 0 ? selfOpen : detailsOpen;
   const toggleDetails = onToggleDetails ?? (() => setSelfOpen(!selfOpen));
   const expandable = facts.length > 0 || deps.length > 0;
-  const selectable = !nested && task.selectable === true;
-  const leading = selectable ? /* @__PURE__ */ React.createElement("input", { className: "df-check", type: "checkbox", checked: picked.includes(task.id), onClick: (event) => event.stopPropagation(), onChange: () => setPicked(togglePick(picked, task.id)) }) : void 0;
+  const pickable = task.selectable === true || task.deletable === true;
+  const leading = pickable ? /* @__PURE__ */ React.createElement("input", { className: "df-check", type: "checkbox", checked: picked.includes(task.id), onClick: (event) => event.stopPropagation(), onChange: () => setPicked(togglePick(picked, task.id)) }) : void 0;
   return /* @__PURE__ */ React.createElement(
     TreeItem,
     {
@@ -1570,7 +1595,10 @@ function DevTaskItem({
       actions: /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement(StatusTag, { ui, t, status: shownStatus(task) }), task.status === "pending-merge" && task.kind !== "accept" && call && reload ? /* @__PURE__ */ React.createElement(ActionButton, { ui, onClick: (event) => {
         event.stopPropagation();
         mergeTask(call, sessionId, task.id, reload, show);
-      } }, t("action.merge")) : null, nested && reviewing && task.acceptance !== "accepted" && batchId && call && reload ? /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement(ActionButton, { ui, onClick: (event) => {
+      } }, t("action.merge")) : null, task.deletable && !nested && call && reload && onDeleteTask ? /* @__PURE__ */ React.createElement(ActionButton, { ui, title: t("hint.deleteSingle"), onClick: (event) => {
+        event.stopPropagation();
+        onDeleteTask(task.id);
+      } }, t("action.delete")) : null, nested && reviewing && task.acceptance !== "accepted" && batchId && call && reload ? /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement(ActionButton, { ui, onClick: (event) => {
         event.stopPropagation();
         finishTask(call, sessionId, batchId, task.id, "accepted", reload);
       } }, t("action.pass")), /* @__PURE__ */ React.createElement(ActionButton, { ui, onClick: (event) => {
@@ -1581,7 +1609,7 @@ function DevTaskItem({
       expandable,
       expanded: openDetails,
       onToggle: expandable ? toggle : void 0,
-      onClick: selectable ? () => setPicked(togglePick(picked, task.id)) : void 0,
+      onClick: pickable ? () => setPicked(togglePick(picked, task.id)) : void 0,
       depth,
       tone: toneOf(shownStatus(task))
     },
@@ -1857,6 +1885,22 @@ function removeBatches(call, sessionId, ids, setPicked, setBusy, reload, show) {
   call("accept-delete", { sessionId, ids }).then(() => {
     setPicked([]);
     show?.(`\u5DF2\u5220\u9664 ${ids.length} \u4E2A\u9A8C\u6536\u4EFB\u52A1`, "info");
+    return reload();
+  }).catch((reason) => reload(reason)).finally(() => setBusy(false));
+}
+function removeTasks(call, sessionId, ids, picked, setPicked, setBusy, reload, show, t) {
+  if (ids.length === 0) return;
+  setBusy(true);
+  call("task-delete", { sessionId, ids }).then((value) => {
+    const result = value;
+    const deleted = Array.isArray(result?.deleted) ? result.deleted : ids;
+    const warnings = Array.isArray(result?.deleteWarnings) ? result.deleteWarnings : [];
+    setPicked(picked.filter((id) => !deleted.includes(id)));
+    if (warnings.length > 0) {
+      show?.(t("toast.deleteWarnings").replace("{count}", String(deleted.length)).replace("{warnings}", warnings.join("\uFF1B")), "error");
+    } else {
+      show?.(t("toast.deletedTasks").replace("{count}", String(deleted.length)), "info");
+    }
     return reload();
   }).catch((reason) => reload(reason)).finally(() => setBusy(false));
 }

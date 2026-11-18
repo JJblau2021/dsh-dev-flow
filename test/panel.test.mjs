@@ -5,7 +5,7 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 import test from 'node:test';
 
-import { completeDevTask, createDevTask } from '../kernel/flow.mjs';
+import { completeDevTask, createDevTask, failDevTask } from '../kernel/flow.mjs';
 import { handle } from '../kernel/service.mjs';
 import { FlowError } from '../kernel/settings.mjs';
 
@@ -79,5 +79,56 @@ test('plugin settings reject a branch format without xxx and keep the file out o
   assert.equal(saved.taskBranch, 'team/xxx');
   assert.equal(handle(root, 'session-a', 'snapshot').initialized, false);
   rmSync(home, { recursive: true, force: true });
+  rmSync(root, { recursive: true, force: true });
+});
+
+test('the panel marks deletable tasks and task-delete cleans the task branch', () => {
+  const root = mkdtempSync(path.join(tmpdir(), 'dev-flow-view-'));
+  const kit = makeRepo(root, 'kit');
+  createDevTask(root, { id: 'login', title: '登录', repos: ['kit'] });
+  const slot = handle(root, 'session-a', 'snapshot').tasks.find((task) => task.id === 'login').slots.kit.path;
+  writeFileSync(path.join(slot, 'login.txt'), 'login\n');
+  git(slot, ['add', 'login.txt']);
+  git(slot, ['commit', '-m', 'login']);
+  completeDevTask(root, 'login');
+
+  const ready = handle(root, 'session-a', 'snapshot');
+  assert.equal(ready.tasks.find((task) => task.id === 'login').deletable, true);
+
+  handle(root, 'session-a', 'session-set', { enabled: true });
+  handle(root, 'session-a', 'accept-start', { id: 'batch-1', taskIds: ['login'] });
+  const accepting = handle(root, 'session-a', 'snapshot');
+  assert.equal(accepting.tasks.find((task) => task.id === 'login').deletable, false);
+  assert.equal(accepting.tasks.find((task) => task.kind === 'accept').deletable, false);
+  assert.throws(
+    () => handle(root, 'session-a', 'task-delete', { ids: ['login'] }),
+    (error) => error.code === 'status',
+  );
+  assert.equal(handle(root, 'session-a', 'snapshot').tasks.some((task) => task.id === 'login'), true);
+
+  handle(root, 'session-a', 'accept-finish', { id: 'batch-1', result: 'rejected' });
+  const deleted = handle(root, 'session-a', 'task-delete', { ids: ['login'] });
+  assert.deepEqual(deleted.deleted, ['login']);
+  assert.deepEqual(deleted.deleteWarnings, []);
+  assert.equal(deleted.snapshot.tasks.some((task) => task.id === 'login'), false);
+  assert.throws(() => execFileSync('git', ['rev-parse', '--verify', 'refs/heads/df-task/login'], { cwd: kit, stdio: 'ignore' }));
+  assert.throws(() => handle(root, 'session-a', 'task-delete', { ids: [] }), /没有要删除的任务/u);
+  rmSync(root, { recursive: true, force: true });
+});
+
+test('task-delete surfaces branch cleanup warnings without keeping the task record', () => {
+  const root = mkdtempSync(path.join(tmpdir(), 'dev-flow-view-'));
+  const kit = makeRepo(root, 'kit');
+  createDevTask(root, { id: 'busy', title: '占用', repos: ['kit'] });
+  const slot = handle(root, 'session-a', 'snapshot').tasks.find((task) => task.id === 'busy').slots.kit.path;
+  failDevTask(root, 'busy');
+  git(slot, ['checkout', '-f', '--detach']);
+  const holder = path.join(root, 'holder');
+  git(kit, ['worktree', 'add', holder, 'df-task/busy']);
+  const result = handle(root, 'session-a', 'task-delete', { ids: ['busy'] });
+  assert.deepEqual(result.deleted, ['busy']);
+  assert.equal(result.deleteWarnings.length, 1);
+  assert.match(result.deleteWarnings[0], /df-task\/busy/u);
+  assert.equal(result.snapshot.tasks.some((task) => task.id === 'busy'), false);
   rmSync(root, { recursive: true, force: true });
 });
