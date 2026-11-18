@@ -1,0 +1,97 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="640" height="300" viewBox="0 0 640 300">
+  <rect width="640" height="300" rx="20" fill="#f3f5f9"/>
+
+  <!-- Git repositories with their own branches -->
+  <g>
+    <rect x="40" y="64" width="152" height="52" rx="12" fill="#ffffff" stroke="#c3cedb" stroke-width="1.5"/>
+    <rect x="56" y="78" width="24" height="24" rx="7" fill="#ccfbf1"/>
+    <g stroke="#0d9488" stroke-width="2" stroke-linecap="round">
+      <path d="M62 85h12"/>
+      <path d="M62 90h8"/>
+      <path d="M62 95h12"/>
+    </g>
+    <rect x="92" y="80" width="60" height="7" rx="3.5" fill="#cbd5e1"/>
+    <rect x="92" y="94" width="40" height="6" rx="3" fill="#e2e8f0"/>
+    <circle cx="180" cy="90" r="4" fill="#0d9488"/>
+  </g>
+  <g>
+    <rect x="40" y="128" width="152" height="52" rx="12" fill="#ffffff" stroke="#c3cedb" stroke-width="1.5"/>
+    <rect x="56" y="142" width="24" height="24" rx="7" fill="#dbeafe"/>
+    <g stroke="#2563eb" stroke-width="2" stroke-linecap="round">
+      <path d="M62 149h12"/>
+      <path d="M62 154h8"/>
+      <path d="M62 159h12"/>
+    </g>
+    <rect x="92" y="144" width="60" height="7" rx="3.5" fill="#cbd5e1"/>
+    <rect x="92" y="158" width="40" height="6" rx="3" fill="#e2e8f0"/>
+    <circle cx="180" cy="154" r="4" fill="#2563eb"/>
+  </g>
+  <g>
+    <rect x="40" y="192" width="152" height="52" rx="12" fill="#ffffff" stroke="#c3cedb" stroke-width="1.5"/>
+    <rect x="56" y="206" width="24" height="24" rx="7" fill="#fef3c7"/>
+    <g stroke="#d97706" stroke-width="2" stroke-linecap="round">
+      <path d="M62 213h12"/>
+      <path d="M62 218h8"/>
+      <path d="M62 223h12"/>
+    </g>
+    <rect x="92" y="208" width="60" height="7" rx="3.5" fill="#cbd5e1"/>
+    <rect x="92" y="222" width="40" height="6" rx="3" fill="#e2e8f0"/>
+    <circle cx="180" cy="218" r="4" fill="#d97706"/>
+  </g>
+
+  <!-- Parallel work feeding the panel -->
+  <g fill="none" stroke="#94a3b8" stroke-width="2" stroke-linecap="round">
+    <path d="M192 90C246 90 254 108 318 108"/>
+    <path d="M192 154C246 154 254 168 318 168"/>
+    <path d="M192 218C246 218 254 228 318 228"/>
+  </g>
+  <circle cx="318" cy="108" r="3" fill="#0d9488"/>
+  <circle cx="318" cy="168" r="3" fill="#2563eb"/>
+  <circle cx="318" cy="228" r="3" fill="#d97706"/>
+
+  <!-- Right-sidebar panel -->
+  <rect x="320" y="32" width="280" height="236" rx="16" fill="#ffffff" stroke="#c3cedb" stroke-width="1.5"/>
+
+  <!-- Page tabs and the workflow switch -->
+  <rect x="340" y="50" width="38" height="12" rx="6" fill="#334155"/>
+  <rect x="386" y="50" width="30" height="12" rx="6" fill="#dbe3ec"/>
+  <rect x="424" y="50" width="34" height="12" rx="6" fill="#dbe3ec"/>
+  <rect x="466" y="50" width="30" height="12" rx="6" fill="#dbe3ec"/>
+  <rect x="504" y="50" width="26" height="12" rx="6" fill="#dbe3ec"/>
+  <rect x="548" y="48" width="32" height="16" rx="8" fill="#14b8a6"/>
+  <circle cx="572" cy="56" r="6" fill="#ffffff"/>
+
+  <path d="M340 76h240" fill="none" stroke="#e2e8f0" stroke-width="1.5"/>
+
+  <!-- Task cards in the panel -->
+  <g>
+    <rect x="336" y="84" width="248" height="48" rx="10" fill="#f8fafc" stroke="#14b8a6" stroke-width="1.5"/>
+    <circle cx="352" cy="100" r="4" fill="#0d9488"/>
+    <rect x="364" y="95" width="76" height="7" rx="3.5" fill="#94a3b8"/>
+    <rect x="364" y="110" width="110" height="6" rx="3" fill="#e2e8f0"/>
+    <rect x="364" y="124" width="100" height="4" rx="2" fill="#e2e8f0"/>
+    <rect x="364" y="124" width="62" height="4" rx="2" fill="#0d9488"/>
+    <rect x="532" y="95" width="14" height="14" rx="4" fill="#ccfbf1"/>
+    <rect x="552" y="95" width="14" height="14" rx="4" fill="#e2e8f0"/>
+  </g>
+  <g>
+    <rect x="336" y="144" width="248" height="48" rx="10" fill="#f8fafc" stroke="#e2e8f0" stroke-width="1.5"/>
+    <circle cx="352" cy="160" r="4" fill="#2563eb"/>
+    <rect x="364" y="155" width="64" height="7" rx="3.5" fill="#94a3b8"/>
+    <rect x="364" y="170" width="92" height="6" rx="3" fill="#e2e8f0"/>
+    <rect x="364" y="184" width="100" height="4" rx="2" fill="#e2e8f0"/>
+    <rect x="364" y="184" width="38" height="4" rx="2" fill="#2563eb"/>
+    <rect x="532" y="155" width="14" height="14" rx="4" fill="#dbeafe"/>
+    <rect x="552" y="155" width="14" height="14" rx="4" fill="#e2e8f0"/>
+  </g>
+  <g>
+    <rect x="336" y="204" width="248" height="48" rx="10" fill="#f8fafc" stroke="#e2e8f0" stroke-width="1.5"/>
+    <circle cx="352" cy="220" r="4" fill="#d97706"/>
+    <rect x="364" y="215" width="70" height="7" rx="3.5" fill="#94a3b8"/>
+    <rect x="364" y="230" width="104" height="6" rx="3" fill="#e2e8f0"/>
+    <rect x="364" y="244" width="100" height="4" rx="2" fill="#e2e8f0"/>
+    <rect x="364" y="244" width="80" height="4" rx="2" fill="#d97706"/>
+    <rect x="532" y="215" width="14" height="14" rx="4" fill="#fef3c7"/>
+    <rect x="552" y="215" width="14" height="14" rx="4" fill="#e2e8f0"/>
+  </g>
+</svg>

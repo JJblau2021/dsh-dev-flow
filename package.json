@@ -9,7 +9,9 @@
     ".": "./index.js",
     "./client": "./client.js",
     "./package.json": "./package.json",
-    "./cordis.patch.yml": "./cordis.patch.yml"
+    "./cordis.patch.yml": "./cordis.patch.yml",
+    "./locale/*.json": "./locale/*.json",
+    "./icon": "./icon.svg"
   },
   "files": [
     "index.js",
@@ -17,7 +19,10 @@
     "cli.mjs",
     "kernel/*.mjs",
     "cordis.patch.yml",
-    "skills/dev-flow/SKILL.md"
+    "skills/dev-flow/SKILL.md",
+    "locale/*.json",
+    "docs",
+    "icon.svg"
   ],
   "dsh": {
     "bundle": {

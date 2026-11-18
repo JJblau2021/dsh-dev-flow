@@ -1,0 +1,7 @@
+{
+  "meta": {
+    "title": "Dev flow",
+    "description": "A right-sidebar panel for multi-repository development: overview, tasks, slots, baselines, and agents. Turn on the workflow switch above the conversation so the lead session dispatches implementation and acceptance to subagents through the bundled dev-flow skill. Tasks run in their own worktrees and df-task/<id> branches, state lives in .dev-flow/ at the workspace root, and the panel requires a session opened at that root.",
+    "detail": "docs/DETAIL.md"
+  }
+}
