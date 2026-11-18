@@ -4,6 +4,7 @@ export const DEFAULT_SETTINGS = Object.freeze({
   acceptModel: '',
   devDir: 'task',
   acceptDir: 'check',
+  baseDir: 'base',
   taskBranch: 'df-task/xxx',
   acceptBranch: 'df-check/xxx',
   agentLimit: 3,

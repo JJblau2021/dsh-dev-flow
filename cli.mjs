@@ -4,16 +4,19 @@ import { parseArgs } from 'node:util';
 
 import {
   abandonDevTask,
+  addBase,
   completeDevTask,
   createDevTask,
   failDevTask,
   finishAcceptance,
   planDispatch,
+  removeBase,
   scan,
   setSessionEnabled,
   startAcceptance,
   startSchedule,
 } from './kernel/flow.mjs';
+import { snapshot } from './kernel/view.mjs';
 import { loadPluginSettings } from './kernel/plugin-settings.mjs';
 import { loadState } from './kernel/state.mjs';
 
@@ -29,6 +32,10 @@ const { values } = parseArgs({
     enabled: { type: 'string' },
     kind: { type: 'string' },
     schedule: { type: 'string' },
+    base: { type: 'string' },
+    group: { type: 'string' },
+    repo: { type: 'string' },
+    branch: { type: 'string' },
   },
   allowPositionals: true,
 });
@@ -48,6 +55,9 @@ const commands = {
     id: values.id,
     title: values.title ?? values.id,
     sessionId: values.session,
+    base: values.base,
+    baseGroup: values.group,
+    settings,
   }),
   'task-create': () => createDevTask(workspace, {
     id: values.id,
@@ -55,14 +65,19 @@ const commands = {
     repos: list(values.repos),
     dependsOn: list(values.depends),
     scheduleId: values.schedule,
+    base: values.base,
+    baseGroup: values.group,
     settings,
   }),
   'task-complete': () => completeDevTask(workspace, values.id),
   'task-fail': () => failDevTask(workspace, values.id),
   'task-abandon': () => abandonDevTask(workspace, values.id),
   'accept-start': () => startAcceptance(workspace, { id: values.id, taskIds: list(values.tasks), settings }),
-  'accept-pass': () => finishAcceptance(workspace, values.id, 'accepted'),
-  'accept-fail': () => finishAcceptance(workspace, values.id, 'rejected'),
+  'accept-pass': () => finishAcceptance(workspace, values.id, 'accepted', settings),
+  'accept-fail': () => finishAcceptance(workspace, values.id, 'rejected', settings),
+  'base-list': () => snapshot(workspace, values.session ?? '', settings).baseGroups,
+  'base-add': () => addBase(workspace, values.repo, values.branch, values.group, settings),
+  'base-remove': () => removeBase(workspace, values.group, values.repo, settings),
   'session-set': () => setSessionEnabled(workspace, values.session, values.enabled === 'true'),
   dispatch: () => planDispatch(workspace, values.session, { kind: values.kind, id: values.id, settings }),
 };

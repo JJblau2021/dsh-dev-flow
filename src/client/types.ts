@@ -13,16 +13,44 @@ export interface Counts {
   activeTasks: number
   activeSlots: number
   pending: number
-  dirtyTrunks: number
+  dirtyBases: number
   devSlots?: { used: number, total: number }
   acceptSlots?: { used: number, total: number }
 }
 
-export interface Trunk {
+export interface ProjectRow {
   name: string
+  path?: string
   dirty: boolean
   branch?: string
   defaultBranch?: string
+  bases?: number
+  branches?: string[]
+}
+
+/** 一条基线分支：合并位置、当前检出、脏状态和在用的任务数。 */
+export interface BaseRow {
+  id: string
+  group?: string
+  label?: string
+  repo: string
+  branch: string
+  head?: string | null
+  shortHead?: string | null
+  current: boolean
+  default: boolean
+  /** root：根目录检出；slot：基线槽位；busy：被其它检出占用；missing：登记了但目录不在；none：还没有槽位。 */
+  location: 'root' | 'slot' | 'busy' | 'missing' | 'none'
+  path?: string | null
+  dirty: boolean
+  tasks: number
+}
+
+/** 一组基线：一个编号，下面按仓库各一个成员。 */
+export interface BaseGroupRow {
+  number: string
+  label: string
+  repos: BaseRow[]
 }
 
 export interface TaskDiffFile {
@@ -48,8 +76,11 @@ export interface TaskRow {
   agentStatus?: string
   batchId?: string | null
   taskIds?: string[]
+  base?: string | null
+  baseGroup?: string | null
+  bases?: Record<string, string>
   repos: string[]
-  slots?: Record<string, { number?: string, path?: string, branch?: string | null, port?: number }>
+  slots?: Record<string, { number?: string, path?: string, branch?: string | null, target?: string | null, port?: number }>
   warnings?: string[]
   usage?: TokenUsage | null
   acceptance?: 'accepted' | null
@@ -70,6 +101,7 @@ export interface DevSlot {
   number: string
   taskId?: string | null
   branch?: string | null
+  base?: string | null
 }
 
 export interface AcceptSlot {
@@ -81,6 +113,8 @@ export interface AcceptSlot {
 export interface RepoRow {
   name: string
   dirty: boolean
+  branch?: string
+  defaultBranch?: string
   devSlots: DevSlot[]
   acceptSlot: AcceptSlot | null
 }
@@ -107,12 +141,15 @@ export interface ScheduleTask {
   createdAt?: string | null
   agentStatus?: string
   dependsOn: { id: string, title: string, status: string, merged: boolean, branch?: string | null }[]
-  slots: { repo: string, number?: string, branch?: string | null }[]
+  slots: { repo: string, number?: string, branch?: string | null, target?: string | null, baseGroup?: string | null }[]
 }
 
 export interface ScheduleRow {
   id: string
   title: string
+  base?: string | null
+  baseGroup?: string | null
+  warnings?: string[]
   status: string
   taskIds: string[]
   agentIds: string[]
@@ -128,7 +165,9 @@ export interface Snapshot {
   enabled?: boolean
   problem?: string
   counts: Counts
-  trunks: Trunk[]
+  projects: ProjectRow[]
+  bases: BaseRow[]
+  baseGroups: BaseGroupRow[]
   tasks: TaskRow[]
   repos: RepoRow[]
   agents: AgentRow[]
@@ -140,6 +179,7 @@ export interface Settings {
   acceptModel?: string
   devDir?: string
   acceptDir?: string
+  baseDir?: string
   taskBranch?: string
   acceptBranch?: string
 }

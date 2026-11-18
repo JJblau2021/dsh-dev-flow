@@ -87,7 +87,7 @@ test('two tasks on one repo get two slots and leave the trunk untouched', () => 
   const second = createDevTask(root, { id: 'pay', title: '支付', repos: ['kit'] });
   assert.equal(first.task.slots.kit.number, '01');
   assert.equal(second.task.slots.kit.number, '02');
-  assert.equal(first.warnings[0], 'kit 主干不干净');
+  assert.equal(first.warnings[0], 'kit 基线 main 工作区不干净');
   assert.equal(head(kit), before);
   assert.equal(branch(kit), 'main');
   assert.equal(branch(first.task.slots.kit.path), 'df-task/login');
@@ -172,8 +172,8 @@ test('acceptance uses one slot and port per repo and rejects a second batch', ()
   assert.equal(batch.repos.kit.port, 4100);
   assert.equal(batch.repos.glose.port, 4101);
   assert.equal(branch(batch.repos.kit.path), 'df-check/batch-1');
-  assert.equal(batch.repos.kit.path.endsWith(`${path.sep}01${path.sep}kit-01`), true);
-  assert.equal(loadState(root).devSlots.kit['01'].path.endsWith(`${path.sep}01${path.sep}kit-01`), true);
+  assert.equal(batch.repos.kit.path.endsWith(`${path.sep}01${path.sep}kit-check-01`), true);
+  assert.equal(loadState(root).devSlots.kit['01'].path.endsWith(`${path.sep}01${path.sep}kit-task-01`), true);
   assert.throws(() => startAcceptance(root, { id: 'batch-2', taskIds: ['login'] }), (error) => error.code === 'busy');
   finishAcceptance(root, 'batch-1', 'rejected');
   assert.equal(loadState(root).tasks.login.status, 'pending-acceptance');
@@ -340,16 +340,19 @@ test('dispatch stays closed until the session switch is on', () => {
   rmSync(root, { recursive: true, force: true });
 });
 
-test('a task branch starts from the trunk checkout, not the detected default branch', () => {
+test('a task branch starts from the requested baseline, not the current checkout', () => {
   const root = mkdtempSync(path.join(tmpdir(), 'dev-flow-'));
   const kit = makeRepo(root, 'kit');
-  git(kit, ['checkout', '-b', 'trunk-line']);
-  commit(kit, 'trunk.txt', 'on trunk\n');
-  const trunkHead = head(kit);
-  createDevTask(root, { id: 'login', title: '登录', repos: ['kit'] });
-  const slot = loadState(root).tasks.login.slots.kit.path;
-  assert.equal(head(slot), trunkHead);
-  assert.notEqual(trunkHead, execFileSync('git', ['rev-parse', 'main'], { cwd: kit, encoding: 'utf8' }).trim());
+  git(kit, ['checkout', '-b', 'release/1.0']);
+  commit(kit, 'release.txt', 'on release\n');
+  const releaseHead = head(kit);
+  git(kit, ['checkout', 'main']);
+  createDevTask(root, { id: 'login', title: '登录', repos: ['kit'], base: 'release/1.0' });
+  const task = loadState(root).tasks.login;
+  assert.equal(task.base, 'release/1.0');
+  assert.equal(task.slots.kit.target, 'release/1.0');
+  assert.equal(head(task.slots.kit.path), releaseHead);
+  assert.equal(branch(kit), 'main');
   rmSync(root, { recursive: true, force: true });
 });
 

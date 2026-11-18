@@ -135,7 +135,7 @@ export function apply(ctx) {
           const workspace = withState(resolveWorkspace(rpc, sessionId) ?? (typeof payload.workspace === 'string' ? payload.workspace : ''));
           if (workspace === '' && endpoint !== 'settings-get' && endpoint !== 'settings-set') {
             const value = endpoint === 'snapshot'
-              ? { initialized: false, enabled: false, problem: '找不到工作区', counts: emptyCounts(), projects: [], trunks: [], tasks: [], repos: [], agents: [] }
+              ? { initialized: false, enabled: false, problem: '找不到工作区', counts: emptyCounts(), projects: [], bases: [], tasks: [], repos: [], agents: [] }
               : null;
             if (value === null) throw new Error('找不到工作区');
             res.writeHead(200, { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store' });
@@ -162,7 +162,7 @@ export function apply(ctx) {
               }
             } catch (error) {
               try {
-                finishAcceptance(workspace, value.batch.id, 'rejected');
+                if (value?.batch?.id) finishAcceptance(workspace, value.batch.id, 'rejected');
                 await flushStateWrites();
               } catch {
                 /* 回滚失败时仍把启动子代理的错误返回给面板。 */
@@ -201,29 +201,28 @@ async function launchAcceptance(rpc, sessionId, workspace, batch, notes) {
   acceptanceSignals.add(controller);
   const name = acceptanceName(batch.id);
   const guide = notes.map((note) => `文件 ${note.file}\n${note.text.slice(0, 8000)}`).join('\n\n');
+  // SubagentActivationSpec 把启动参数放在顶层；旧版包在 request 里会导致 spec.parent 为空。
   const started = await rpc.subagents.startActivation({
     provider: 'spawn',
     label: `验收 ${batch.id}`,
     ...(name === undefined ? {} : { name }),
     signal: controller.signal,
     delivery: 'parent',
-    request: {
-      cwd,
-      parent,
-      maxDepth: 1,
-      prompt: [{
-        type: 'text',
-        text: [
-          '你是验收子代理。不要改任务代码，不要合并，不要推送。',
-          '不要在本会话启动开发服务或任何需要一直运行的进程。子代理结束后这些进程会被回收。',
-          '如果验收说明要求启动服务，不要自己启动。在回复里通知父会话启动，写清验收槽位目录、端口和说明里的启动命令，然后结束。',
-          '说明没有要求启动服务时，只按说明检查。',
-          ...lines,
-          '',
-          guide,
-        ].join('\n'),
-      }],
-    },
+    cwd,
+    parent,
+    maxDepth: 1,
+    prompt: [{
+      type: 'text',
+      text: [
+        '你是验收子代理。不要改任务代码，不要合并，不要推送。',
+        '不要在本会话启动开发服务或任何需要一直运行的进程。子代理结束后这些进程会被回收。',
+        '如果验收说明要求启动服务，不要自己启动。在回复里通知父会话启动，写清验收槽位目录、端口和说明里的启动命令，然后结束。',
+        '说明没有要求启动服务时，只按说明检查。',
+        ...lines,
+        '',
+        guide,
+      ].join('\n'),
+    }],
   });
   started.result.finally(() => acceptanceSignals.delete(controller));
   return { id: started.childId, name: started.name };
@@ -351,7 +350,7 @@ function spawnWait(subprocess, argv, cwd, stdin) {
 }
 
 function emptyCounts() {
-  return { projects: 0, activeAgents: 0, agentLimit: 3, activeTasks: 0, activeSlots: 0, pending: 0, devSlots: { used: 0, total: 0 }, acceptSlots: { used: 0, total: 0 }, dirtyTrunks: 0 };
+  return { projects: 0, activeAgents: 0, agentLimit: 3, activeTasks: 0, activeSlots: 0, pending: 0, devSlots: { used: 0, total: 0 }, acceptSlots: { used: 0, total: 0 }, dirtyBases: 0 };
 }
 
 /**

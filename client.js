@@ -466,6 +466,7 @@ var zh = {
   "page.tasks": "\u4EFB\u52A1",
   "page.slots": "\u69FD\u4F4D",
   "page.agents": "\u4EE3\u7406",
+  "page.bases": "\u57FA\u7EBF",
   "filter.all": "\u5168\u90E8",
   "filter.pending": "\u5F85\u9A8C\u6536",
   "filter.dev": "\u5F00\u53D1\u4E2D",
@@ -504,6 +505,10 @@ var zh = {
   "status.review": "\u5F85\u786E\u8BA4",
   "action.refresh": "\u5237\u65B0",
   "action.save": "\u4FDD\u5B58",
+  "action.saving": "\u4FDD\u5B58\u4E2D",
+  "action.cancel": "\u53D6\u6D88",
+  "action.edit": "\u7F16\u8F91",
+  "action.newBase": "\u65B0\u5EFA\u57FA\u7EBF\u7EC4",
   "action.init": "\u521D\u59CB\u5316",
   "empty.init": "\u5C1A\u672A\u521D\u59CB\u5316\u3002\u521D\u59CB\u5316\u540E\u624D\u4F1A\u626B\u63CF\u4ED3\u5E93\u3002",
   "empty.root": "\u8BF7\u5728\u5DE5\u4F5C\u533A\u6839\u6253\u5F00\u4F1A\u8BDD",
@@ -513,7 +518,7 @@ var zh = {
   "metric.tasks": "\u6D3B\u8DC3\u4EFB\u52A1",
   "metric.slots": "\u6D3B\u8DC3\u69FD\u4F4D",
   "metric.pending": "\u5F85\u9A8C\u6536",
-  "metric.dirty": "\u4E3B\u5E72\u4E0D\u5E72\u51C0",
+  "metric.dirty": "\u57FA\u7EBF\u4E0D\u5E72\u51C0",
   "section.scheduleTasks": "\u8C03\u5EA6\u4EFB\u52A1",
   "section.emptySchedule": "\u6CA1\u6709\u8C03\u5EA6\u4EFB\u52A1",
   "section.devTasks": "\u5F00\u53D1\u4EFB\u52A1",
@@ -524,7 +529,34 @@ var zh = {
   "fact.merged": "\u5DF2\u5E76\u5165",
   "fact.state": "\u72B6\u6001",
   "fact.notMerged": "\u672A\u5E76\u5165",
-  "section.trunks": "\u4E3B\u5E72",
+  "fact.warning": "\u8B66\u544A",
+  "section.projects": "\u9879\u76EE",
+  "section.bases": "\u57FA\u7EBF",
+  "empty.bases": "\u8FD8\u6CA1\u6709\u57FA\u7EBF",
+  "empty.basesHint": "\u7528\u4EFB\u52A1\u6216\u8C03\u5EA6\u6307\u5B9A\u57FA\u7EBF\u5206\u652F\u540E\uFF0C\u4F1A\u81EA\u52A8\u5EFA\u7ACB\u57FA\u7EBF\u69FD\u4F4D",
+  "base.current": "\u5F53\u524D",
+  "base.default": "\u9ED8\u8BA4",
+  "base.root": "\u6839\u76EE\u5F55\u68C0\u51FA",
+  "base.slot": "\u57FA\u7EBF\u69FD\u4F4D",
+  "base.busy": "\u5176\u5B83\u68C0\u51FA\u5360\u7528",
+  "base.missing": "\u69FD\u4F4D\u7F3A\u5931",
+  "base.none": "\u672A\u5EFA\u7ACB\u69FD\u4F4D",
+  "base.tasks": "{count} \u4E2A\u4EFB\u52A1",
+  "base.label": "\u540D\u79F0",
+  "base.labelPlaceholder": "\u7559\u7A7A\u65F6\u7528\u7B2C\u4E00\u6761\u5206\u652F\u540D",
+  "base.branch": "\u5206\u652F",
+  "base.noBranches": "\u6CA1\u6709\u53EF\u9009\u5206\u652F",
+  "base.branchesStale": "\u5BBF\u4E3B\u6CA1\u6709\u8FD4\u56DE\u5206\u652F\u5217\u8868\uFF0C\u73B0\u5728\u53EA\u80FD\u9009\u5F53\u524D\u5206\u652F\uFF1B\u8BF7\u91CD\u542F DSH \u540E\u518D\u8BD5\u3002",
+  "base.needMember": "\u81F3\u5C11\u9009\u62E9\u4E00\u4E2A\u9879\u76EE",
+  "base.needBranch": "\u8BF7\u4E3A\u9009\u4E2D\u7684\u9879\u76EE\u9009\u62E9\u5206\u652F",
+  "base.saved": "\u5DF2\u4FDD\u5B58\u57FA\u7EBF\u7EC4",
+  "base.editor.create": "\u65B0\u5EFA\u57FA\u7EBF\u7EC4",
+  "base.editor.edit": "\u7F16\u8F91\u57FA\u7EBF\u7EC4 #{number}",
+  "base.count": "{count} \u6761\u57FA\u7EBF",
+  "base.projects": "{count} \u4E2A\u9879\u76EE",
+  "base.noRepo": "\u8FD8\u6CA1\u6709\u5206\u914D\u4ED3\u5E93",
+  "base.clean": "\u5E72\u51C0",
+  "base.dirty": "\u4E0D\u5E72\u51C0",
   "section.active": "\u6D3B\u8DC3\u4E2D",
   "section.none": "\u6CA1\u6709\u8FDB\u884C\u4E2D\u7684\u4EE3\u7406",
   "agent.lead": "\u4E3B\u4F1A\u8BDD",
@@ -541,8 +573,6 @@ var zh = {
   "slot.reusable": "\u53EF\u590D\u7528",
   "slot.noDev": "\u8FD8\u6CA1\u6709\u5F00\u53D1\u69FD\u4F4D",
   "slot.noAccept": "\u4E0D\u8BA1\u5165\u9A8C\u6536\u5206\u6BCD",
-  "trunk.clean": "\u5E72\u51C0",
-  "trunk.dirty": "\u4E0D\u5E72\u51C0",
   "status.developing": "\u5F00\u53D1\u4E2D",
   "status.awaiting-agent": "\u5F85\u6D3E\u53D1",
   "status.scheduling": "\u8C03\u5EA6\u4E2D",
@@ -558,7 +588,8 @@ var zh = {
   "status.idle": "\u7A7A\u95F2",
   "status.rejected": "\u4E0D\u901A\u8FC7",
   "hint.order": "\u6309\u52FE\u9009\u987A\u5E8F\u5E76\u5165",
-  "hint.pick": "\u5148\u52FE\u9009\u5F85\u9A8C\u6536\u4EFB\u52A1"
+  "hint.pick": "\u5148\u52FE\u9009\u5F85\u9A8C\u6536\u4EFB\u52A1",
+  "hint.baseMismatch": "\u6240\u9009\u4EFB\u52A1\u7684\u57FA\u7EBF\u4E0D\u4E00\u81F4\uFF0C\u8BF7\u5206\u5F00\u9A8C\u6536"
 };
 var en = {
   "tab.title": "dev-flow",
@@ -569,6 +600,7 @@ var en = {
   "page.tasks": "Tasks",
   "page.slots": "Slots",
   "page.agents": "Agents",
+  "page.bases": "Baselines",
   "filter.all": "All",
   "filter.pending": "Pending",
   "filter.dev": "Developing",
@@ -607,6 +639,10 @@ var en = {
   "status.review": "Waiting for review",
   "action.refresh": "Refresh",
   "action.save": "Save",
+  "action.saving": "Saving",
+  "action.cancel": "Cancel",
+  "action.edit": "Edit",
+  "action.newBase": "New baseline group",
   "action.init": "Initialize",
   "empty.init": "Not initialized. Repositories are scanned after initialization.",
   "empty.root": "Open the session at the workspace root",
@@ -616,7 +652,7 @@ var en = {
   "metric.tasks": "Active tasks",
   "metric.slots": "Active slots",
   "metric.pending": "Pending",
-  "metric.dirty": "Dirty trunks",
+  "metric.dirty": "Dirty baselines",
   "section.scheduleTasks": "Scheduling",
   "section.emptySchedule": "No scheduling tasks",
   "section.devTasks": "Development",
@@ -627,7 +663,34 @@ var en = {
   "fact.merged": "Merged",
   "fact.state": "State",
   "fact.notMerged": "Not merged",
-  "section.trunks": "Trunks",
+  "fact.warning": "Warning",
+  "section.projects": "Projects",
+  "section.bases": "Baselines",
+  "empty.bases": "No baselines yet",
+  "empty.basesHint": "Name a baseline branch when creating a task or schedule; its base slot is created automatically",
+  "base.current": "Current",
+  "base.default": "Default",
+  "base.root": "Root checkout",
+  "base.slot": "Base slot",
+  "base.busy": "Checked out elsewhere",
+  "base.missing": "Slot missing",
+  "base.none": "No slot yet",
+  "base.tasks": "{count} tasks",
+  "base.label": "Label",
+  "base.labelPlaceholder": "Defaults to the first branch name",
+  "base.branch": "Branch",
+  "base.noBranches": "No branch available",
+  "base.branchesStale": "The host returned no branch list, so only the current branch is available. Restart DSH and try again.",
+  "base.needMember": "Select at least one project",
+  "base.needBranch": "Choose a branch for every selected project",
+  "base.saved": "Baseline group saved",
+  "base.editor.create": "New baseline group",
+  "base.editor.edit": "Edit baseline group #{number}",
+  "base.count": "{count} baselines",
+  "base.projects": "{count} projects",
+  "base.noRepo": "No repository yet",
+  "base.clean": "Clean",
+  "base.dirty": "Dirty",
   "section.active": "Active",
   "section.none": "No agent is running",
   "agent.lead": "Lead",
@@ -644,8 +707,6 @@ var en = {
   "slot.reusable": "Reusable",
   "slot.noDev": "No dev slot yet",
   "slot.noAccept": "Not in the acceptance total",
-  "trunk.clean": "Clean",
-  "trunk.dirty": "Dirty",
   "status.developing": "Developing",
   "status.awaiting-agent": "Not started",
   "status.scheduling": "Scheduling",
@@ -661,7 +722,8 @@ var en = {
   "status.idle": "Idle",
   "status.rejected": "Rejected",
   "hint.order": "Merge order follows the selection",
-  "hint.pick": "Select pending tasks first"
+  "hint.pick": "Select pending tasks first",
+  "hint.baseMismatch": "Selected tasks use different baselines; review them in separate batches"
 };
 
 // src/client/sheet.ts
@@ -718,8 +780,6 @@ var panelSheet = `
 .df-line { grid-template-columns: minmax(0, 1fr) auto; }
 .df-agent { grid-template-columns: auto minmax(0, 1fr) auto; }
 .df-line:hover, .df-agent:hover { background: var(--dsw-alias-interactive-bg-hover, rgba(38, 49, 72, 0.06)); }
-.df-trunk-live { box-shadow: inset 2px 0 0 color-mix(in srgb, var(--dsw-alias-state-business-primary) 60%, transparent); }
-.df-trunk-states { display: inline-flex; align-items: center; gap: 8px; }
 
 /* \u4EFB\u52A1\u884C */
 .df-tree { display: flex; flex-direction: column; width: 100%; box-sizing: border-box; border-bottom: 0.5px solid var(--dsw-alias-border-l2); transition: background-color 120ms ease; position: relative; }
@@ -744,7 +804,7 @@ var panelSheet = `
   text-align: left;
 }
 .df-tree-content { display: flex; align-items: center; gap: 8px; flex: 1 1 auto; min-width: 0; }
-.df-tree-title { flex: 0 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 560; }
+.df-tree-title { flex: 0 0 auto; min-width: 0; max-width: 55%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 560; }
 .df-chev {
   flex: none;
   display: inline-flex;
@@ -766,7 +826,7 @@ var panelSheet = `
 .df-chev-space { width: 12px; flex: none; }
 .df-tree .df-actions { display: flex; align-items: center; gap: 7px; flex: none; }
 .df-tree-time { color: var(--dsw-alias-label-tertiary); font-size: 11px; line-height: 17px; font-variant-numeric: tabular-nums; white-space: nowrap; }
-.df-tree .df-chips { flex: 0 1 auto; min-width: 0; flex-wrap: nowrap; overflow: hidden; display: flex; gap: 5px; }
+.df-tree .df-chips { flex: 0 1 auto; min-width: 0; flex-wrap: nowrap; overflow: hidden; display: flex; gap: 5px; mask-image: linear-gradient(to right, #000 calc(100% - 10px), transparent); }
 .df-tree .df-chips .df-chip { flex: none; max-width: 150px; }
 .df-tree-children { display: flex; flex-direction: column; padding-left: 20px; }
 .df-tree-children > .df-tree { background: transparent; }
@@ -777,8 +837,6 @@ var panelSheet = `
 .df-line { grid-template-columns: minmax(0, 1fr) auto; }
 .df-agent { grid-template-columns: auto minmax(0, 1fr) auto; }
 .df-line:hover, .df-agent:hover { background: var(--dsw-alias-interactive-bg-hover, rgba(38, 49, 72, 0.06)); }
-.df-trunk-live { box-shadow: inset 2px 0 0 color-mix(in srgb, var(--dsw-alias-state-business-primary) 60%, transparent); }
-.df-trunk-states { display: inline-flex; align-items: center; gap: 8px; }
 
 /* \u4EFB\u52A1\u884C */
 .df-tree { display: flex; flex-direction: column; gap: 2px; width: 100%; box-sizing: border-box; border-bottom: 0.5px solid var(--dsw-alias-border-l2); transition: background-color 120ms ease; }
@@ -861,7 +919,8 @@ var panelSheet = `
 .df-task-chips { gap: 4px; flex: 1 1 auto; min-width: 0; flex-wrap: nowrap; overflow: hidden; }
 .df-tree .df-actions { display: flex; align-items: center; gap: 6px; flex: none; justify-self: end; margin-left: auto; }
 .df-tree .df-chips { flex: 0 1 auto; min-width: 0; flex-wrap: nowrap; overflow: hidden; }
-.df-tree-head > .df-check, .df-tree-head > span[data-state], .df-tree-head > span { flex: none; }
+.df-tree-head > .df-check, .df-tree-head > span[data-state], .df-tree-head > span:not(.df-tree-content) { flex: none; }
+.df-tree .df-tree-content { flex: 1 1 auto; min-width: 0; }
 .df-tree .df-chips .df-chip { flex: none; max-width: 150px; }
 .df-ok { color: var(--dsw-alias-state-success-primary); }
 .df-warn { color: var(--dsw-alias-state-warn-primary); }
@@ -900,7 +959,32 @@ var panelSheet = `
 }
 
 /* \u69FD\u4F4D\u3001\u4ED3\u5E93 */
-.df-repo { display: flex; align-items: center; gap: 8px; padding: 8px 16px 6px; font-size: 12px; color: var(--dsw-alias-label-primary); }
+.df-repo { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; padding: 8px 16px 6px; font-size: 12px; color: var(--dsw-alias-label-primary); }
+.df-line-states { display: inline-flex; align-items: center; gap: 8px; }
+.df-base { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; justify-content: space-between; padding: 6px 16px; border-top: 0.5px solid var(--dsw-alias-border-l2); font-size: 11px; line-height: 17px; }
+.df-base:first-of-type { border-top: 0; }
+.df-base-name { display: inline-flex; align-items: center; gap: 6px; min-width: 0; max-width: 100%; }
+.df-base-branch { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-family: var(--ds-font-family-code, ui-monospace, monospace); color: var(--dsw-alias-label-secondary); }
+.df-base-branch.is-current { color: var(--dsw-alias-label-primary); font-weight: 560; }
+.df-base-flag { flex: none; padding: 0 6px; border-radius: 999px; background: var(--dsw-alias-interactive-bg-hover, rgba(38, 49, 72, 0.06)); color: var(--dsw-alias-label-tertiary); font-size: 10px; line-height: 15px; }
+.df-base-meta { display: flex; flex: 1 1 100%; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 4px 10px; min-width: 0; }
+.df-base-loc { padding: 0 6px; border-radius: 999px; font-size: 10px; line-height: 15px; }
+.df-base-loc[data-location='root'] { color: var(--dsw-alias-state-success-primary); background: color-mix(in srgb, var(--dsw-alias-state-success-primary) 14%, transparent); }
+.df-base-loc[data-location='slot'] { color: var(--dsw-alias-state-business-primary); background: color-mix(in srgb, var(--dsw-alias-state-business-primary) 12%, transparent); }
+.df-base-loc[data-location='busy'], .df-base-loc[data-location='missing'] { color: var(--dsw-alias-state-warn-primary); background: color-mix(in srgb, var(--dsw-alias-state-warn-primary) 16%, transparent); }
+.df-base-loc[data-location='none'] { color: var(--dsw-alias-label-tertiary); background: var(--dsw-alias-interactive-bg-hover, rgba(38, 49, 72, 0.06)); }
+.df-base-head { font-family: var(--ds-font-family-code, ui-monospace, monospace); color: var(--dsw-alias-label-tertiary); }
+.df-base-toolbar { display: flex; flex: none; justify-content: flex-end; }
+.df-base-actions { margin-left: auto; }
+.df-base-editor { display: flex; flex-direction: column; gap: 8px; padding: 10px 12px; border: 0.5px solid var(--dsw-alias-border-l3); border-radius: 8px; background: var(--dsw-alias-bg-layer-1, var(--dsw-alias-bg-base)); }
+.df-base-label-row { display: flex; align-items: center; gap: 8px; font-size: 12px; }
+.df-base-label-row input { flex: 1; min-width: 0; height: 28px; padding: 0 8px; border: 0.5px solid var(--dsw-alias-border-l4); border-radius: var(--dsw-radius-sm, 6px); background: transparent; color: var(--dsw-alias-label-primary); font: inherit; font-size: 12px; }
+.df-base-edit-row { display: grid; grid-template-columns: auto minmax(0, 1fr) minmax(0, 1.2fr); align-items: center; gap: 8px; font-size: 12px; }
+.df-base-edit-row select { height: 28px; min-width: 0; padding: 0 6px; border: 0.5px solid var(--dsw-alias-border-l4); border-radius: var(--dsw-radius-sm, 6px); background: transparent; color: var(--dsw-alias-label-primary); font: inherit; font-size: 12px; }
+.df-base-edit-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--dsw-alias-label-secondary); }
+.df-base-error { margin: 0; color: var(--dsw-alias-state-error-primary); font-size: 12px; line-height: 17px; }
+.df-base-warn { margin: 0; color: var(--dsw-alias-state-warn-primary); font-size: 12px; line-height: 17px; }
+.df-base-edit-actions { display: flex; justify-content: flex-end; gap: 8px; }
 .df-slot { display: grid; grid-template-columns: minmax(0, 1.2fr) 52px minmax(0, 1fr); gap: 8px; padding: 6px 16px; font-size: 11px; line-height: 17px; }
 
 /* \u5B50\u9762\u677F */
@@ -1031,6 +1115,20 @@ function ensureSheet() {
 ${all()}`;
 }
 
+// src/client/snapshot.ts
+function normalizeSnapshot(value) {
+  if (value === null || typeof value !== "object") return null;
+  const snapshot = value;
+  if (Array.isArray(snapshot.projects)) {
+    snapshot.projects = snapshot.projects.map((project) => typeof project === "string" ? { name: project, dirty: false } : project);
+  }
+  if (!Array.isArray(snapshot.bases)) snapshot.bases = [];
+  if (snapshot.counts !== void 0 && snapshot.counts.dirtyBases === void 0) {
+    snapshot.counts.dirtyBases = snapshot.counts.dirtyTrunks ?? 0;
+  }
+  return snapshot;
+}
+
 // src/client/pages.tsx
 var { useEffect: useEffect2, useRef: useRef2, useState: useState2 } = React;
 function Title({ t }) {
@@ -1084,8 +1182,8 @@ function PanelView({ ui, sessionId, call, t, openDiff }) {
   const [picked, setPicked] = useState2([]);
   const { show, node } = useToast();
   const load = (failure) => call("snapshot", { sessionId }).then((value) => {
-    setData(value);
-    const snapshot = value;
+    const snapshot = normalizeSnapshot(value);
+    setData(snapshot);
     if (failure) show(textOf(failure), "error");
     else if (snapshot?.problem) show(snapshot.problem, "error");
   }).catch((reason) => show(textOf(reason), "error"));
@@ -1096,6 +1194,7 @@ function PanelView({ ui, sessionId, call, t, openDiff }) {
     { value: "overview", label: t("page.overview"), id: "dev-flow-tab-overview", panelId: "dev-flow-panel-overview" },
     { value: "tasks", label: t("page.tasks"), id: "dev-flow-tab-tasks", panelId: "dev-flow-panel-tasks" },
     { value: "slots", label: t("page.slots"), id: "dev-flow-tab-slots", panelId: "dev-flow-panel-slots" },
+    { value: "bases", label: t("page.bases"), id: "dev-flow-tab-bases", panelId: "dev-flow-panel-bases" },
     { value: "agents", label: t("page.agents"), id: "dev-flow-tab-agents", panelId: "dev-flow-panel-agents" }
   ];
   return /* @__PURE__ */ React.createElement("div", { className: "df" }, node, /* @__PURE__ */ React.createElement("div", { className: "df-toolbar" }, ui.SegmentedTabs ? /* @__PURE__ */ React.createElement(ui.SegmentedTabs, { size: "sm", label: t("tab.title"), items: pages, value: page, onChange: (value) => setPage(value) }) : /* @__PURE__ */ React.createElement("div", { role: "tablist", className: "df-filters" }, pages.map((item) => /* @__PURE__ */ React.createElement("button", { key: item.value, type: "button", "aria-selected": page === item.value, onClick: () => setPage(item.value) }, item.label))), /* @__PURE__ */ React.createElement(ActionButton, { ui, variant: "ghost", onClick: () => {
@@ -1111,6 +1210,7 @@ function PageBody(props) {
   if (props.page === "overview") return /* @__PURE__ */ React.createElement(Overview, { ui: props.ui, data: props.data, t: props.t });
   if (props.page === "tasks") return /* @__PURE__ */ React.createElement(Tasks, { ...props });
   if (props.page === "slots") return /* @__PURE__ */ React.createElement(Slots, { ui: props.ui, data: props.data, t: props.t });
+  if (props.page === "bases") return /* @__PURE__ */ React.createElement(Bases, { ui: props.ui, data: props.data, t: props.t, call: props.call, reload: props.reload, show: props.show, sessionId: props.sessionId });
   return /* @__PURE__ */ React.createElement(Agents, { ui: props.ui, data: props.data, t: props.t });
 }
 function Overview({ ui, data, t }) {
@@ -1122,14 +1222,10 @@ function Overview({ ui, data, t }) {
     [t("metric.tasks"), data.counts.activeTasks],
     [t("metric.slots"), data.counts.activeSlots],
     [t("metric.pending"), data.counts.pending, data.counts.pending > 0 ? "warn" : void 0],
-    [t("metric.dirty"), `${data.counts.dirtyTrunks}/${data.counts.projects}`, data.counts.dirtyTrunks > 0 ? "warn" : void 0]
+    [t("metric.dirty"), `${data.counts.dirtyBases}/${data.counts.projects}`, data.counts.dirtyBases > 0 ? "warn" : void 0]
   ];
   const running = (data.agents ?? []).filter((agent) => agent.status === "running");
-  return /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("div", { className: "df-metrics" }, cards.map(([label, value, tone]) => /* @__PURE__ */ React.createElement("div", { key: label, className: "df-metric", "data-tone": tone }, /* @__PURE__ */ React.createElement("div", { className: "df-kicker" }, label), /* @__PURE__ */ React.createElement("strong", null, String(value))))), /* @__PURE__ */ React.createElement("h3", { className: "df-section" }, t("section.trunks")), /* @__PURE__ */ React.createElement("div", { className: "df-card" }, (data.trunks ?? []).map((repo) => {
-    const active = trunkActivity(data, repo.name);
-    const phase = trunkPhase(active);
-    return /* @__PURE__ */ React.createElement("div", { key: repo.name, className: phase === "idle" ? "df-line" : "df-line df-trunk-live" }, /* @__PURE__ */ React.createElement("span", { className: "df-name" }, phase === "idle" ? null : /* @__PURE__ */ React.createElement("span", { className: "df-live", "aria-hidden": "true" }), repo.name, repo.branch ? /* @__PURE__ */ React.createElement("span", { className: "df-branch" }, repo.branch) : null), /* @__PURE__ */ React.createElement("span", { className: "df-trunk-states" }, /* @__PURE__ */ React.createElement(StatusTag, { ui, t, status: phase }), /* @__PURE__ */ React.createElement("span", { className: repo.dirty ? "df-warn" : "df-ok" }, repo.dirty ? t("trunk.dirty") : t("trunk.clean"))));
-  })), /* @__PURE__ */ React.createElement("h3", { className: "df-section" }, t("section.active")), running.length === 0 ? /* @__PURE__ */ React.createElement("p", { className: "df-empty-line" }, t("section.none")) : /* @__PURE__ */ React.createElement("div", { className: "df-active" }, running.map((agent) => /* @__PURE__ */ React.createElement("article", { key: agent.id, className: "df-active-card" }, /* @__PURE__ */ React.createElement("div", { className: "df-active-top" }, /* @__PURE__ */ React.createElement("span", { className: "df-name" }, /* @__PURE__ */ React.createElement("span", { className: "df-live", "aria-hidden": "true" }), agent.id), /* @__PURE__ */ React.createElement(StatusTag, { ui, t, status: agentPhase(agent) })), /* @__PURE__ */ React.createElement("div", { className: "df-active-title" }, taskTitle(data, agent.taskId)), /* @__PURE__ */ React.createElement("div", { className: "df-chips" }, agentSlots(data, agent).map((slot) => /* @__PURE__ */ React.createElement("span", { key: slot, className: "df-chip" }, slot)))))), dev || accept ? /* @__PURE__ */ React.createElement("p", { className: "df-meta" }, `${t("slot.dev")} ${dev?.used ?? 0}/${dev?.total ?? 0} \xB7 ${t("slot.accept")} ${accept?.used ?? 0}/${accept?.total ?? 0}`) : null);
+  return /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("div", { className: "df-metrics" }, cards.map(([label, value, tone]) => /* @__PURE__ */ React.createElement("div", { key: label, className: "df-metric", "data-tone": tone }, /* @__PURE__ */ React.createElement("div", { className: "df-kicker" }, label), /* @__PURE__ */ React.createElement("strong", null, String(value))))), /* @__PURE__ */ React.createElement("h3", { className: "df-section" }, t("section.projects")), /* @__PURE__ */ React.createElement("div", { className: "df-card" }, (data.projects ?? []).map((project) => /* @__PURE__ */ React.createElement("div", { key: project.name, className: "df-line" }, /* @__PURE__ */ React.createElement("span", { className: "df-name" }, project.name, project.branch ? /* @__PURE__ */ React.createElement("span", { className: "df-branch" }, project.branch) : null), /* @__PURE__ */ React.createElement("span", { className: "df-line-states" }, /* @__PURE__ */ React.createElement("span", { className: "df-meta" }, t("base.count").replace("{count}", String(project.bases ?? 0))), /* @__PURE__ */ React.createElement("span", { className: project.dirty ? "df-warn" : "df-ok" }, project.dirty ? t("base.dirty") : t("base.clean")))))), /* @__PURE__ */ React.createElement("h3", { className: "df-section" }, t("section.active")), running.length === 0 ? /* @__PURE__ */ React.createElement("p", { className: "df-empty-line" }, t("section.none")) : /* @__PURE__ */ React.createElement("div", { className: "df-active" }, running.map((agent) => /* @__PURE__ */ React.createElement("article", { key: agent.id, className: "df-active-card" }, /* @__PURE__ */ React.createElement("div", { className: "df-active-top" }, /* @__PURE__ */ React.createElement("span", { className: "df-name" }, /* @__PURE__ */ React.createElement("span", { className: "df-live", "aria-hidden": "true" }), agent.id), /* @__PURE__ */ React.createElement(StatusTag, { ui, t, status: agentPhase(agent) })), /* @__PURE__ */ React.createElement("div", { className: "df-active-title" }, taskTitle(data, agent.taskId)), /* @__PURE__ */ React.createElement("div", { className: "df-chips" }, agentSlots(data, agent).map((slot) => /* @__PURE__ */ React.createElement("span", { key: slot, className: "df-chip" }, slot)))))), dev || accept ? /* @__PURE__ */ React.createElement("p", { className: "df-meta" }, `${t("slot.dev")} ${dev?.used ?? 0}/${dev?.total ?? 0} \xB7 ${t("slot.accept")} ${accept?.used ?? 0}/${accept?.total ?? 0}`) : null);
 }
 function Tasks({
   ui,
@@ -1381,9 +1477,17 @@ function ScheduleItem({ ui, t, schedule, open, onToggle, depth = 0 }) {
     {
       kind: "schedule",
       title: schedule.title,
-      chips: schedule.usage?.totalTokens ? [formatTokens(schedule.usage.totalTokens)] : [],
+      chips: [
+        ...schedule.baseGroup ? [`#${schedule.baseGroup}`] : [],
+        ...schedule.base ? [schedule.base] : [],
+        ...schedule.usage?.totalTokens ? [formatTokens(schedule.usage.totalTokens)] : []
+      ],
       time: createdText(schedule.createdAt),
       actions: /* @__PURE__ */ React.createElement(StatusTag, { ui, t, status: schedule.status }),
+      facts: [
+        ...schedule.base ? [{ slot: t("page.bases"), detail: schedule.baseGroup ? `#${schedule.baseGroup} \xB7 ${schedule.base}` : schedule.base }] : [],
+        ...(schedule.warnings ?? []).map((warning) => ({ slot: t("fact.warning"), detail: warning }))
+      ],
       expandable: true,
       expanded: open,
       onToggle,
@@ -1460,7 +1564,7 @@ function DevTaskItem({
     {
       kind: "dev",
       title: task.title,
-      chips: [...taskBranchChips(task), ...taskChips(task)],
+      chips: [...baseChips(task), ...taskBranchChips(task), ...taskChips(task)],
       time: createdText(task.createdAt),
       leading,
       actions: /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement(StatusTag, { ui, t, status: shownStatus(task) }), task.status === "pending-merge" && task.kind !== "accept" && call && reload ? /* @__PURE__ */ React.createElement(ActionButton, { ui, onClick: (event) => {
@@ -1533,7 +1637,7 @@ function AcceptTaskItem({
     {
       kind: "accept",
       title: batch.title,
-      chips: taskChips(batch),
+      chips: [...baseChips(batch), ...taskChips(batch)],
       time: createdText(batch.createdAt),
       leading,
       actions: /* @__PURE__ */ React.createElement(StatusTag, { ui, t, status: shownStatus(batch) }),
@@ -1556,7 +1660,7 @@ function containedTasks(data, batch) {
 function Slots({ ui, data, t }) {
   const dev = data.counts.devSlots;
   const accept = data.counts.acceptSlots;
-  return /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("p", { className: "df-meta" }, `${t("slot.dev")} ${dev?.used ?? 0}/${dev?.total ?? 0} \xB7 ${t("slot.accept")} ${accept?.used ?? 0}/${accept?.total ?? 0}`), data.repos.map((repo) => /* @__PURE__ */ React.createElement("section", { key: repo.name, className: "df-card" }, /* @__PURE__ */ React.createElement("div", { className: "df-repo" }, /* @__PURE__ */ React.createElement("strong", null, repo.name), " ", /* @__PURE__ */ React.createElement("span", { className: repo.dirty ? "df-warn" : "df-ok" }, repo.dirty ? t("trunk.dirty") : t("trunk.clean"))), repo.devSlots.length === 0 ? /* @__PURE__ */ React.createElement(SlotLine, { t, kind: "dev", state: "missing", detail: t("slot.noDev") }) : repo.devSlots.map((slot) => /* @__PURE__ */ React.createElement(SlotLine, { key: slot.number, t, kind: "dev", repo: repo.name, number: slot.number, state: slot.taskId ? "busy" : "free", detail: devDetail(data, repo, slot, t) })), /* @__PURE__ */ React.createElement(
+  return /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("p", { className: "df-meta" }, `${t("slot.dev")} ${dev?.used ?? 0}/${dev?.total ?? 0} \xB7 ${t("slot.accept")} ${accept?.used ?? 0}/${accept?.total ?? 0}`), data.repos.map((repo) => /* @__PURE__ */ React.createElement("section", { key: repo.name, className: "df-card" }, /* @__PURE__ */ React.createElement("div", { className: "df-repo" }, /* @__PURE__ */ React.createElement("strong", null, repo.name), repo.branch ? /* @__PURE__ */ React.createElement("span", { className: "df-branch" }, repo.branch) : null, /* @__PURE__ */ React.createElement("span", { className: repo.dirty ? "df-warn" : "df-ok" }, repo.dirty ? t("base.dirty") : t("base.clean"))), repo.devSlots.length === 0 ? /* @__PURE__ */ React.createElement(SlotLine, { t, kind: "dev", state: "missing", detail: t("slot.noDev") }) : repo.devSlots.map((slot) => /* @__PURE__ */ React.createElement(SlotLine, { key: slot.number, t, kind: "dev", repo: repo.name, number: slot.number, state: slot.taskId ? "busy" : "free", detail: devDetail(data, repo, slot, t) })), /* @__PURE__ */ React.createElement(
     SlotLine,
     {
       t,
@@ -1567,6 +1671,103 @@ function Slots({ ui, data, t }) {
       detail: acceptDetail(repo, t)
     }
   ))));
+}
+function baseDraftOf(projects, group) {
+  const rows = {};
+  for (const project of projects) {
+    const member = group?.repos.find((item) => item.repo === project.name);
+    const branches = project.branches ?? [];
+    rows[project.name] = member !== void 0 ? { enabled: true, branch: member.branch } : { enabled: false, branch: project.branch ?? project.defaultBranch ?? branches[0] ?? "" };
+  }
+  return { number: group?.number ?? null, label: group?.label ?? "", rows };
+}
+function Bases({
+  ui,
+  data,
+  t,
+  call,
+  reload,
+  show,
+  sessionId
+}) {
+  const groups = data.baseGroups ?? [];
+  const projects = data.projects ?? [];
+  const [draft, setDraft] = useState2(null);
+  const [saving, setSaving] = useState2(false);
+  const [error, setError] = useState2("");
+  const openCreate = () => {
+    setDraft(baseDraftOf(projects));
+    setError("");
+  };
+  const openEdit = (group) => {
+    setDraft(baseDraftOf(projects, group));
+    setError("");
+  };
+  const close = () => {
+    if (saving) return;
+    setDraft(null);
+    setError("");
+  };
+  const setRow = (repo, next) => {
+    if (draft === null) return;
+    setDraft({ ...draft, rows: { ...draft.rows, [repo]: next } });
+  };
+  const save = () => {
+    if (draft === null || saving) return;
+    const members = Object.entries(draft.rows).filter(([, row]) => row.enabled).map(([repo, row]) => ({ repo, branch: row.branch }));
+    if (members.length === 0) {
+      setError(t("base.needMember"));
+      return;
+    }
+    if (members.some((member) => member.branch === "")) {
+      setError(t("base.needBranch"));
+      return;
+    }
+    setSaving(true);
+    setError("");
+    call("base-save", { sessionId, number: draft.number, label: draft.label, members }).then(() => {
+      setDraft(null);
+      show(t("base.saved"), "info");
+      return reload();
+    }).catch((reason) => {
+      const text = textOf(reason);
+      setError(text);
+      show(text, "error");
+    }).finally(() => setSaving(false));
+  };
+  return /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("div", { className: "df-base-toolbar" }, /* @__PURE__ */ React.createElement(ActionButton, { ui, variant: "primary", onClick: openCreate, disabled: draft !== null }, t("action.newBase"))), draft !== null ? /* @__PURE__ */ React.createElement("section", { className: "df-card df-base-editor" }, /* @__PURE__ */ React.createElement("div", { className: "df-repo" }, /* @__PURE__ */ React.createElement("strong", null, draft.number === null ? t("base.editor.create") : t("base.editor.edit").replace("{number}", draft.number))), /* @__PURE__ */ React.createElement("label", { className: "df-base-label-row" }, /* @__PURE__ */ React.createElement("span", null, t("base.label")), /* @__PURE__ */ React.createElement(
+    "input",
+    {
+      type: "text",
+      value: draft.label,
+      placeholder: t("base.labelPlaceholder"),
+      disabled: saving,
+      onChange: (event) => setDraft({ ...draft, label: event.target.value })
+    }
+  )), projects.some((project) => !Array.isArray(project.branches)) ? /* @__PURE__ */ React.createElement("p", { className: "df-base-warn", role: "status" }, t("base.branchesStale")) : null, projects.map((project) => {
+    const row = draft.rows[project.name] ?? { enabled: false, branch: "" };
+    const branches = [...new Set([...project.branches ?? [], row.branch].filter((branch) => branch !== ""))].sort();
+    return /* @__PURE__ */ React.createElement("div", { key: project.name, className: "df-base-edit-row" }, /* @__PURE__ */ React.createElement(
+      "input",
+      {
+        type: "checkbox",
+        checked: row.enabled,
+        disabled: saving,
+        "aria-label": project.name,
+        onChange: () => setRow(project.name, { ...row, enabled: !row.enabled })
+      }
+    ), /* @__PURE__ */ React.createElement("span", { className: "df-base-edit-name" }, project.name), /* @__PURE__ */ React.createElement(
+      "select",
+      {
+        value: row.branch,
+        disabled: !row.enabled || saving,
+        "aria-label": `${project.name} ${t("base.branch")}`,
+        onChange: (event) => setRow(project.name, { ...row, branch: event.target.value })
+      },
+      branches.length === 0 ? /* @__PURE__ */ React.createElement("option", { value: "" }, t("base.noBranches")) : null,
+      branches.map((branch) => /* @__PURE__ */ React.createElement("option", { key: branch, value: branch }, branch))
+    ));
+  }), error !== "" ? /* @__PURE__ */ React.createElement("p", { className: "df-base-error", role: "alert" }, error) : null, /* @__PURE__ */ React.createElement("div", { className: "df-base-edit-actions" }, /* @__PURE__ */ React.createElement(ActionButton, { ui, variant: "ghost", onClick: close, disabled: saving }, t("action.cancel")), /* @__PURE__ */ React.createElement(ActionButton, { ui, variant: "primary", onClick: save, disabled: saving }, saving ? t("action.saving") : t("action.save")))) : null, groups.length === 0 && draft === null ? /* @__PURE__ */ React.createElement("div", { className: "df-empty" }, /* @__PURE__ */ React.createElement("p", null, t("empty.bases")), /* @__PURE__ */ React.createElement("p", { className: "df-meta" }, t("empty.basesHint"))) : null, groups.map((group) => /* @__PURE__ */ React.createElement("section", { key: group.number, className: "df-card" }, /* @__PURE__ */ React.createElement("div", { className: "df-repo" }, /* @__PURE__ */ React.createElement("strong", null, `#${group.number}`), /* @__PURE__ */ React.createElement("span", { className: "df-branch" }, group.label), /* @__PURE__ */ React.createElement("span", { className: "df-meta" }, t("base.projects").replace("{count}", String(group.repos.length))), /* @__PURE__ */ React.createElement("span", { className: "df-base-actions" }, /* @__PURE__ */ React.createElement(ActionButton, { ui, variant: "ghost", onClick: () => openEdit(group), title: t("action.edit") }, t("action.edit")))), group.repos.length === 0 ? /* @__PURE__ */ React.createElement("p", { className: "df-empty-line" }, t("base.noRepo")) : null, group.repos.map((base) => /* @__PURE__ */ React.createElement("div", { key: base.repo, className: "df-base" }, /* @__PURE__ */ React.createElement("span", { className: "df-base-name" }, /* @__PURE__ */ React.createElement("span", { className: "df-meta" }, base.repo), /* @__PURE__ */ React.createElement("span", { className: base.current ? "df-base-branch is-current" : "df-base-branch" }, base.branch), base.default ? /* @__PURE__ */ React.createElement("span", { className: "df-base-flag" }, t("base.default")) : null, base.current ? /* @__PURE__ */ React.createElement("span", { className: "df-base-flag" }, t("base.current")) : null), /* @__PURE__ */ React.createElement("span", { className: "df-base-meta" }, /* @__PURE__ */ React.createElement("span", { className: "df-base-loc", "data-location": base.location }, t(`base.${base.location}`)), /* @__PURE__ */ React.createElement("span", { className: base.dirty ? "df-warn" : "df-ok" }, base.dirty ? t("base.dirty") : t("base.clean")), /* @__PURE__ */ React.createElement("span", { className: "df-meta" }, t("base.tasks").replace("{count}", String(base.tasks))), base.shortHead ? /* @__PURE__ */ React.createElement("span", { className: "df-base-head" }, base.shortHead) : null))))));
 }
 function SlotLine({ t, kind, repo, number, state, detail }) {
   const label = repo && number ? `${repo}-${number}` : `${kind === "dev" ? t("slot.dev") : t("slot.accept")} ${number ?? ""}`.trim();
@@ -1608,6 +1809,7 @@ function SettingsForm({ ui, view, call, t }) {
     ["acceptModel", "\u9A8C\u6536\u4EFB\u52A1\u6A21\u578B"],
     ["devDir", "\u5F00\u53D1\u69FD\u4F4D\u76EE\u5F55"],
     ["acceptDir", "\u9A8C\u6536\u69FD\u4F4D\u76EE\u5F55"],
+    ["baseDir", "\u57FA\u7EBF\u69FD\u4F4D\u76EE\u5F55"],
     ["taskBranch", "\u4EFB\u52A1\u5206\u652F\u683C\u5F0F"],
     ["acceptBranch", "\u9A8C\u6536\u5206\u652F\u683C\u5F0F"]
   ];
@@ -1662,7 +1864,7 @@ function mergeTask(call, sessionId, taskId, reload, show) {
   call("task-merge", { sessionId, taskId }).then((value) => {
     const task = value?.tasks?.find((item) => item.id === taskId);
     if (task?.status === "pending-merge") show?.(task.warnings?.join("\uFF0C") || "\u6CA1\u6709\u5408\u5165", "error");
-    else show?.("\u5DF2\u5408\u5165\u4E3B\u5E72", "info");
+    else show?.("\u5DF2\u5408\u5165\u57FA\u7EBF", "info");
     return reload();
   }).catch((reason) => reload(reason));
 }
@@ -1689,17 +1891,20 @@ function acceptReason(data, picked, t) {
   if (data.counts.activeAgents >= data.counts.agentLimit) return "\u5B50\u4EE3\u7406\u5DF2\u8FBE\u4E0A\u9650";
   const busy = selected.flatMap((task) => task.repos).filter((name) => data.repos.find((repo) => repo.name === name)?.acceptSlot?.batchId);
   if (busy.length > 0) return `${busy[0]} \u7684\u9A8C\u6536\u69FD\u4F4D\u6B63\u5728\u5360\u7528`;
+  const perRepo = /* @__PURE__ */ new Map();
+  for (const task of selected) {
+    for (const name of task.repos) {
+      const bases = perRepo.get(name) ?? /* @__PURE__ */ new Set();
+      bases.add(task.base ?? "");
+      perRepo.set(name, bases);
+    }
+  }
+  if ([...perRepo.values()].some((bases) => bases.size > 1)) return t("hint.baseMismatch");
   return "";
 }
 function taskTitle(data, id) {
   if (!id) return "";
   return data.tasks.find((task) => task.id === id)?.title ?? id;
-}
-function trunkPhase(active) {
-  if (active.some((item) => item.kind === "accept")) return "accepting";
-  if (active.some((item) => item.kind === "schedule")) return "scheduling";
-  if (active.length > 0) return "developing";
-  return "idle";
 }
 function agentPhase(agent) {
   if (agent.status !== "running") return "idle";
@@ -1707,21 +1912,17 @@ function agentPhase(agent) {
   if (agent.kind === "schedule") return "scheduling";
   return "developing";
 }
-function trunkActivity(data, repoName) {
-  return (data.agents ?? []).flatMap((agent) => {
-    if (agent.status !== "running") return [];
-    const task = data.tasks.find((item) => item.id === agent.taskId);
-    if (!task) return [];
-    const slots = Object.entries(task.slots ?? {}).filter(([repo]) => repo === repoName).map(([, slot]) => slot.number ? `${repoName}-${slot.number}` : repoName);
-    const involved = task.repos?.includes(repoName) || slots.length > 0;
-    if (!involved) return [];
-    return [{ agent: agent.id, title: task.title, kind: agent.kind, slots }];
-  });
-}
 function agentSlots(data, agent) {
   const task = data.tasks.find((item) => item.id === agent.taskId || item.id === agent.lastTaskId);
   if (!task?.slots) return [];
   return Object.entries(task.slots).map(([repo, slot]) => slot.number ? `${repo}-${slot.number}` : `${repo} ${slot.port ?? ""}`.trim());
+}
+function baseChips(task) {
+  if (task.kind === "accept") return Object.values(task.bases ?? {}).filter((base) => typeof base === "string" && base !== "");
+  const chips = [];
+  if (typeof task.baseGroup === "string" && task.baseGroup !== "") chips.push(`#${task.baseGroup}`);
+  if (typeof task.base === "string" && task.base !== "") chips.push(task.base);
+  return chips;
 }
 function taskChips(task) {
   return Object.entries(task.slots ?? {}).map(([repo, slot]) => {

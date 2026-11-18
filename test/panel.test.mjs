@@ -33,7 +33,7 @@ test('an uninitialized workspace reports zero counts until init', () => {
   assert.equal(view.counts.projects, 0);
   const ready = handle(root, 'session-a', 'init');
   assert.equal(ready.initialized, true);
-  assert.deepEqual(ready.projects, ['kit']);
+  assert.deepEqual(ready.projects.map((project) => project.name), ['kit']);
   rmSync(root, { recursive: true, force: true });
 });
 

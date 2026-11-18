@@ -1,15 +1,16 @@
 import type React from 'react'
 
 const { useEffect, useRef, useState } = React
-import type { AgentRow, Call, DevSlot, RepoRow, ScheduleRow, Settings, Snapshot, TaskDiff, TaskDiffFile, TaskRow, Translate } from './types'
+import type { AgentRow, BaseGroupRow, Call, DevSlot, ProjectRow, RepoRow, ScheduleRow, Settings, Snapshot, TaskDiff, TaskDiffFile, TaskRow, Translate } from './types'
 import { ActionButton, Dot, type UiKit } from './ui'
 import { FileDiff } from './vendor/FileDiff'
 import { diffLabelsOf, diffStateOf } from './diff'
+import { normalizeSnapshot } from './snapshot'
 
 /** 打开一条任务 diff 的入口：由插件在 Sidebar 里新开一个 tab，并选中这次的文件。 */
 type OpenDiff = (taskId: string, title: string, index: number) => void
 
-type PageId = 'overview' | 'tasks' | 'slots' | 'agents'
+type PageId = 'overview' | 'tasks' | 'slots' | 'bases' | 'agents'
 
 export function Title({ t }: { t: Translate }) {
   return <span>{t('tab.title')}</span>
@@ -78,8 +79,8 @@ function PanelView({ ui, sessionId, call, t, openDiff }: { ui: UiKit, sessionId?
   const { show, node } = useToast()
   const load = (failure?: unknown) => call('snapshot', { sessionId })
     .then((value) => {
-      setData(value as Snapshot)
-      const snapshot = value as Snapshot | undefined
+      const snapshot = normalizeSnapshot(value)
+      setData(snapshot)
       if (failure) show(textOf(failure), 'error')
       else if (snapshot?.problem) show(snapshot.problem, 'error')
     })
@@ -89,6 +90,7 @@ function PanelView({ ui, sessionId, call, t, openDiff }: { ui: UiKit, sessionId?
     { value: 'overview', label: t('page.overview'), id: 'dev-flow-tab-overview', panelId: 'dev-flow-panel-overview' },
     { value: 'tasks', label: t('page.tasks'), id: 'dev-flow-tab-tasks', panelId: 'dev-flow-panel-tasks' },
     { value: 'slots', label: t('page.slots'), id: 'dev-flow-tab-slots', panelId: 'dev-flow-panel-slots' },
+    { value: 'bases', label: t('page.bases'), id: 'dev-flow-tab-bases', panelId: 'dev-flow-panel-bases' },
     { value: 'agents', label: t('page.agents'), id: 'dev-flow-tab-agents', panelId: 'dev-flow-panel-agents' },
   ]
   return (
@@ -141,6 +143,7 @@ function PageBody(props: {
   if (props.page === 'overview') return <Overview ui={props.ui} data={props.data} t={props.t} />
   if (props.page === 'tasks') return <Tasks {...props} />
   if (props.page === 'slots') return <Slots ui={props.ui} data={props.data} t={props.t} />
+  if (props.page === 'bases') return <Bases ui={props.ui} data={props.data} t={props.t} call={props.call} reload={props.reload} show={props.show} sessionId={props.sessionId} />
   return <Agents ui={props.ui} data={props.data} t={props.t} />
 }
 
@@ -153,7 +156,7 @@ function Overview({ ui, data, t }: { ui: UiKit, data: Snapshot, t: Translate }) 
     [t('metric.tasks'), data.counts.activeTasks],
     [t('metric.slots'), data.counts.activeSlots],
     [t('metric.pending'), data.counts.pending, data.counts.pending > 0 ? 'warn' : undefined],
-    [t('metric.dirty'), `${data.counts.dirtyTrunks}/${data.counts.projects}`, data.counts.dirtyTrunks > 0 ? 'warn' : undefined],
+    [t('metric.dirty'), `${data.counts.dirtyBases}/${data.counts.projects}`, data.counts.dirtyBases > 0 ? 'warn' : undefined],
   ]
   const running = (data.agents ?? []).filter((agent) => agent.status === 'running')
   return (
@@ -166,25 +169,20 @@ function Overview({ ui, data, t }: { ui: UiKit, data: Snapshot, t: Translate }) 
           </div>
         ))}
       </div>
-      <h3 className="df-section">{t('section.trunks')}</h3>
+      <h3 className="df-section">{t('section.projects')}</h3>
       <div className="df-card">
-        {(data.trunks ?? []).map((repo) => {
-          const active = trunkActivity(data, repo.name)
-          const phase = trunkPhase(active)
-          return (
-            <div key={repo.name} className={phase === 'idle' ? 'df-line' : 'df-line df-trunk-live'}>
-              <span className="df-name">
-                {phase === 'idle' ? null : <span className="df-live" aria-hidden="true" />}
-                {repo.name}
-                {repo.branch ? <span className="df-branch">{repo.branch}</span> : null}
-              </span>
-              <span className="df-trunk-states">
-                <StatusTag ui={ui} t={t} status={phase} />
-                <span className={repo.dirty ? 'df-warn' : 'df-ok'}>{repo.dirty ? t('trunk.dirty') : t('trunk.clean')}</span>
-              </span>
-            </div>
-          )
-        })}
+        {(data.projects ?? []).map((project) => (
+          <div key={project.name} className="df-line">
+            <span className="df-name">
+              {project.name}
+              {project.branch ? <span className="df-branch">{project.branch}</span> : null}
+            </span>
+            <span className="df-line-states">
+              <span className="df-meta">{t('base.count').replace('{count}', String(project.bases ?? 0))}</span>
+              <span className={project.dirty ? 'df-warn' : 'df-ok'}>{project.dirty ? t('base.dirty') : t('base.clean')}</span>
+            </span>
+          </div>
+        ))}
       </div>
       <h3 className="df-section">{t('section.active')}</h3>
       {running.length === 0 ? <p className="df-empty-line">{t('section.none')}</p> : (
@@ -558,9 +556,17 @@ function ScheduleItem({ ui, t, schedule, open, onToggle, depth = 0 }: {
     <TreeItem
       kind="schedule"
       title={schedule.title}
-      chips={schedule.usage?.totalTokens ? [formatTokens(schedule.usage.totalTokens)] : []}
+      chips={[
+        ...(schedule.baseGroup ? [`#${schedule.baseGroup}`] : []),
+        ...(schedule.base ? [schedule.base] : []),
+        ...(schedule.usage?.totalTokens ? [formatTokens(schedule.usage.totalTokens)] : []),
+      ]}
       time={createdText(schedule.createdAt)}
       actions={<StatusTag ui={ui} t={t} status={schedule.status} />}
+      facts={[
+        ...(schedule.base ? [{ slot: t('page.bases'), detail: schedule.baseGroup ? `#${schedule.baseGroup} · ${schedule.base}` : schedule.base }] : []),
+        ...(schedule.warnings ?? []).map((warning) => ({ slot: t('fact.warning'), detail: warning })),
+      ]}
       expandable
       expanded={open}
       onToggle={onToggle}
@@ -644,7 +650,7 @@ function DevTaskItem({
     <TreeItem
       kind="dev"
       title={task.title}
-      chips={[...taskBranchChips(task), ...taskChips(task)]}
+      chips={[...baseChips(task), ...taskBranchChips(task), ...taskChips(task)]}
       time={createdText(task.createdAt)}
       leading={leading}
       actions={(
@@ -753,7 +759,7 @@ function AcceptTaskItem({
     <TreeItem
       kind="accept"
       title={batch.title}
-      chips={taskChips(batch)}
+      chips={[...baseChips(batch), ...taskChips(batch)]}
       time={createdText(batch.createdAt)}
       leading={leading}
       actions={<StatusTag ui={ui} t={t} status={shownStatus(batch)} />}
@@ -790,8 +796,8 @@ function Slots({ ui, data, t }: { ui: UiKit, data: Snapshot, t: Translate }) {
         <section key={repo.name} className="df-card">
           <div className="df-repo">
             <strong>{repo.name}</strong>
-            {' '}
-            <span className={repo.dirty ? 'df-warn' : 'df-ok'}>{repo.dirty ? t('trunk.dirty') : t('trunk.clean')}</span>
+            {repo.branch ? <span className="df-branch">{repo.branch}</span> : null}
+            <span className={repo.dirty ? 'df-warn' : 'df-ok'}>{repo.dirty ? t('base.dirty') : t('base.clean')}</span>
           </div>
           {repo.devSlots.length === 0 ? <SlotLine t={t} kind="dev" state="missing" detail={t('slot.noDev')} /> : repo.devSlots.map((slot) => (
             <SlotLine key={slot.number} t={t} kind="dev" repo={repo.name} number={slot.number} state={slot.taskId ? 'busy' : 'free'} detail={devDetail(data, repo, slot, t)} />
@@ -804,6 +810,192 @@ function Slots({ ui, data, t }: { ui: UiKit, data: Snapshot, t: Translate }) {
             state={repo.acceptSlot ? (repo.acceptSlot.batchId ? 'busy' : 'free') : 'missing'}
             detail={acceptDetail(repo, t)}
           />
+        </section>
+      ))}
+    </>
+  )
+}
+
+/** 基线草稿：一组里每个项目是否参与、用哪条分支。 */
+interface BaseDraftRow {
+  enabled: boolean
+  branch: string
+}
+
+interface BaseDraft {
+  number: string | null
+  label: string
+  rows: Record<string, BaseDraftRow>
+}
+
+function baseDraftOf(projects: ProjectRow[], group?: BaseGroupRow): BaseDraft {
+  const rows: Record<string, BaseDraftRow> = {}
+  for (const project of projects) {
+    const member = group?.repos.find((item) => item.repo === project.name)
+    const branches = project.branches ?? []
+    rows[project.name] = member !== undefined
+      ? { enabled: true, branch: member.branch }
+      : { enabled: false, branch: project.branch ?? project.defaultBranch ?? branches[0] ?? '' }
+  }
+  return { number: group?.number ?? null, label: group?.label ?? '', rows }
+}
+
+/** 基线：一个编号一组，组里按仓库列基线分支和合并位置；可新建和编辑。 */
+function Bases({
+  ui, data, t, call, reload, show, sessionId,
+}: {
+  ui: UiKit
+  data: Snapshot
+  t: Translate
+  call: Call
+  reload: (failure?: unknown) => unknown
+  show: (text: string, tone?: string) => void
+  sessionId?: string
+}) {
+  const groups = data.baseGroups ?? []
+  const projects = data.projects ?? []
+  const [draft, setDraft] = useState<BaseDraft | null>(null)
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState('')
+  const openCreate = () => {
+    setDraft(baseDraftOf(projects))
+    setError('')
+  }
+  const openEdit = (group: BaseGroupRow) => {
+    setDraft(baseDraftOf(projects, group))
+    setError('')
+  }
+  const close = () => {
+    if (saving) return
+    setDraft(null)
+    setError('')
+  }
+  const setRow = (repo: string, next: BaseDraftRow) => {
+    if (draft === null) return
+    setDraft({ ...draft, rows: { ...draft.rows, [repo]: next } })
+  }
+  const save = () => {
+    if (draft === null || saving) return
+    const members = Object.entries(draft.rows)
+      .filter(([, row]) => row.enabled)
+      .map(([repo, row]) => ({ repo, branch: row.branch }))
+    if (members.length === 0) {
+      setError(t('base.needMember'))
+      return
+    }
+    if (members.some((member) => member.branch === '')) {
+      setError(t('base.needBranch'))
+      return
+    }
+    setSaving(true)
+    setError('')
+    call('base-save', { sessionId, number: draft.number, label: draft.label, members })
+      .then(() => {
+        setDraft(null)
+        show(t('base.saved'), 'info')
+        return reload()
+      })
+      .catch((reason: unknown) => {
+        const text = textOf(reason)
+        setError(text)
+        show(text, 'error')
+      })
+      .finally(() => setSaving(false))
+  }
+  return (
+    <>
+      <div className="df-base-toolbar">
+        <ActionButton ui={ui} variant="primary" onClick={openCreate} disabled={draft !== null}>
+          {t('action.newBase')}
+        </ActionButton>
+      </div>
+      {draft !== null ? (
+        <section className="df-card df-base-editor">
+          <div className="df-repo">
+            <strong>{draft.number === null ? t('base.editor.create') : t('base.editor.edit').replace('{number}', draft.number)}</strong>
+          </div>
+          <label className="df-base-label-row">
+            <span>{t('base.label')}</span>
+            <input
+              type="text"
+              value={draft.label}
+              placeholder={t('base.labelPlaceholder')}
+              disabled={saving}
+              onChange={(event) => setDraft({ ...draft, label: event.target.value })}
+            />
+          </label>
+          {projects.some((project) => !Array.isArray(project.branches)) ? (
+            <p className="df-base-warn" role="status">{t('base.branchesStale')}</p>
+          ) : null}
+          {projects.map((project) => {
+            const row = draft.rows[project.name] ?? { enabled: false, branch: '' }
+            const branches = [...new Set([...(project.branches ?? []), row.branch].filter((branch) => branch !== ''))].sort()
+            return (
+              <div key={project.name} className="df-base-edit-row">
+                <input
+                  type="checkbox"
+                  checked={row.enabled}
+                  disabled={saving}
+                  aria-label={project.name}
+                  onChange={() => setRow(project.name, { ...row, enabled: !row.enabled })}
+                />
+                <span className="df-base-edit-name">{project.name}</span>
+                <select
+                  value={row.branch}
+                  disabled={!row.enabled || saving}
+                  aria-label={`${project.name} ${t('base.branch')}`}
+                  onChange={(event) => setRow(project.name, { ...row, branch: event.target.value })}
+                >
+                  {branches.length === 0 ? <option value="">{t('base.noBranches')}</option> : null}
+                  {branches.map((branch) => <option key={branch} value={branch}>{branch}</option>)}
+                </select>
+              </div>
+            )
+          })}
+          {error !== '' ? <p className="df-base-error" role="alert">{error}</p> : null}
+          <div className="df-base-edit-actions">
+            <ActionButton ui={ui} variant="ghost" onClick={close} disabled={saving}>{t('action.cancel')}</ActionButton>
+            <ActionButton ui={ui} variant="primary" onClick={save} disabled={saving}>
+              {saving ? t('action.saving') : t('action.save')}
+            </ActionButton>
+          </div>
+        </section>
+      ) : null}
+      {groups.length === 0 && draft === null ? (
+        <div className="df-empty">
+          <p>{t('empty.bases')}</p>
+          <p className="df-meta">{t('empty.basesHint')}</p>
+        </div>
+      ) : null}
+      {groups.map((group) => (
+        <section key={group.number} className="df-card">
+          <div className="df-repo">
+            <strong>{`#${group.number}`}</strong>
+            <span className="df-branch">{group.label}</span>
+            <span className="df-meta">{t('base.projects').replace('{count}', String(group.repos.length))}</span>
+            <span className="df-base-actions">
+              <ActionButton ui={ui} variant="ghost" onClick={() => openEdit(group)} title={t('action.edit')}>
+                {t('action.edit')}
+              </ActionButton>
+            </span>
+          </div>
+          {group.repos.length === 0 ? <p className="df-empty-line">{t('base.noRepo')}</p> : null}
+          {group.repos.map((base) => (
+            <div key={base.repo} className="df-base">
+              <span className="df-base-name">
+                <span className="df-meta">{base.repo}</span>
+                <span className={base.current ? 'df-base-branch is-current' : 'df-base-branch'}>{base.branch}</span>
+                {base.default ? <span className="df-base-flag">{t('base.default')}</span> : null}
+                {base.current ? <span className="df-base-flag">{t('base.current')}</span> : null}
+              </span>
+              <span className="df-base-meta">
+                <span className="df-base-loc" data-location={base.location}>{t(`base.${base.location}`)}</span>
+                <span className={base.dirty ? 'df-warn' : 'df-ok'}>{base.dirty ? t('base.dirty') : t('base.clean')}</span>
+                <span className="df-meta">{t('base.tasks').replace('{count}', String(base.tasks))}</span>
+                {base.shortHead ? <span className="df-base-head">{base.shortHead}</span> : null}
+              </span>
+            </div>
+          ))}
         </section>
       ))}
     </>
@@ -883,6 +1075,7 @@ export function SettingsForm({ ui, view, call, t }: { ui: UiKit, view?: string, 
     ['acceptModel', '验收任务模型'],
     ['devDir', '开发槽位目录'],
     ['acceptDir', '验收槽位目录'],
+    ['baseDir', '基线槽位目录'],
     ['taskBranch', '任务分支格式'],
     ['acceptBranch', '验收分支格式'],
   ]
@@ -965,7 +1158,7 @@ function mergeTask(call: Call, sessionId: string | undefined, taskId: string, re
   call('task-merge', { sessionId, taskId }).then((value) => {
     const task = (value as Snapshot | undefined)?.tasks?.find((item) => item.id === taskId)
     if (task?.status === 'pending-merge') show?.(task.warnings?.join('，') || '没有合入', 'error')
-    else show?.('已合入主干', 'info')
+    else show?.('已合入基线', 'info')
     return reload()
   }).catch((reason: unknown) => reload(reason))
 }
@@ -997,19 +1190,21 @@ function acceptReason(data: Snapshot, picked: string[], t: Translate) {
   if (data.counts.activeAgents >= data.counts.agentLimit) return '子代理已达上限'
   const busy = selected.flatMap((task) => task.repos).filter((name) => data.repos.find((repo) => repo.name === name)?.acceptSlot?.batchId)
   if (busy.length > 0) return `${busy[0]} 的验收槽位正在占用`
+  const perRepo = new Map<string, Set<string>>()
+  for (const task of selected) {
+    for (const name of task.repos) {
+      const bases = perRepo.get(name) ?? new Set<string>()
+      bases.add(task.base ?? '')
+      perRepo.set(name, bases)
+    }
+  }
+  if ([...perRepo.values()].some((bases) => bases.size > 1)) return t('hint.baseMismatch')
   return ''
 }
 
 function taskTitle(data: Snapshot, id?: string | null) {
   if (!id) return ''
   return data.tasks.find((task) => task.id === id)?.title ?? id
-}
-
-function trunkPhase(active: { kind?: string }[]) {
-  if (active.some((item) => item.kind === 'accept')) return 'accepting'
-  if (active.some((item) => item.kind === 'schedule')) return 'scheduling'
-  if (active.length > 0) return 'developing'
-  return 'idle'
 }
 
 function agentPhase(agent: AgentRow) {
@@ -1019,24 +1214,18 @@ function agentPhase(agent: AgentRow) {
   return 'developing'
 }
 
-function trunkActivity(data: Snapshot, repoName: string) {
-  return (data.agents ?? []).flatMap((agent) => {
-    if (agent.status !== 'running') return []
-    const task = data.tasks.find((item) => item.id === agent.taskId)
-    if (!task) return []
-    const slots = Object.entries(task.slots ?? {})
-      .filter(([repo]) => repo === repoName)
-      .map(([, slot]) => slot.number ? `${repoName}-${slot.number}` : repoName)
-    const involved = task.repos?.includes(repoName) || slots.length > 0
-    if (!involved) return []
-    return [{ agent: agent.id, title: task.title, kind: agent.kind, slots }]
-  })
-}
-
 function agentSlots(data: Snapshot, agent: AgentRow) {
   const task = data.tasks.find((item) => item.id === agent.taskId || item.id === agent.lastTaskId)
   if (!task?.slots) return []
   return Object.entries(task.slots).map(([repo, slot]) => slot.number ? `${repo}-${slot.number}` : `${repo} ${slot.port ?? ''}`.trim())
+}
+
+function baseChips(task: TaskRow) {
+  if (task.kind === 'accept') return Object.values(task.bases ?? {}).filter((base) => typeof base === 'string' && base !== '')
+  const chips = []
+  if (typeof task.baseGroup === 'string' && task.baseGroup !== '') chips.push(`#${task.baseGroup}`)
+  if (typeof task.base === 'string' && task.base !== '') chips.push(task.base)
+  return chips
 }
 
 function taskChips(task: TaskRow) {
