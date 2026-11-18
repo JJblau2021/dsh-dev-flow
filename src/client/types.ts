@@ -124,6 +124,7 @@ export interface ScheduleRow {
 
 export interface Snapshot {
   initialized?: boolean
+  workspace?: string
   enabled?: boolean
   problem?: string
   counts: Counts
@@ -143,6 +144,36 @@ export interface Settings {
   acceptBranch?: string
 }
 
+/** 一个 tab 最近一次被导航到的位置；恢复的 tab 没有 params，但地址即 contentId。 */
+export interface TabNavigation {
+  address: string
+  params?: unknown
+  revision: number
+}
+
+/** Sidebar tab 的实时信息，由宿主以 useTabInfo 钩子交给 tab body。 */
+export interface TabInfo {
+  tab: {
+    id: string
+    kind: string
+    contentId: string
+    title?: string
+    navigation?: TabNavigation
+    /** tab 自身的动作：在 Sidebar 里打开另一个资源、关闭自己。 */
+    actions?: {
+      openResource?: (address: string, options?: Record<string, unknown>) => void
+      close?: () => void
+    }
+    /** tab 生命周期信号：tab 关闭时中止，用来清掉按 tab 存的状态。 */
+    signal?: AbortSignal
+  }
+}
+
+/** Sidebar 的导航服务：按资源地址打开或揭示一个 tab。 */
+export interface SidebarRightService {
+  openResource: (address: string, options?: { params?: unknown, revealIfOpened?: boolean }) => void
+}
+
 export interface ClientContext {
   sessions?: { list?: { getSnapshot?: () => { byId?: Record<string, { cwd?: string }> } } }
   get?: (name: string) => ClientContext['sessions']
@@ -152,6 +183,7 @@ export interface ClientContext {
   }
   effect: (dispose: () => void, label: string) => void
   sidebarRightTabs: { register: (definition: unknown) => () => void }
+  sidebarRight: SidebarRightService
   connection: {
     rpc: {
       call: (channel: string, endpoint: string, payload: unknown, signal?: AbortSignal) => Promise<{ ok?: boolean, value?: unknown, error?: { message?: string } }>

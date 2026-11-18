@@ -140,26 +140,28 @@ export const panelSheet = `
 .df-hover-path { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-family: var(--ds-font-family-code, ui-monospace, monospace); font-size: 11px; color: var(--dsw-alias-label-secondary); }
 .df-hover-body { flex: 1; min-height: 0; max-height: 200px; overflow: auto; }
 
-/* diff 详情 */
-.df-diff-page { margin: 2px 16px 8px 36px; border: 0.5px solid var(--dsw-alias-border-l3); border-radius: 8px; overflow: hidden; background: var(--dsw-alias-bg-base); }
-.df-diff-standalone { display: flex; flex-direction: column; min-height: 0; height: 100%; margin: 0; border: 0; border-radius: 0; background: transparent; }
-.df-diff-standalone .df-diff-header { height: 34px; background: transparent; }
-.df-diff-standalone .df-diff-body { flex: 1; min-height: 0; max-height: none; }
-.df-diff-header { display: flex; align-items: center; gap: 6px; height: 32px; padding: 0 8px; border-bottom: 0.5px solid var(--dsw-alias-border-l3); background: var(--dsw-alias-bg-layer-2); }
-.df-diff-back { display: inline-flex; align-items: center; justify-content: center; width: 20px; height: 20px; padding: 0; border: 0; border-radius: 4px; background: transparent; color: var(--dsw-alias-label-tertiary); font-size: 15px; line-height: 1; cursor: pointer; }
-.df-diff-back:hover { background: var(--dsw-alias-interactive-bg-hover, rgba(38, 49, 72, 0.06)); color: var(--dsw-alias-label-primary); }
-.df-diff-title { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-family: var(--ds-font-family-code, ui-monospace, monospace); font-size: 11px; color: var(--dsw-alias-label-secondary); }
-.df-diff-body { max-height: 360px; overflow: auto; padding: 4px 0; }
-.df-difflines { min-width: max-content; font-family: var(--ds-font-family-code, ui-monospace, Menlo, monospace); font-size: 11px; line-height: 1.6; color: var(--dsw-alias-label-secondary); }
-.df-diffline { display: grid; grid-template-columns: 3.2em 3.2em 1.2em minmax(0, 1fr); white-space: pre; }
-.df-diffline-no { text-align: right; padding-right: 8px; color: var(--dsw-alias-label-tertiary); font-variant-numeric: tabular-nums; user-select: none; }
-.df-diffline-sign { text-align: center; color: var(--dsw-alias-label-tertiary); user-select: none; }
-.df-diffline[data-kind='add'] { background: color-mix(in srgb, var(--dsw-alias-state-success-primary) 12%, transparent); }
-.df-diffline[data-kind='del'] { background: color-mix(in srgb, var(--dsw-alias-state-error-primary) 12%, transparent); }
-.df-diffline[data-kind='add'] .df-diffline-sign { color: var(--dsw-alias-state-success-primary); }
-.df-diffline[data-kind='del'] .df-diffline-sign { color: var(--dsw-alias-state-error-primary); }
-.df-diffline[data-kind='hunk'] { background: var(--dsw-alias-bg-layer-2); color: var(--dsw-alias-label-tertiary); }
-.df-diffline[data-kind='meta'] { color: var(--dsw-alias-label-tertiary); }
+/* diff 页：文件选择器 + 对比工具栏 */
+.df-review { display: flex; flex-direction: column; height: 100%; min-height: 0; }
+.df-review-head { display: flex; align-items: center; gap: 6px; flex: 0 0 auto; height: 38px; padding: 0 6px 0 8px; border-bottom: 0.5px solid var(--dsw-alias-border-l3); }
+.df-review-selector { flex: 0 1 auto; min-width: 0; }
+.df-review-select { display: inline-flex; align-items: center; gap: 4px; box-sizing: border-box; max-width: 100%; height: 28px; padding: 0 6px 0 8px; border: 0; border-radius: var(--dsw-radius-sm, 6px); background: transparent; color: var(--dsw-alias-label-primary); cursor: pointer; font: inherit; font-size: 12px; line-height: 20px; }
+.df-review-select[aria-expanded='true'] { background: var(--dsw-alias-interactive-bg-hover, rgba(38, 49, 72, 0.06)); }
+.df-review-select:hover { background: var(--dsw-alias-interactive-bg-hover, rgba(38, 49, 72, 0.06)); }
+.df-review-select svg { display: block; flex: none; }
+.df-review-file { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-family: var(--ds-font-family-code, ui-monospace, monospace); font-size: 12px; color: var(--dsw-alias-label-secondary); }
+.df-review-native-select { max-width: 100%; height: 28px; }
+.df-review-counts { display: inline-flex; flex: none; gap: 6px; align-items: center; margin-right: auto; font-family: var(--ds-font-family-code, ui-monospace, monospace); font-size: 12px; line-height: 20px; }
+.df-review-label { color: var(--dsw-alias-label-tertiary); }
+.df-review-tools { display: inline-flex; flex: none; gap: 2px; align-items: center; margin-left: auto; }
+.df-review-tool { display: inline-flex; flex: none; align-items: center; justify-content: center; width: 28px; height: 28px; padding: 6px; border: 0; border-radius: var(--dsw-radius-sm, 6px); background: transparent; color: var(--dsw-alias-label-secondary); font-size: 13px; cursor: pointer; }
+.df-review-tool svg { width: 15px; height: 15px; }
+.df-review-tool:hover { color: var(--dsw-alias-label-primary); background: var(--dsw-alias-interactive-bg-hover, rgba(38, 49, 72, 0.06)); }
+.df-review-tool[aria-pressed='true'] .df-review-compare-icon { transform: rotate(90deg); }
+.df-review-body { display: flex; flex-direction: column; flex: 1 1 auto; min-height: 0; overflow: hidden; }
+.df-review-body > * { flex: 1 1 auto; min-height: 0; }
+.df-menu-item { display: flex; gap: 12px; align-items: center; justify-content: space-between; min-width: 0; }
+.df-menu-path { min-width: 0; overflow: hidden; line-height: 20px; text-overflow: ellipsis; white-space: nowrap; }
+.df-menu-counts { display: inline-flex; flex: none; gap: 6px; align-items: center; font-family: var(--ds-font-family-code, ui-monospace, monospace); font-size: 12px; line-height: 20px; }
 
 /* 名称、标签、药丸 */
 .df-name { font-weight: 560; display: flex; align-items: center; gap: 6px; min-width: 0; }

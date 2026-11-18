@@ -35,10 +35,431 @@ __export(index_exports, {
 });
 module.exports = __toCommonJS(index_exports);
 
+// src/client/diff.ts
+var DIFF_TYPE_ID = "@jjblau2021/dsh-dev-flow/diff";
+var DIFF_KIND = "devFlowDiff";
+var DIFF_SCHEME = "dsh-resource://dev-flow-diff/";
+var DIFF_PATTERN = "dsh-resource://dev-flow-diff/**";
+function diffAddress(target) {
+  const title = target.title === "" ? target.taskId : target.title;
+  return DIFF_SCHEME + [target.taskId, title].map((part) => encodeURIComponent(part)).join("/");
+}
+function parseDiffAddress(address) {
+  if (address === void 0 || !address.startsWith(DIFF_SCHEME)) return void 0;
+  const parts = address.slice(DIFF_SCHEME.length).split("/");
+  if (parts.length !== 2) return void 0;
+  try {
+    const [taskId, title] = parts.map((part) => decodeURIComponent(part));
+    if (taskId === "") return void 0;
+    return { taskId, title: title === "" ? taskId : title };
+  } catch {
+    return void 0;
+  }
+}
+function diffTitle(address) {
+  return parseDiffAddress(address)?.title ?? "";
+}
+function navigatedIndex(params) {
+  const index = params?.index;
+  return typeof index === "number" && Number.isSafeInteger(index) && index >= 0 ? index : void 0;
+}
+function absoluteFileAddress(path) {
+  const normalized = path.replace(/\\/gu, "/");
+  const unc = normalized.startsWith("//");
+  const absolute = normalized.replace(/^\/+/, "");
+  const encoded = absolute.split("/").map((segment) => encodeURIComponent(segment).replace(/%3A/giu, ":")).join("/");
+  return `dsh-resource://file/absolute/${unc ? "/" : ""}${encoded}`;
+}
+function diffLabelsOf(t) {
+  const fallback = {
+    "diff.loading": "\u52A0\u8F7D\u4E2D",
+    "diff.missing": "\u6587\u4EF6\u5DF2\u4E0D\u5B58\u5728",
+    "diff.error": "\u8BFB\u53D6\u5931\u8D25",
+    "presented.retry": "\u91CD\u8BD5",
+    "diff.binary": "\u4E8C\u8FDB\u5236\u6587\u4EF6",
+    "diff.oversized": "\u6587\u4EF6\u8FC7\u5927",
+    "diff.coarse": "\u5927\u7EB2\u6A21\u5F0F",
+    "diff.truncated": "\u53EA\u663E\u793A\u524D {count} \u884C"
+  };
+  return (key, params) => {
+    const localized = t(key);
+    const text = localized === key || localized === "" ? fallback[key] ?? key : localized;
+    return params ? text.replace(/\{(\w+)\}/gu, (whole, name) => params[name] ?? whole) : text;
+  };
+}
+function hunksFromPatch(patch) {
+  const hunks = [];
+  let current = null;
+  for (const line of patch.split("\n")) {
+    const head = /^@@ -(\d+)(?:,(\d+))? \+(\d+)(?:,(\d+))? @@/u.exec(line);
+    if (head !== null) {
+      current = { oldStart: Number(head[1]), oldLines: Number(head[2] ?? 1), newStart: Number(head[3]), newLines: Number(head[4] ?? 1), lines: [] };
+      hunks.push(current);
+      continue;
+    }
+    if (current === null) continue;
+    if (line.startsWith("\\")) continue;
+    if (line.startsWith("diff --git") || line.startsWith("index ") || line.startsWith("--- ") || line.startsWith("+++ ")) {
+      current = null;
+      continue;
+    }
+    if (line === "") continue;
+    current.lines.push(line);
+  }
+  return hunks;
+}
+function diffStateOf(file) {
+  if (file.binary) return { kind: "binary", path: file.path, display: file.path };
+  return {
+    kind: "text",
+    path: file.path,
+    display: file.path,
+    before: !/^--- \/dev\/null$/mu.test(file.patch),
+    after: !/^\+\+\+ \/dev\/null$/mu.test(file.patch),
+    hunks: file.hunks?.length ? file.hunks : hunksFromPatch(file.patch),
+    coarse: false
+  };
+}
+
+// src/client/ui.tsx
+function loadUi() {
+  try {
+    return require("@deepseek-ai/dsh-client-ui-primitives") ?? {};
+  } catch {
+    return {};
+  }
+}
+function Dot({ ui, state }) {
+  return ui.StateDot ? /* @__PURE__ */ React.createElement(ui.StateDot, { state }) : /* @__PURE__ */ React.createElement("span", { "data-state": state });
+}
+function ActionButton({
+  ui,
+  children,
+  onClick,
+  disabled,
+  title,
+  variant = "outline",
+  size = "sm",
+  type = "button",
+  className
+}) {
+  if (ui.Button) {
+    return /* @__PURE__ */ React.createElement(ui.Button, { type, className, variant, size, disabled, title, onClick }, children);
+  }
+  return /* @__PURE__ */ React.createElement("button", { type, className, disabled, title, onClick }, children);
+}
+
+// src/client/vendor/FileDiff.tsx
+var import_react = require("react");
+var import_dsh_client_ui_primitives = require("@deepseek-ai/dsh-client-ui-primitives");
+
+// df:dev-flow:css-registry
+var chunks = [];
+function register(text) {
+  chunks.push(text);
+}
+function all() {
+  return chunks.join("\n");
+}
+
+// src/client/vendor/FileDiff.module.css
+register("/** Shared comparison layout, header, states, and numbered diff lines for previews and review tabs. */\n.df-root-7c16c1 { --diff-empty-fill: color-mix(in srgb, var(--dsw-alias-interactive-bg-hover) 50%, transparent); display: flex; flex-direction: column; box-sizing: border-box; width: 100%; min-height: 0; color: var(--dsw-alias-label-primary); }\n.df-header-7c16c1 { display: flex; flex: 0 0 auto; gap: 6px; align-items: center; box-sizing: border-box; height: 38px; padding: 0 6px 0 8px; border-bottom: 0.5px solid var(--dsw-alias-border-l3); }\n.df-status-7c16c1 { display: flex; gap: 12px; align-items: center; margin: 0; padding: 16px; font-size: 13px; color: var(--dsw-alias-label-secondary); }\n.df-body-7c16c1 { display: flex; flex: 1 1 auto; flex-direction: column; min-height: 0; overflow: auto; padding: 8px 0 16px; font: var(--dsw-font-markdown-code-block); }\n.df-columns-7c16c1 { display: grid; flex: 1 1 auto; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); min-height: 0; }\n/* One intrinsic-width track keeps every hunk and row painted across the scrollable content. */\n.df-column-7c16c1, .df-body-7c16c1[data-review-view='unified']:not([data-review-wrap]) { display: grid; grid-template-columns: minmax(max-content, 100%); align-content: start; }\n.df-column-7c16c1 { min-width: 0; overflow-x: scroll; overscroll-behavior: none; }\n.df-column-7c16c1 + .df-column-7c16c1 { border-left: 0.5px solid var(--dsw-alias-border-l3); }\n.df-sideLine-7c16c1 { display: grid; grid-template-columns: 3.5em max-content; box-sizing: border-box; min-width: 100%; width: max-content; min-height: 22px; line-height: 22px; white-space: pre; }\n.df-note-7c16c1 { margin: 0; padding: 4px 16px 8px; font: var(--dsw-font-xs-13); color: var(--dsw-alias-label-tertiary); }\n.df-hunk-7c16c1 { margin-bottom: 8px; }\n.df-hunkHeader-7c16c1 { padding: 4px 16px; color: var(--dsw-alias-label-tertiary); white-space: pre; }\n.df-line-7c16c1 { display: grid; grid-template-columns: 3.5em 3.5em 1.2em minmax(0, 1fr); box-sizing: border-box; min-height: 22px; line-height: 22px; white-space: pre; }\n.df-splitLine-7c16c1 { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); min-height: 22px; line-height: 22px; white-space: pre; }\n.df-cell-7c16c1 { display: grid; grid-template-columns: 3.5em minmax(0, 1fr); box-sizing: border-box; min-width: 0; }\n.df-cell-7c16c1 + .df-cell-7c16c1 { border-left: 0.5px solid var(--dsw-alias-border-l3); }\n.df-number-7c16c1 { padding-right: 8px; color: var(--dsw-alias-label-tertiary); text-align: right; user-select: none; }\n.df-sign-7c16c1 { text-align: center; user-select: none; }\n.df-text-7c16c1 { padding-right: 16px; }\n.df-body-7c16c1[data-review-wrap] .df-line-7c16c1, .df-body-7c16c1[data-review-wrap] .df-splitLine-7c16c1 { white-space: pre-wrap; }\n.df-body-7c16c1[data-review-wrap] .df-text-7c16c1 { overflow-wrap: anywhere; }\n.df-add-7c16c1 { --diff-gutter-fill: var(--dsw-alias-file-diff-added-gutter); --diff-marker: var(--dsw-alias-file-diff-added-marker); background: var(--dsw-alias-file-diff-added-bg); }\n.df-del-7c16c1 { --diff-gutter-fill: var(--dsw-alias-file-diff-deleted-gutter); --diff-marker: var(--dsw-alias-file-diff-deleted-marker); background: var(--dsw-alias-file-diff-deleted-bg); }\n.df-add-7c16c1 .df-number-7c16c1, .df-del-7c16c1 .df-number-7c16c1 { background: var(--diff-gutter-fill); color: var(--diff-marker); }\n.df-add-7c16c1 .df-number-7c16c1:first-child, .df-del-7c16c1 .df-number-7c16c1:first-child { box-shadow: inset 3px 0 0 var(--diff-marker); }\n.df-add-7c16c1 .df-sign-7c16c1, .df-del-7c16c1 .df-sign-7c16c1 { color: var(--diff-marker); }\n.df-context-7c16c1 .df-text-7c16c1 { color: var(--dsw-alias-label-secondary); }\n.df-empty-7c16c1 { background: var(--diff-empty-fill); }\n");
+var FileDiff_default = { "root": "df-root-7c16c1", "header": "df-header-7c16c1", "status": "df-status-7c16c1", "body": "df-body-7c16c1", "columns": "df-columns-7c16c1", "column": "df-column-7c16c1", "sideLine": "df-sideLine-7c16c1", "note": "df-note-7c16c1", "hunk": "df-hunk-7c16c1", "hunkHeader": "df-hunkHeader-7c16c1", "line": "df-line-7c16c1", "splitLine": "df-splitLine-7c16c1", "cell": "df-cell-7c16c1", "number": "df-number-7c16c1", "sign": "df-sign-7c16c1", "text": "df-text-7c16c1", "add": "df-add-7c16c1", "del": "df-del-7c16c1", "context": "df-context-7c16c1", "empty": "df-empty-7c16c1" };
+
+// src/client/vendor/FileDiff.tsx
+var MAX_RENDERED_LINES = 5e3;
+function highlightedSide(rows, side, highlighter) {
+  const source = rows.flatMap((row) => {
+    const no = row[side];
+    return no === void 0 ? [] : [{ no, text: row.text }];
+  });
+  if (source.length === 0) return /* @__PURE__ */ new Map();
+  const highlighted = highlighter(source.map((line) => line.text).join("\n"));
+  if (highlighted === void 0) return void 0;
+  return new Map(source.map((line, index) => {
+    return [line.no, highlighted[index] ?? []];
+  }));
+}
+function hunkHighlights(hunk, highlighter) {
+  const rows = hunkRows(hunk);
+  return { old: highlightedSide(rows, "old", highlighter), new: highlightedSide(rows, "new", highlighter) };
+}
+function DiffText({ text, spans }) {
+  return /* @__PURE__ */ React.createElement("span", { className: FileDiff_default.text, "data-diff-code": spans === void 0 ? void 0 : "" }, spans === void 0 ? text : spans.map((span, index) => /* @__PURE__ */ React.createElement("span", { key: index, style: span.style }, span.text)));
+}
+function hunkRows(hunk) {
+  let oldNo = hunk.oldStart;
+  let newNo = hunk.newStart;
+  return hunk.lines.map((line) => {
+    const text = line.slice(1);
+    switch (line[0]) {
+      case "+":
+        return { kind: "add", old: void 0, new: newNo++, text };
+      case "-":
+        return { kind: "del", old: oldNo++, new: void 0, text };
+      default:
+        return { kind: "context", old: oldNo++, new: newNo++, text };
+    }
+  });
+}
+function splitRows(hunk) {
+  const rows = [];
+  let dels = [];
+  let adds = [];
+  const flush = () => {
+    for (let at = 0; at < Math.max(dels.length, adds.length); at += 1) {
+      const left = dels[at];
+      const right = adds[at];
+      rows.push({ ...left === void 0 ? {} : { left }, ...right === void 0 ? {} : { right } });
+    }
+    dels = [];
+    adds = [];
+  };
+  for (const row of hunkRows(hunk)) {
+    if (row.kind === "del") dels.push({ no: row.old, text: row.text, kind: "del" });
+    else if (row.kind === "add") adds.push({ no: row.new, text: row.text, kind: "add" });
+    else {
+      flush();
+      rows.push({ left: { no: row.old, text: row.text, kind: "context" }, right: { no: row.new, text: row.text, kind: "context" } });
+    }
+  }
+  flush();
+  return rows;
+}
+function renderedHunks(hunks) {
+  let budget = MAX_RENDERED_LINES;
+  const kept = [];
+  for (const hunk of hunks) {
+    if (budget === 0) return { hunks: kept, truncated: true };
+    kept.push(hunk.lines.length <= budget ? hunk : { ...hunk, lines: hunk.lines.slice(0, budget) });
+    budget -= Math.min(budget, hunk.lines.length);
+  }
+  return { hunks: kept, truncated: hunks.some((hunk, at) => kept[at] !== hunk) };
+}
+function noteOf(diff) {
+  if (!diff.before) return "diff.created";
+  if (!diff.after) return "diff.deleted";
+  if (diff.hunks.length === 0) return "diff.unchanged";
+  return void 0;
+}
+function FileDiff({ state, split, wrap, retry, t }) {
+  if (state === void 0 || state === "loading") return /* @__PURE__ */ React.createElement("p", { className: FileDiff_default.status, role: "status" }, t("diff.loading"));
+  if (state === "missing") return /* @__PURE__ */ React.createElement("p", { className: FileDiff_default.status }, t("diff.missing"));
+  if (state === "error") {
+    return /* @__PURE__ */ React.createElement("div", { className: FileDiff_default.status }, /* @__PURE__ */ React.createElement("span", null, t("diff.error")), /* @__PURE__ */ React.createElement(import_dsh_client_ui_primitives.Button, { size: "sm", onClick: retry }, t("presented.retry")));
+  }
+  if (state.kind === "binary") return /* @__PURE__ */ React.createElement("p", { className: FileDiff_default.status }, t("diff.binary"));
+  if (state.kind === "oversized") return /* @__PURE__ */ React.createElement("p", { className: FileDiff_default.status }, t("diff.oversized"));
+  const hasAdditions = state.hunks.some((hunk) => hunk.lines.some((line) => line.startsWith("+")));
+  const hasDeletions = state.hunks.some((hunk) => hunk.lines.some((line) => line.startsWith("-")));
+  const oneSided = hasAdditions !== hasDeletions;
+  return /* @__PURE__ */ React.createElement(TextDiff, { diff: state, split: split && !oneSided, wrap, t });
+}
+function splitRowKind(row) {
+  return row.left?.kind === "del" ? "del" : row.right?.kind === "add" ? "add" : "context";
+}
+function hunkHeader(hunk) {
+  return `@@ -${hunk.oldStart},${hunk.oldLines} +${hunk.newStart},${hunk.newLines} @@`;
+}
+function SplitColumns({ hunks, highlights }) {
+  const paired = (0, import_react.useMemo)(() => hunks.map((hunk) => ({ header: hunkHeader(hunk), rows: splitRows(hunk) })), [hunks]);
+  const columns = (0, import_react.useRef)({ left: null, right: null });
+  const offsets = (0, import_react.useRef)({ left: { scrollLeft: 0, scrollTop: 0 }, right: { scrollLeft: 0, scrollTop: 0 } });
+  const follow = (side) => (event) => {
+    const peer = side === "left" ? "right" : "left";
+    const other = columns.current[peer];
+    if (other === null) return;
+    for (const axis of ["scrollLeft", "scrollTop"]) {
+      const value = event.currentTarget[axis];
+      if (offsets.current[side][axis] === value) continue;
+      offsets.current[side][axis] = value;
+      other[axis] = value;
+      offsets.current[peer][axis] = other[axis];
+    }
+  };
+  return /* @__PURE__ */ React.createElement("div", { className: FileDiff_default.columns }, ["left", "right"].map((side) => /* @__PURE__ */ React.createElement(
+    "div",
+    {
+      key: side,
+      className: FileDiff_default.column,
+      "data-diff-side": side,
+      ref: (element) => {
+        columns.current[side] = element;
+      },
+      onScroll: follow(side)
+    },
+    paired.map((hunk, position) => /* @__PURE__ */ React.createElement("section", { key: position, className: FileDiff_default.hunk }, /* @__PURE__ */ React.createElement("div", { className: FileDiff_default.hunkHeader, "data-diff-hunk-header": true }, hunk.header), hunk.rows.map((row, at) => {
+      const cell = row[side];
+      const spans = cell === void 0 ? void 0 : highlights[position]?.[side === "left" ? "old" : "new"]?.get(cell.no);
+      return /* @__PURE__ */ React.createElement("div", { key: at, className: `${FileDiff_default.sideLine} ${cell === void 0 ? FileDiff_default.empty : FileDiff_default[cell.kind]}`, "data-diff-line": splitRowKind(row) }, /* @__PURE__ */ React.createElement("span", { className: FileDiff_default.number }, cell?.no ?? ""), /* @__PURE__ */ React.createElement(DiffText, { text: cell?.text ?? "", spans }));
+    })))
+  )));
+}
+function TextDiff({ diff, split, wrap, t }) {
+  const note = noteOf(diff);
+  const { hunks, truncated } = (0, import_react.useMemo)(() => renderedHunks(diff.hunks), [diff.hunks]);
+  const highlighter = (0, import_dsh_client_ui_primitives.useCodeHighlighter)((0, import_dsh_client_ui_primitives.languageForPath)(diff.path));
+  const highlights = (0, import_react.useMemo)(() => hunks.map((hunk) => hunkHighlights(hunk, highlighter)), [hunks, highlighter]);
+  return /* @__PURE__ */ React.createElement("div", { className: FileDiff_default.body, "data-review-view": split ? "split" : "unified", "data-review-wrap": wrap || void 0 }, note !== void 0 && /* @__PURE__ */ React.createElement("p", { className: FileDiff_default.note, "data-diff-note": hunks.length === 0 ? "empty" : "metadata" }, t(note)), diff.coarse && /* @__PURE__ */ React.createElement("p", { className: FileDiff_default.note, "data-diff-coarse": true }, t("diff.coarse")), truncated && /* @__PURE__ */ React.createElement("p", { className: FileDiff_default.note, "data-diff-truncated": true }, t("diff.truncated", { count: String(MAX_RENDERED_LINES) })), split && !wrap ? /* @__PURE__ */ React.createElement(SplitColumns, { hunks, highlights }) : hunks.map((hunk, position) => {
+    const highlighted = highlights[position];
+    return /* @__PURE__ */ React.createElement("section", { key: position, className: FileDiff_default.hunk }, /* @__PURE__ */ React.createElement("div", { className: FileDiff_default.hunkHeader, "data-diff-hunk-header": true }, hunkHeader(hunk)), split ? splitRows(hunk).map((row, at) => /* @__PURE__ */ React.createElement("div", { key: at, className: FileDiff_default.splitLine, "data-diff-line": splitRowKind(row) }, /* @__PURE__ */ React.createElement("span", { className: `${FileDiff_default.cell} ${row.left === void 0 ? FileDiff_default.empty : FileDiff_default[row.left.kind]}` }, /* @__PURE__ */ React.createElement("span", { className: FileDiff_default.number }, row.left?.no ?? ""), /* @__PURE__ */ React.createElement(DiffText, { text: row.left?.text ?? "", spans: row.left === void 0 ? void 0 : highlighted?.old?.get(row.left.no) })), /* @__PURE__ */ React.createElement("span", { className: `${FileDiff_default.cell} ${row.right === void 0 ? FileDiff_default.empty : FileDiff_default[row.right.kind]}` }, /* @__PURE__ */ React.createElement("span", { className: FileDiff_default.number }, row.right?.no ?? ""), /* @__PURE__ */ React.createElement(DiffText, { text: row.right?.text ?? "", spans: row.right === void 0 ? void 0 : highlighted?.new?.get(row.right.no) })))) : hunkRows(hunk).map((row, at) => /* @__PURE__ */ React.createElement("div", { key: at, className: `${FileDiff_default.line} ${FileDiff_default[row.kind]}`, "data-diff-line": row.kind }, /* @__PURE__ */ React.createElement("span", { className: FileDiff_default.number }, row.old ?? ""), /* @__PURE__ */ React.createElement("span", { className: FileDiff_default.number }, row.new ?? ""), /* @__PURE__ */ React.createElement("span", { className: FileDiff_default.sign }, row.kind === "add" ? "+" : row.kind === "del" ? "-" : " "), /* @__PURE__ */ React.createElement(DiffText, { text: row.text, spans: row.kind === "add" ? highlighted?.new?.get(row.new) : highlighted?.old?.get(row.old) }))));
+  }));
+}
+
+// src/client/diff-tab.tsx
+var { useEffect, useState } = React;
+var views = /* @__PURE__ */ new Map();
+var appliedRevisions = /* @__PURE__ */ new Map();
+var DEFAULT_VIEW = { index: 0, split: true, wrap: false };
+function DiffTab({
+  sessionId,
+  call,
+  t,
+  ui,
+  useTabInfo
+}) {
+  const info = typeof useTabInfo === "function" ? useTabInfo() : void 0;
+  const tab = info?.tab;
+  const address = tab === void 0 ? void 0 : tab.navigation?.address ?? tab.contentId;
+  const target = parseDiffAddress(address);
+  const tabId = tab?.id ?? "";
+  const [view, setView] = useState(() => views.get(tabId) ?? DEFAULT_VIEW);
+  const [files, setFiles] = useState(null);
+  const [failed, setFailed] = useState("");
+  const [attempt, setAttempt] = useState(0);
+  const [menuOpen, setMenuOpen] = useState(false);
+  useEffect(() => {
+    if (tabId !== "") views.set(tabId, view);
+  }, [tabId, view]);
+  useEffect(() => {
+    const signal = tab?.signal;
+    if (signal === void 0 || tabId === "") return void 0;
+    const forget = () => {
+      views.delete(tabId);
+      appliedRevisions.delete(tabId);
+    };
+    signal.addEventListener("abort", forget, { once: true });
+    return () => signal.removeEventListener("abort", forget);
+  }, [tab?.signal, tabId]);
+  const taskId = target?.taskId;
+  useEffect(() => {
+    if (sessionId === void 0 || taskId === void 0) {
+      setFiles([]);
+      return void 0;
+    }
+    const controller = new AbortController();
+    setFiles(null);
+    setFailed("");
+    call("task-diff", { sessionId, taskId }, controller.signal).then((value) => {
+      if (!controller.signal.aborted) setFiles(value?.files ?? []);
+    }).catch((reason) => {
+      if (!controller.signal.aborted) setFailed(reason instanceof Error ? reason.message : String(reason));
+    });
+    return () => controller.abort();
+  }, [sessionId, call, taskId, attempt]);
+  const revision = tab?.navigation?.revision ?? 0;
+  const requested = navigatedIndex(tab?.navigation?.params);
+  useEffect(() => {
+    if (files === null || files.length === 0 || tabId === "") return;
+    if ((appliedRevisions.get(tabId) ?? -1) === revision) return;
+    appliedRevisions.set(tabId, revision);
+    setView((prev) => ({ ...prev, index: Math.min(requested ?? prev.index, files.length - 1) }));
+  }, [files, revision, requested, tabId]);
+  const labels = diffLabelsOf(t);
+  const index = files === null || files.length === 0 ? 0 : Math.min(view.index, files.length - 1);
+  const file = files?.[index];
+  const retry = () => setAttempt((value) => value + 1);
+  const openFile = () => {
+    if (file === void 0 || sessionId === void 0 || taskId === void 0 || typeof tab?.actions?.openResource !== "function") return;
+    const actions = tab.actions;
+    call("snapshot", { sessionId }).then((value) => {
+      const task = value?.tasks?.find((row) => row.id === taskId);
+      const slot = task?.slots?.[file.repo]?.path;
+      if (typeof slot === "string" && slot !== "") actions.openResource?.(absoluteFileAddress(`${slot}/${file.path}`));
+    }).catch(() => void 0);
+  };
+  const pathOf = (entry) => `${entry.repo}/${entry.path}`;
+  const counts = (entry) => entry.binary ? /* @__PURE__ */ React.createElement("span", { className: "df-review-label" }, t("diff.binary")) : /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("span", { className: "df-diff-add" }, `+${entry.added}`), /* @__PURE__ */ React.createElement("span", { className: "df-diff-del" }, `-${entry.deleted}`));
+  const Menu = ui.Menu;
+  const PathLabel = ui.PathLabel;
+  const Chevron2 = ui.IconChevronDownOutlineRegular;
+  const selector = Menu === void 0 ? /* @__PURE__ */ React.createElement(
+    "select",
+    {
+      className: "df-review-file df-review-native-select",
+      "aria-label": t("review.selectFile"),
+      value: String(index),
+      onChange: (event) => setView((prev) => ({ ...prev, index: Number(event.target.value) }))
+    },
+    (files ?? []).map((entry, at) => /* @__PURE__ */ React.createElement("option", { key: `${at}-${entry.repo}:${entry.path}`, value: String(at) }, pathOf(entry)))
+  ) : /* @__PURE__ */ React.createElement(
+    Menu,
+    {
+      className: "df-review-selector",
+      open: menuOpen,
+      autoFocus: true,
+      portal: true,
+      align: "start",
+      dense: true,
+      onClose: () => setMenuOpen(false),
+      anchor: /* @__PURE__ */ React.createElement(
+        "button",
+        {
+          type: "button",
+          className: "df-review-select",
+          "aria-haspopup": "menu",
+          "aria-expanded": menuOpen,
+          "aria-label": t("review.selectFile"),
+          title: file === void 0 ? "" : pathOf(file),
+          onClick: () => setMenuOpen((value) => !value)
+        },
+        PathLabel === void 0 ? /* @__PURE__ */ React.createElement("span", { className: "df-review-file" }, file === void 0 ? "" : pathOf(file)) : /* @__PURE__ */ React.createElement(PathLabel, { path: file === void 0 ? "" : pathOf(file) }),
+        Chevron2 === void 0 ? null : /* @__PURE__ */ React.createElement(Chevron2, { size: 12 })
+      ),
+      items: (files ?? []).map((entry, at) => ({
+        id: String(at),
+        label: /* @__PURE__ */ React.createElement("span", { className: "df-menu-item" }, /* @__PURE__ */ React.createElement("span", { className: "df-menu-path" }, pathOf(entry)), /* @__PURE__ */ React.createElement("span", { className: "df-menu-counts" }, counts(entry)))
+      })),
+      selectedId: String(index),
+      onSelect: (id) => {
+        setView((prev) => ({ ...prev, index: Number(id) }));
+        setMenuOpen(false);
+      }
+    }
+  );
+  return /* @__PURE__ */ React.createElement("div", { className: "df-review" }, /* @__PURE__ */ React.createElement("div", { className: "df-review-head" }, files === null || files.length === 0 ? /* @__PURE__ */ React.createElement("span", { className: "df-review-file" }, target?.title ?? "") : selector, file === void 0 ? null : /* @__PURE__ */ React.createElement("span", { className: "df-review-counts" }, counts(file)), files === null || files.length === 0 ? null : /* @__PURE__ */ React.createElement("span", { className: "df-review-tools" }, /* @__PURE__ */ React.createElement(Tooltip, { ui, label: t(view.split ? "review.unified" : "review.split") }, /* @__PURE__ */ React.createElement(
+    "button",
+    {
+      type: "button",
+      className: "df-review-tool",
+      "aria-pressed": view.split,
+      "aria-label": t("review.splitAria"),
+      onClick: () => setView((prev) => ({ ...prev, split: !prev.split }))
+    },
+    ui.IconCompareSplitOutlineRegular === void 0 ? /* @__PURE__ */ React.createElement("span", { "aria-hidden": "true" }, "\u25A5") : /* @__PURE__ */ React.createElement(ui.IconCompareSplitOutlineRegular, { className: "df-review-compare-icon" })
+  )), /* @__PURE__ */ React.createElement(Tooltip, { ui, label: t(view.wrap ? "review.nowrap" : "review.wrap") }, /* @__PURE__ */ React.createElement(
+    "button",
+    {
+      type: "button",
+      className: "df-review-tool",
+      "aria-pressed": view.wrap,
+      "aria-label": t("review.wrapAria"),
+      onClick: () => setView((prev) => ({ ...prev, wrap: !prev.wrap }))
+    },
+    view.wrap ? ui.IconNowrapFillRegular === void 0 ? /* @__PURE__ */ React.createElement("span", { "aria-hidden": "true" }, "\u21B5") : /* @__PURE__ */ React.createElement(ui.IconNowrapFillRegular, null) : ui.IconWrapFillRegular === void 0 ? /* @__PURE__ */ React.createElement("span", { "aria-hidden": "true" }, "\u21A9") : /* @__PURE__ */ React.createElement(ui.IconWrapFillRegular, null)
+  )), /* @__PURE__ */ React.createElement(Tooltip, { ui, label: t("review.openFile") }, /* @__PURE__ */ React.createElement("button", { type: "button", className: "df-review-tool", "aria-label": t("review.openFile"), onClick: openFile }, ui.IconInspectOutlineRegular === void 0 ? /* @__PURE__ */ React.createElement("span", { "aria-hidden": "true" }, "\u2315") : /* @__PURE__ */ React.createElement(ui.IconInspectOutlineRegular, null))))), /* @__PURE__ */ React.createElement("div", { className: "df-review-body" }, failed !== "" ? /* @__PURE__ */ React.createElement("div", { className: "df-empty" }, /* @__PURE__ */ React.createElement("p", null, failed), /* @__PURE__ */ React.createElement(ActionButton, { ui, onClick: retry }, t("presented.retry"))) : files === null ? /* @__PURE__ */ React.createElement(FileDiff, { state: "loading", split: view.split, wrap: view.wrap, retry, t: labels }) : files.length === 0 ? /* @__PURE__ */ React.createElement("div", { className: "df-empty" }, /* @__PURE__ */ React.createElement("p", null, t("review.empty"))) : file === void 0 ? /* @__PURE__ */ React.createElement(FileDiff, { state: "missing", split: view.split, wrap: view.wrap, retry, t: labels }) : /* @__PURE__ */ React.createElement(FileDiff, { state: diffStateOf(file), split: view.split, wrap: view.wrap, retry, t: labels })));
+}
+function Tooltip({ ui, label, children }) {
+  if (ui.Tooltip === void 0) return /* @__PURE__ */ React.createElement(React.Fragment, null, children);
+  const Tip = ui.Tooltip;
+  return /* @__PURE__ */ React.createElement(Tip, { label, side: "bottom", delayMs: 500 }, children);
+}
+
 // src/client/locale.ts
 var NAMESPACE = "devFlow";
 var zh = {
   "tab.title": "dev-flow",
+  "tab.diff": "diff",
   "tab.description": "\u67E5\u770B\u591A\u4ED3\u5E93\u5F00\u53D1\u4EFB\u52A1\u3001\u69FD\u4F4D\u548C\u4EE3\u7406",
   "switch.label": "\u5DE5\u4F5C\u6D41",
   "page.overview": "\u6982\u89C8",
@@ -60,6 +481,25 @@ var zh = {
   "diff.copy": "\u590D\u5236",
   "diff.copied": "\u5DF2\u590D\u5236",
   "diff.collapse": "\u6536\u8D77",
+  "diff.loading": "\u52A0\u8F7D\u4E2D",
+  "diff.missing": "\u6587\u4EF6\u5DF2\u4E0D\u5B58\u5728",
+  "diff.error": "\u8BFB\u53D6\u5931\u8D25",
+  "diff.binary": "\u4E8C\u8FDB\u5236\u6587\u4EF6",
+  "diff.oversized": "\u6587\u4EF6\u8FC7\u5927",
+  "diff.created": "\u65B0\u6587\u4EF6",
+  "diff.deleted": "\u5DF2\u5220\u9664",
+  "diff.unchanged": "\u5185\u5BB9\u6CA1\u6709\u53D8\u5316",
+  "diff.coarse": "\u5927\u7EB2\u6A21\u5F0F",
+  "diff.truncated": "\u53EA\u663E\u793A\u524D {count} \u884C",
+  "review.selectFile": "\u9009\u62E9\u8981\u67E5\u770B\u7684\u6587\u4EF6",
+  "review.split": "\u5207\u6362\u4E3A\u5DE6\u53F3\u5BF9\u6BD4",
+  "review.unified": "\u5207\u6362\u4E3A\u5355\u680F\u5BF9\u6BD4",
+  "review.splitAria": "\u5DE6\u53F3\u5BF9\u6BD4",
+  "review.wrap": "\u5F00\u542F\u81EA\u52A8\u6362\u884C",
+  "review.nowrap": "\u5173\u95ED\u81EA\u52A8\u6362\u884C",
+  "review.wrapAria": "\u81EA\u52A8\u6362\u884C",
+  "review.openFile": "\u5728\u4FA7\u8FB9\u680F\u6253\u5F00\u6574\u4E2A\u6587\u4EF6",
+  "review.empty": "\u8FD9\u6B21\u6539\u52A8\u6CA1\u6709\u6587\u4EF6",
   "action.fail": "\u4E0D\u901A\u8FC7",
   "status.review": "\u5F85\u786E\u8BA4",
   "action.refresh": "\u5237\u65B0",
@@ -122,6 +562,7 @@ var zh = {
 };
 var en = {
   "tab.title": "dev-flow",
+  "tab.diff": "diff",
   "tab.description": "Tasks, slots, and agents for a multi-repo workspace",
   "switch.label": "Workflow",
   "page.overview": "Overview",
@@ -143,6 +584,25 @@ var en = {
   "diff.copy": "Copy",
   "diff.copied": "Copied",
   "diff.collapse": "Collapse",
+  "diff.loading": "Loading",
+  "diff.missing": "File no longer exists",
+  "diff.error": "Failed to load",
+  "diff.binary": "Binary file",
+  "diff.oversized": "File too large",
+  "diff.created": "New file",
+  "diff.deleted": "Deleted",
+  "diff.unchanged": "No content changes",
+  "diff.coarse": "Outline mode",
+  "diff.truncated": "Showing the first {count} lines",
+  "review.selectFile": "Choose the file to review",
+  "review.split": "Switch to split view",
+  "review.unified": "Switch to unified view",
+  "review.splitAria": "Split view",
+  "review.wrap": "Enable line wrap",
+  "review.nowrap": "Disable line wrap",
+  "review.wrapAria": "Line wrap",
+  "review.openFile": "Open the whole file in the sidebar",
+  "review.empty": "Nothing changed in this task",
   "action.fail": "Fail",
   "status.review": "Waiting for review",
   "action.refresh": "Refresh",
@@ -203,12 +663,6 @@ var en = {
   "hint.order": "Merge order follows the selection",
   "hint.pick": "Select pending tasks first"
 };
-
-// df:dev-flow:css-registry
-var chunks = [];
-function all() {
-  return chunks.join("\n");
-}
 
 // src/client/sheet.ts
 var PANEL_STYLE_ID = "dev-flow-panel";
@@ -350,26 +804,28 @@ var panelSheet = `
 .df-hover-path { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-family: var(--ds-font-family-code, ui-monospace, monospace); font-size: 11px; color: var(--dsw-alias-label-secondary); }
 .df-hover-body { flex: 1; min-height: 0; max-height: 200px; overflow: auto; }
 
-/* diff \u8BE6\u60C5 */
-.df-diff-page { margin: 2px 16px 8px 36px; border: 0.5px solid var(--dsw-alias-border-l3); border-radius: 8px; overflow: hidden; background: var(--dsw-alias-bg-base); }
-.df-diff-standalone { display: flex; flex-direction: column; min-height: 0; height: 100%; margin: 0; border: 0; border-radius: 0; background: transparent; }
-.df-diff-standalone .df-diff-header { height: 34px; background: transparent; }
-.df-diff-standalone .df-diff-body { flex: 1; min-height: 0; max-height: none; }
-.df-diff-header { display: flex; align-items: center; gap: 6px; height: 32px; padding: 0 8px; border-bottom: 0.5px solid var(--dsw-alias-border-l3); background: var(--dsw-alias-bg-layer-2); }
-.df-diff-back { display: inline-flex; align-items: center; justify-content: center; width: 20px; height: 20px; padding: 0; border: 0; border-radius: 4px; background: transparent; color: var(--dsw-alias-label-tertiary); font-size: 15px; line-height: 1; cursor: pointer; }
-.df-diff-back:hover { background: var(--dsw-alias-interactive-bg-hover, rgba(38, 49, 72, 0.06)); color: var(--dsw-alias-label-primary); }
-.df-diff-title { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-family: var(--ds-font-family-code, ui-monospace, monospace); font-size: 11px; color: var(--dsw-alias-label-secondary); }
-.df-diff-body { max-height: 360px; overflow: auto; padding: 4px 0; }
-.df-difflines { min-width: max-content; font-family: var(--ds-font-family-code, ui-monospace, Menlo, monospace); font-size: 11px; line-height: 1.6; color: var(--dsw-alias-label-secondary); }
-.df-diffline { display: grid; grid-template-columns: 3.2em 3.2em 1.2em minmax(0, 1fr); white-space: pre; }
-.df-diffline-no { text-align: right; padding-right: 8px; color: var(--dsw-alias-label-tertiary); font-variant-numeric: tabular-nums; user-select: none; }
-.df-diffline-sign { text-align: center; color: var(--dsw-alias-label-tertiary); user-select: none; }
-.df-diffline[data-kind='add'] { background: color-mix(in srgb, var(--dsw-alias-state-success-primary) 12%, transparent); }
-.df-diffline[data-kind='del'] { background: color-mix(in srgb, var(--dsw-alias-state-error-primary) 12%, transparent); }
-.df-diffline[data-kind='add'] .df-diffline-sign { color: var(--dsw-alias-state-success-primary); }
-.df-diffline[data-kind='del'] .df-diffline-sign { color: var(--dsw-alias-state-error-primary); }
-.df-diffline[data-kind='hunk'] { background: var(--dsw-alias-bg-layer-2); color: var(--dsw-alias-label-tertiary); }
-.df-diffline[data-kind='meta'] { color: var(--dsw-alias-label-tertiary); }
+/* diff \u9875\uFF1A\u6587\u4EF6\u9009\u62E9\u5668 + \u5BF9\u6BD4\u5DE5\u5177\u680F */
+.df-review { display: flex; flex-direction: column; height: 100%; min-height: 0; }
+.df-review-head { display: flex; align-items: center; gap: 6px; flex: 0 0 auto; height: 38px; padding: 0 6px 0 8px; border-bottom: 0.5px solid var(--dsw-alias-border-l3); }
+.df-review-selector { flex: 0 1 auto; min-width: 0; }
+.df-review-select { display: inline-flex; align-items: center; gap: 4px; box-sizing: border-box; max-width: 100%; height: 28px; padding: 0 6px 0 8px; border: 0; border-radius: var(--dsw-radius-sm, 6px); background: transparent; color: var(--dsw-alias-label-primary); cursor: pointer; font: inherit; font-size: 12px; line-height: 20px; }
+.df-review-select[aria-expanded='true'] { background: var(--dsw-alias-interactive-bg-hover, rgba(38, 49, 72, 0.06)); }
+.df-review-select:hover { background: var(--dsw-alias-interactive-bg-hover, rgba(38, 49, 72, 0.06)); }
+.df-review-select svg { display: block; flex: none; }
+.df-review-file { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-family: var(--ds-font-family-code, ui-monospace, monospace); font-size: 12px; color: var(--dsw-alias-label-secondary); }
+.df-review-native-select { max-width: 100%; height: 28px; }
+.df-review-counts { display: inline-flex; flex: none; gap: 6px; align-items: center; margin-right: auto; font-family: var(--ds-font-family-code, ui-monospace, monospace); font-size: 12px; line-height: 20px; }
+.df-review-label { color: var(--dsw-alias-label-tertiary); }
+.df-review-tools { display: inline-flex; flex: none; gap: 2px; align-items: center; margin-left: auto; }
+.df-review-tool { display: inline-flex; flex: none; align-items: center; justify-content: center; width: 28px; height: 28px; padding: 6px; border: 0; border-radius: var(--dsw-radius-sm, 6px); background: transparent; color: var(--dsw-alias-label-secondary); font-size: 13px; cursor: pointer; }
+.df-review-tool svg { width: 15px; height: 15px; }
+.df-review-tool:hover { color: var(--dsw-alias-label-primary); background: var(--dsw-alias-interactive-bg-hover, rgba(38, 49, 72, 0.06)); }
+.df-review-tool[aria-pressed='true'] .df-review-compare-icon { transform: rotate(90deg); }
+.df-review-body { display: flex; flex-direction: column; flex: 1 1 auto; min-height: 0; overflow: hidden; }
+.df-review-body > * { flex: 1 1 auto; min-height: 0; }
+.df-menu-item { display: flex; gap: 12px; align-items: center; justify-content: space-between; min-width: 0; }
+.df-menu-path { min-width: 0; overflow: hidden; line-height: 20px; text-overflow: ellipsis; white-space: nowrap; }
+.df-menu-counts { display: inline-flex; flex: none; gap: 6px; align-items: center; font-family: var(--ds-font-family-code, ui-monospace, monospace); font-size: 12px; line-height: 20px; }
 
 /* \u540D\u79F0\u3001\u6807\u7B7E\u3001\u836F\u4E38 */
 .df-name { font-weight: 560; display: flex; align-items: center; gap: 6px; min-width: 0; }
@@ -575,36 +1031,8 @@ function ensureSheet() {
 ${all()}`;
 }
 
-// src/client/ui.tsx
-function loadUi() {
-  try {
-    return require("@deepseek-ai/dsh-client-ui-primitives") ?? {};
-  } catch {
-    return {};
-  }
-}
-function Dot({ ui, state }) {
-  return ui.StateDot ? /* @__PURE__ */ React.createElement(ui.StateDot, { state }) : /* @__PURE__ */ React.createElement("span", { "data-state": state });
-}
-function ActionButton({
-  ui,
-  children,
-  onClick,
-  disabled,
-  title,
-  variant = "outline",
-  size = "sm",
-  type = "button",
-  className
-}) {
-  if (ui.Button) {
-    return /* @__PURE__ */ React.createElement(ui.Button, { type, className, variant, size, disabled, title, onClick }, children);
-  }
-  return /* @__PURE__ */ React.createElement("button", { type, className, disabled, title, onClick }, children);
-}
-
 // src/client/pages.tsx
-var { useEffect, useRef, useState } = React;
+var { useEffect: useEffect2, useRef: useRef2, useState: useState2 } = React;
 function Title({ t }) {
   return /* @__PURE__ */ React.createElement("span", null, t("tab.title"));
 }
@@ -615,9 +1043,9 @@ function WorkflowSwitch({
   parentSessionId,
   t
 }) {
-  const [enabled, setEnabled] = useState(false);
-  const [error, setError] = useState("");
-  useEffect(() => {
+  const [enabled, setEnabled] = useState2(false);
+  const [error, setError] = useState2("");
+  useEffect2(() => {
     if (parentSessionId || !sessionId) return void 0;
     const controller = new AbortController();
     call("snapshot", { sessionId }, controller.signal).then((value) => {
@@ -650,10 +1078,10 @@ var PanelBoundary = class extends React.Component {
     return this.props.children;
   }
 };
-function PanelView({ ui, sessionId, call, t }) {
-  const [page, setPage] = useState("overview");
-  const [data, setData] = useState(null);
-  const [picked, setPicked] = useState([]);
+function PanelView({ ui, sessionId, call, t, openDiff }) {
+  const [page, setPage] = useState2("overview");
+  const [data, setData] = useState2(null);
+  const [picked, setPicked] = useState2([]);
   const { show, node } = useToast();
   const load = (failure) => call("snapshot", { sessionId }).then((value) => {
     setData(value);
@@ -661,7 +1089,7 @@ function PanelView({ ui, sessionId, call, t }) {
     if (failure) show(textOf(failure), "error");
     else if (snapshot?.problem) show(snapshot.problem, "error");
   }).catch((reason) => show(textOf(reason), "error"));
-  useEffect(() => {
+  useEffect2(() => {
     void load();
   }, [sessionId]);
   const pages = [
@@ -672,7 +1100,7 @@ function PanelView({ ui, sessionId, call, t }) {
   ];
   return /* @__PURE__ */ React.createElement("div", { className: "df" }, node, /* @__PURE__ */ React.createElement("div", { className: "df-toolbar" }, ui.SegmentedTabs ? /* @__PURE__ */ React.createElement(ui.SegmentedTabs, { size: "sm", label: t("tab.title"), items: pages, value: page, onChange: (value) => setPage(value) }) : /* @__PURE__ */ React.createElement("div", { role: "tablist", className: "df-filters" }, pages.map((item) => /* @__PURE__ */ React.createElement("button", { key: item.value, type: "button", "aria-selected": page === item.value, onClick: () => setPage(item.value) }, item.label))), /* @__PURE__ */ React.createElement(ActionButton, { ui, variant: "ghost", onClick: () => {
     void load();
-  } }, t("action.refresh"))), !data ? null : data.problem ? null : !data.initialized ? /* @__PURE__ */ React.createElement(Uninitialized, { ui, t, sessionId, call, reload: load, workspace: data.workspace }) : /* @__PURE__ */ React.createElement(PageBody, { ui, page, data, t, picked, setPicked, sessionId, call, reload: load, show }));
+  } }, t("action.refresh"))), !data ? null : data.problem ? null : !data.initialized ? /* @__PURE__ */ React.createElement(Uninitialized, { ui, t, sessionId, call, reload: load, workspace: data.workspace }) : /* @__PURE__ */ React.createElement(PageBody, { ui, page, data, t, picked, setPicked, sessionId, call, reload: load, show, openDiff }));
 }
 function Uninitialized({ ui, t, sessionId, call, reload, workspace }) {
   return /* @__PURE__ */ React.createElement("div", { className: "df-empty" }, /* @__PURE__ */ React.createElement("p", null, t("empty.init")), workspace ? /* @__PURE__ */ React.createElement("p", { className: "df-meta" }, workspace) : null, /* @__PURE__ */ React.createElement(ActionButton, { ui, variant: "primary", onClick: () => {
@@ -712,25 +1140,25 @@ function Tasks({
   sessionId,
   call,
   reload,
-  show
+  show,
+  openDiff
 }) {
-  const [filter, setFilter] = useState("all");
-  const [busy, setBusy] = useState(false);
-  const [opened, setOpened] = useState({});
-  const [scheduleOpen, setScheduleOpen] = useState({});
-  const [pickedBatches, setPickedBatches] = useState([]);
-  const [removing, setRemoving] = useState(false);
-  const [details, setDetails] = useState({});
-  const [diffPage, setDiffPage] = useState(null);
+  const [filter, setFilter] = useState2("all");
+  const [busy, setBusy] = useState2(false);
+  const [opened, setOpened] = useState2({});
+  const [scheduleOpen, setScheduleOpen] = useState2({});
+  const [pickedBatches, setPickedBatches] = useState2([]);
+  const [removing, setRemoving] = useState2(false);
+  const [details, setDetails] = useState2({});
   const detailProps = (id) => ({
     detailsOpen: details[id] === true,
     onToggleDetails: () => setDetails({ ...details, [id]: !details[id] })
   });
-  const [layout, setLayout] = useState(loadPaneLayout);
-  const [dropY, setDropY] = useState(null);
-  const dragged = useRef(false);
-  const dropAt = useRef(null);
-  const splitRef = useRef(null);
+  const [layout, setLayout] = useState2(loadPaneLayout);
+  const [dropY, setDropY] = useState2(null);
+  const dragged = useRef2(false);
+  const dropAt = useRef2(null);
+  const splitRef = useRef2(null);
   const { order, open, heights } = layout;
   const newest = (left, right) => String(right.createdAt ?? "").localeCompare(String(left.createdAt ?? ""));
   const devAll = data.tasks.filter((task) => task.kind !== "accept").sort(newest);
@@ -813,7 +1241,7 @@ function Tasks({
     window.addEventListener("pointermove", move);
     window.addEventListener("pointerup", stop);
   };
-  useEffect(() => {
+  useEffect2(() => {
     savePaneLayout(layout);
   }, [layout]);
   const schedules = [...data.schedules ?? []].sort((left, right) => String(right.createdAt ?? "").localeCompare(String(left.createdAt ?? "")));
@@ -829,9 +1257,6 @@ function Tasks({
     }
     setLayout((prev) => ({ ...prev, open: { ...prev.open, [id]: !prev.open[id] } }));
   };
-  if (diffPage !== null) {
-    return /* @__PURE__ */ React.createElement("div", { className: "df-diff-page df-diff-standalone" }, /* @__PURE__ */ React.createElement("div", { className: "df-diff-header" }, /* @__PURE__ */ React.createElement("button", { type: "button", className: "df-diff-back", onClick: () => setDiffPage(null) }, "\u2039"), /* @__PURE__ */ React.createElement("span", { className: "df-diff-title" }, diffPage.path)), /* @__PURE__ */ React.createElement("div", { className: "df-diff-body" }, /* @__PURE__ */ React.createElement(FileDiff, { state: diffStateOf(diffPage), split: false, wrap: false, retry: () => void 0, t: diffLabelsOf(t) })));
-  }
   return /* @__PURE__ */ React.createElement("div", { className: "df-views", ref: splitRef }, dropY !== null ? /* @__PURE__ */ React.createElement("div", { className: "df-drop", style: { top: dropY } }) : null, order.map((id) => {
     const laterOpen = order.slice(order.indexOf(id) + 1).some((next) => open[next]);
     const title = id === "schedule" ? t("section.scheduleTasks") : id === "dev" ? t("section.devTasks") : t("section.acceptTasks");
@@ -852,7 +1277,7 @@ function Tasks({
       const count2 = devAll.filter((task) => matchFilter(value, task)).length;
       const text = `${label} ${count2}`;
       return ui.Pill ? /* @__PURE__ */ React.createElement(ui.Pill, { key: value, active: filter === value, onClick: () => setFilter(value) }, text) : /* @__PURE__ */ React.createElement("button", { key: value, type: "button", "aria-pressed": filter === value, onClick: () => setFilter(value) }, text);
-    })), /* @__PURE__ */ React.createElement("div", { className: "df-view-body" }, /* @__PURE__ */ React.createElement("div", { className: "df-card" }, devRows.length === 0 ? /* @__PURE__ */ React.createElement("div", { className: "df-empty" }, /* @__PURE__ */ React.createElement("p", null, t("section.emptyDev"))) : devRows.map((task) => /* @__PURE__ */ React.createElement(DevTaskItem, { key: task.id, ui, t, task, picked, setPicked, sessionId, call, reload, show, ...detailProps(task.id), onOpenDiff: setDiffPage })))), selected.length > 0 ? /* @__PURE__ */ React.createElement("div", { className: "df-foot" }, /* @__PURE__ */ React.createElement(ActionButton, { ui, className: "df-go", variant: "primary", disabled: busy || reason !== "", title: reason, onClick: launch }, busy ? t("action.working") : t("action.accept")), /* @__PURE__ */ React.createElement("p", { className: "df-hint" }, reason !== "" ? reason : `${t("hint.order")}\uFF1A${selected.map((task) => task.title).join(" \u2192 ")}`)) : null) : null, id === "accept" && open.accept ? /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("div", { className: "df-view-body" }, /* @__PURE__ */ React.createElement("div", { className: "df-card" }, acceptRows.length === 0 ? /* @__PURE__ */ React.createElement("div", { className: "df-empty" }, /* @__PURE__ */ React.createElement("p", null, t("section.emptyAccept"))) : acceptRows.map((batch) => {
+    })), /* @__PURE__ */ React.createElement("div", { className: "df-view-body" }, /* @__PURE__ */ React.createElement("div", { className: "df-card" }, devRows.length === 0 ? /* @__PURE__ */ React.createElement("div", { className: "df-empty" }, /* @__PURE__ */ React.createElement("p", null, t("section.emptyDev"))) : devRows.map((task) => /* @__PURE__ */ React.createElement(DevTaskItem, { key: task.id, ui, t, task, picked, setPicked, sessionId, call, reload, show, ...detailProps(task.id), onOpenDiff: (file, index) => openDiff?.(task.id, task.title, index) })))), selected.length > 0 ? /* @__PURE__ */ React.createElement("div", { className: "df-foot" }, /* @__PURE__ */ React.createElement(ActionButton, { ui, className: "df-go", variant: "primary", disabled: busy || reason !== "", title: reason, onClick: launch }, busy ? t("action.working") : t("action.accept")), /* @__PURE__ */ React.createElement("p", { className: "df-hint" }, reason !== "" ? reason : `${t("hint.order")}\uFF1A${selected.map((task) => task.title).join(" \u2192 ")}`)) : null) : null, id === "accept" && open.accept ? /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("div", { className: "df-view-body" }, /* @__PURE__ */ React.createElement("div", { className: "df-card" }, acceptRows.length === 0 ? /* @__PURE__ */ React.createElement("div", { className: "df-empty" }, /* @__PURE__ */ React.createElement("p", null, t("section.emptyAccept"))) : acceptRows.map((batch) => {
       const children = containedTasks(data, batch);
       const open2 = children.length > 0 && (opened[batch.id] ?? batch.status === "accepting");
       const deletable = batch.status !== "accepting";
@@ -950,7 +1375,7 @@ function TreeItem({
 }
 function ScheduleItem({ ui, t, schedule, open, onToggle, depth = 0 }) {
   const tasks = [...schedule.tasks ?? []].sort((left, right) => String(right.createdAt ?? "").localeCompare(String(left.createdAt ?? "")));
-  const [openTasks, setOpenTasks] = useState({});
+  const [openTasks, setOpenTasks] = useState2({});
   return /* @__PURE__ */ React.createElement(
     TreeItem,
     {
@@ -1006,6 +1431,7 @@ function DevTaskItem({
   show,
   detailsOpen = false,
   onToggleDetails,
+  onOpenDiff,
   nested = false,
   reviewing = false,
   batchId,
@@ -1013,11 +1439,9 @@ function DevTaskItem({
 }) {
   const facts = taskFacts(task, t);
   const deps = task.dependsOn ?? [];
-  const [openDeps, setOpenDeps] = useState({});
-  const [selfOpen, setSelfOpen] = useState(false);
-  const [diff, setDiff] = useState(null);
-  const [openFile, setOpenFile] = useState(null);
-  const selectedFile = diff?.files.find((item) => `${item.repo}:${item.path}` === openFile) ?? null;
+  const [openDeps, setOpenDeps] = useState2({});
+  const [selfOpen, setSelfOpen] = useState2(false);
+  const [diff, setDiff] = useState2(null);
   const loadDiff = () => {
     if (diff !== null || !call || nested) return;
     call("task-diff", { sessionId, taskId: task.id }).then((value) => setDiff(value)).catch(() => setDiff({ files: [], repos: [] }));
@@ -1057,11 +1481,11 @@ function DevTaskItem({
       depth,
       tone: toneOf(shownStatus(task))
     },
-    diff !== null && diff.files.length > 0 ? false ? null : /* @__PURE__ */ React.createElement("div", { className: "df-files" }, diff.files.map((file) => {
+    diff !== null && diff.files.length > 0 ? /* @__PURE__ */ React.createElement("div", { className: "df-files" }, diff.files.map((file, index) => {
       const key = `${file.repo}:${file.path}`;
       return /* @__PURE__ */ React.createElement("div", { key, className: "df-file-item" }, /* @__PURE__ */ React.createElement("div", { className: "df-file-row", onClick: (event) => {
         event.stopPropagation();
-        onOpenDiff?.(file);
+        onOpenDiff?.(file, index);
       } }, /* @__PURE__ */ React.createElement("span", { className: "df-file-path" }, file.path), file.binary ? /* @__PURE__ */ React.createElement("span", { className: "df-meta" }, "binary") : /* @__PURE__ */ React.createElement("span", { className: "df-diff-counts" }, /* @__PURE__ */ React.createElement("span", { className: "df-diff-add" }, `+${file.added}`), /* @__PURE__ */ React.createElement("span", { className: "df-diff-del" }, `-${file.deleted}`))), file.binary ? null : /* @__PURE__ */ React.createElement("div", { className: "df-hover-card", "aria-hidden": "true" }, /* @__PURE__ */ React.createElement("div", { className: "df-hover-head" }, /* @__PURE__ */ React.createElement("span", { className: "df-hover-path" }, file.path), /* @__PURE__ */ React.createElement("span", { className: "df-diff-counts" }, /* @__PURE__ */ React.createElement("span", { className: "df-diff-add" }, `+${file.added}`), /* @__PURE__ */ React.createElement("span", { className: "df-diff-del" }, `-${file.deleted}`))), /* @__PURE__ */ React.createElement("div", { className: "df-hover-body" }, /* @__PURE__ */ React.createElement(FileDiff, { state: diffStateOf(file), split: false, wrap: false, retry: () => void 0, t: diffLabelsOf(t) }))));
     })) : null,
     deps.map((dep) => /* @__PURE__ */ React.createElement(
@@ -1169,9 +1593,9 @@ function StatusTag({ ui, t, status }) {
   return ui.Tag ? /* @__PURE__ */ React.createElement(ui.Tag, { tone }, label) : /* @__PURE__ */ React.createElement("span", { className: "df-meta" }, label);
 }
 function SettingsForm({ ui, view, call, t }) {
-  const [draft, setDraft] = useState(null);
-  const [message, setMessage] = useState("");
-  useEffect(() => {
+  const [draft, setDraft] = useState2(null);
+  const [message, setMessage] = useState2("");
+  useEffect2(() => {
     if (view === "summary") return void 0;
     const controller = new AbortController();
     call("settings-get", {}, controller.signal).then((value) => setDraft(value)).catch((reason) => setMessage(reason instanceof Error ? reason.message : String(reason)));
@@ -1196,8 +1620,8 @@ function SettingsForm({ ui, view, call, t }) {
   } }, fields.map(([key, label]) => /* @__PURE__ */ React.createElement("label", { key, className: "df-field" }, label, /* @__PURE__ */ React.createElement("input", { value: draft[key] ?? "", onChange: (event) => setDraft({ ...draft, [key]: event.target.value }) }))), /* @__PURE__ */ React.createElement(ActionButton, { ui, type: "submit", variant: "primary" }, t("action.save")), message ? /* @__PURE__ */ React.createElement("p", { className: "df-note", role: "status" }, message) : null);
 }
 function useToast() {
-  const [toast, setToast] = useState(null);
-  const timer = useRef(null);
+  const [toast, setToast] = useState2(null);
+  const timer = useRef2(null);
   const show = (text, tone = "error") => {
     if (text === "") return;
     if (timer.current !== null) clearTimeout(timer.current);
@@ -1305,29 +1729,6 @@ function taskChips(task) {
     return slot.number ?? repo;
   });
 }
-function diffLabelsOf(t) {
-  const strings = {
-    "diff.loading": "\u52A0\u8F7D\u4E2D",
-    "diff.missing": "\u6587\u4EF6\u5DF2\u4E0D\u5B58\u5728",
-    "diff.error": "\u8BFB\u53D6\u5931\u8D25",
-    "presented.retry": "\u91CD\u8BD5",
-    "diff.binary": "\u4E8C\u8FDB\u5236\u6587\u4EF6",
-    "diff.oversized": "\u6587\u4EF6\u8FC7\u5927"
-  };
-  return (key) => strings[key] ?? key;
-}
-function diffStateOf(file) {
-  if (file.binary) return { kind: "binary", path: file.path, display: file.path };
-  return {
-    kind: "text",
-    path: file.path,
-    display: file.path,
-    before: true,
-    after: true,
-    hunks: file.hunks ?? [],
-    coarse: false
-  };
-}
 function createdText(createdAt) {
   if (!createdAt) return void 0;
   const date = new Date(createdAt);
@@ -1404,6 +1805,15 @@ function definition(t) {
     }]
   };
 }
+function diffDefinition(t) {
+  return {
+    id: DIFF_TYPE_ID,
+    kind: DIFF_KIND,
+    priority: "extension",
+    patterns: [DIFF_PATTERN],
+    title: (address) => diffTitle(address) || t("tab.diff")
+  };
+}
 function apply(ctx) {
   ensureSheet();
   const ui = loadUi();
@@ -1425,8 +1835,20 @@ function apply(ctx) {
     name: "sidebar.right.pane.tab",
     key: TYPE_ID,
     locale: NAMESPACE,
-    inject: (sessionId) => ({ ...typeof sessionId === "string" ? { sessionId } : {}, call, ui })
+    inject: (sessionId) => ({
+      ...typeof sessionId === "string" ? { sessionId } : {},
+      call,
+      ui,
+      openDiff: (taskId, title, index) => ctx.sidebarRight.openResource(diffAddress({ taskId, title }), { params: { index } })
+    })
   }, Panel)), "dev-flow: body");
+  ctx.effect(() => ctx.sidebarRightTabs.register(diffDefinition(t)), "dev-flow: diff type");
+  ctx.effect(() => ctx.slots.inject("sidebar.right.pane.tab", () => ctx.slots.register({
+    name: "sidebar.right.pane.tab",
+    key: DIFF_TYPE_ID,
+    locale: NAMESPACE,
+    inject: (sessionId) => ({ ...typeof sessionId === "string" ? { sessionId } : {}, call, t, ui })
+  }, DiffTab)), "dev-flow: diff body");
   ctx.effect(() => ctx.slots.inject("sidebar.right.pane.tab.title", () => ctx.slots.register({
     name: "sidebar.right.pane.tab.title",
     key: TYPE_ID,
@@ -1448,7 +1870,7 @@ function apply(ctx) {
 }
 
 // src/client/index.tsx
-var inject = ["slots", "locale", "sidebarRightTabs", "connection", "sessions"];
+var inject = ["slots", "locale", "sidebarRightTabs", "sidebarRight", "connection", "sessions"];
 
     const plugin = module.exports;
     if (typeof plugin.apply !== 'function') throw new Error('dev-flow: 构建产物缺少 apply');

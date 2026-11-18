@@ -1,8 +1,13 @@
 import type React from 'react'
 
 const { useEffect, useRef, useState } = React
-import type { AgentRow, Call, DevSlot, RepoRow, Settings, Snapshot, TaskRow, Translate } from './types'
+import type { AgentRow, Call, DevSlot, RepoRow, ScheduleRow, Settings, Snapshot, TaskDiff, TaskDiffFile, TaskRow, Translate } from './types'
 import { ActionButton, Dot, type UiKit } from './ui'
+import { FileDiff } from './vendor/FileDiff'
+import { diffLabelsOf, diffStateOf } from './diff'
+
+/** 打开一条任务 diff 的入口：由插件在 Sidebar 里新开一个 tab，并选中这次的文件。 */
+type OpenDiff = (taskId: string, title: string, index: number) => void
 
 type PageId = 'overview' | 'tasks' | 'slots' | 'agents'
 
@@ -51,7 +56,7 @@ export function WorkflowSwitch({
   )
 }
 
-export function Panel(props: { ui: UiKit, sessionId?: string, call: Call, t: Translate }) {
+export function Panel(props: { ui: UiKit, sessionId?: string, call: Call, t: Translate, openDiff?: OpenDiff }) {
   return <PanelBoundary><PanelView {...props} /></PanelBoundary>
 }
 
@@ -66,7 +71,7 @@ class PanelBoundary extends React.Component<{ children: React.ReactNode }, { err
   }
 }
 
-function PanelView({ ui, sessionId, call, t }: { ui: UiKit, sessionId?: string, call: Call, t: Translate }) {
+function PanelView({ ui, sessionId, call, t, openDiff }: { ui: UiKit, sessionId?: string, call: Call, t: Translate, openDiff?: OpenDiff }) {
   const [page, setPage] = useState<PageId>('overview')
   const [data, setData] = useState<Snapshot | null>(null)
   const [picked, setPicked] = useState<string[]>([])
@@ -103,7 +108,7 @@ function PanelView({ ui, sessionId, call, t }: { ui: UiKit, sessionId?: string, 
       </div>
       {!data ? null : data.problem ? null : !data.initialized
         ? <Uninitialized ui={ui} t={t} sessionId={sessionId} call={call} reload={load} workspace={data.workspace} />
-        : <PageBody ui={ui} page={page} data={data} t={t} picked={picked} setPicked={setPicked} sessionId={sessionId} call={call} reload={load} show={show} />}
+        : <PageBody ui={ui} page={page} data={data} t={t} picked={picked} setPicked={setPicked} sessionId={sessionId} call={call} reload={load} show={show} openDiff={openDiff} />}
     </div>
   )
 }
@@ -131,6 +136,7 @@ function PageBody(props: {
   call: Call
   reload: (failure?: unknown) => unknown
   show: (text: string, tone?: string) => void
+  openDiff?: OpenDiff
 }) {
   if (props.page === 'overview') return <Overview ui={props.ui} data={props.data} t={props.t} />
   if (props.page === 'tasks') return <Tasks {...props} />
@@ -203,7 +209,7 @@ function Overview({ ui, data, t }: { ui: UiKit, data: Snapshot, t: Translate }) 
 }
 
 function Tasks({
-  ui, data, t, picked, setPicked, sessionId, call, reload, show,
+  ui, data, t, picked, setPicked, sessionId, call, reload, show, openDiff,
 }: {
   ui: UiKit
   data: Snapshot
@@ -214,6 +220,7 @@ function Tasks({
   call: Call
   reload: (failure?: unknown) => unknown
   show: (text: string, tone?: string) => void
+  openDiff?: OpenDiff
 }) {
   const [filter, setFilter] = useState('all')
   const [busy, setBusy] = useState(false)
@@ -222,7 +229,6 @@ function Tasks({
   const [pickedBatches, setPickedBatches] = useState<string[]>([])
   const [removing, setRemoving] = useState(false)
   const [details, setDetails] = useState<Record<string, boolean>>({})
-  const [diffPage, setDiffPage] = useState<TaskDiffFile | null>(null)
   const detailProps = (id: string) => ({
     detailsOpen: details[id] === true,
     onToggleDetails: () => setDetails({ ...details, [id]: !details[id] }),
@@ -331,17 +337,6 @@ function Tasks({
     }
     setLayout((prev) => ({ ...prev, open: { ...prev.open, [id]: !prev.open[id] } }))
   }
-  if (diffPage !== null) {
-    return (
-      <div className="df-diff-page df-diff-standalone">
-        <div className="df-diff-header">
-          <button type="button" className="df-diff-back" onClick={() => setDiffPage(null)}>‹</button>
-          <span className="df-diff-title">{diffPage.path}</span>
-        </div>
-        <div className="df-diff-body"><FileDiff state={diffStateOf(diffPage)} split={false} wrap={false} retry={() => undefined} t={diffLabelsOf(t)} /></div>
-      </div>
-    )
-  }
   return (
     <div className="df-views" ref={splitRef}>
       {dropY !== null ? <div className="df-drop" style={{ top: dropY }} /> : null}
@@ -382,7 +377,7 @@ function Tasks({
       <div className="df-view-body">
       <div className="df-card">
         {devRows.length === 0 ? <div className="df-empty"><p>{t('section.emptyDev')}</p></div> : devRows.map((task) => (
-          <DevTaskItem key={task.id} ui={ui} t={t} task={task} picked={picked} setPicked={setPicked} sessionId={sessionId} call={call} reload={reload} show={show} {...detailProps(task.id)} onOpenDiff={setDiffPage} />
+          <DevTaskItem key={task.id} ui={ui} t={t} task={task} picked={picked} setPicked={setPicked} sessionId={sessionId} call={call} reload={reload} show={show} {...detailProps(task.id)} onOpenDiff={(file, index) => openDiff?.(task.id, task.title, index)} />
         ))}
       </div>
       </div>
@@ -589,7 +584,7 @@ function ScheduleItem({ ui, t, schedule, open, onToggle, depth = 0 }: {
             kind="dev"
             title={task.title}
             chips={task.slots.map((slot) => (slot.number ? `${slot.repo}-${slot.number}` : slot.repo))}
-            actions={<StatusTag ui={ui} t={t} status={shownStatus({ ...task, kind: 'dev', repos: [] } as TaskRow)} />}
+            actions={<StatusTag ui={ui} t={t} status={shownStatus({ ...task, kind: 'dev', repos: [] } as unknown as TaskRow)} />}
             facts={facts}
             expandable
             expanded={openTasks[task.id] === true}
@@ -604,7 +599,7 @@ function ScheduleItem({ ui, t, schedule, open, onToggle, depth = 0 }: {
 
 /** 开发任务。 */
 function DevTaskItem({
-  ui, t, task, picked, setPicked, sessionId, call, reload, show, detailsOpen = false, onToggleDetails, nested = false, reviewing = false, batchId, depth = 0,
+  ui, t, task, picked, setPicked, sessionId, call, reload, show, detailsOpen = false, onToggleDetails, onOpenDiff, nested = false, reviewing = false, batchId, depth = 0,
 }: {
   ui: UiKit
   t: Translate
@@ -621,15 +616,13 @@ function DevTaskItem({
   reviewing?: boolean
   batchId?: string
   depth?: number
-  onOpenDiff?: (file: TaskDiffFile) => void
+  onOpenDiff?: (file: TaskDiffFile, index: number) => void
 }) {
   const facts = taskFacts(task, t)
   const deps = task.dependsOn ?? []
   const [openDeps, setOpenDeps] = useState<Record<string, boolean>>({})
   const [selfOpen, setSelfOpen] = useState(false)
   const [diff, setDiff] = useState<TaskDiff | null>(null)
-  const [openFile, setOpenFile] = useState<string | null>(null)
-  const selectedFile = diff?.files.find((item) => `${item.repo}:${item.path}` === openFile) ?? null
   const loadDiff = () => {
     if (diff !== null || !call || nested) return
     call('task-diff', { sessionId, taskId: task.id })
@@ -677,40 +670,38 @@ function DevTaskItem({
       tone={toneOf(shownStatus(task))}
     >
       {diff !== null && diff.files.length > 0 ? (
-        false ? null : (
-          <div className="df-files">
-            {diff.files.map((file) => {
-              const key = `${file.repo}:${file.path}`
-              return (
-                <div key={key} className="df-file-item">
-                  <div className="df-file-row" onClick={(event) => { event.stopPropagation(); onOpenDiff?.(file) }}>
-                    <span className="df-file-path">{file.path}</span>
-                    {file.binary
-                      ? <span className="df-meta">binary</span>
-                      : (
-                        <span className="df-diff-counts">
-                          <span className="df-diff-add">{`+${file.added}`}</span>
-                          <span className="df-diff-del">{`-${file.deleted}`}</span>
-                        </span>
-                      )}
-                  </div>
-                  {file.binary ? null : (
-                    <div className="df-hover-card" aria-hidden="true">
-                      <div className="df-hover-head">
-                        <span className="df-hover-path">{file.path}</span>
-                        <span className="df-diff-counts">
-                          <span className="df-diff-add">{`+${file.added}`}</span>
-                          <span className="df-diff-del">{`-${file.deleted}`}</span>
-                        </span>
-                      </div>
-                      <div className="df-hover-body"><FileDiff state={diffStateOf(file)} split={false} wrap={false} retry={() => undefined} t={diffLabelsOf(t)} /></div>
-                    </div>
-                  )}
+        <div className="df-files">
+          {diff.files.map((file, index) => {
+            const key = `${file.repo}:${file.path}`
+            return (
+              <div key={key} className="df-file-item">
+                <div className="df-file-row" onClick={(event) => { event.stopPropagation(); onOpenDiff?.(file, index) }}>
+                  <span className="df-file-path">{file.path}</span>
+                  {file.binary
+                    ? <span className="df-meta">binary</span>
+                    : (
+                      <span className="df-diff-counts">
+                        <span className="df-diff-add">{`+${file.added}`}</span>
+                        <span className="df-diff-del">{`-${file.deleted}`}</span>
+                      </span>
+                    )}
                 </div>
-              )
-            })}
-          </div>
-        )
+                {file.binary ? null : (
+                  <div className="df-hover-card" aria-hidden="true">
+                    <div className="df-hover-head">
+                      <span className="df-hover-path">{file.path}</span>
+                      <span className="df-diff-counts">
+                        <span className="df-diff-add">{`+${file.added}`}</span>
+                        <span className="df-diff-del">{`-${file.deleted}`}</span>
+                      </span>
+                    </div>
+                    <div className="df-hover-body"><FileDiff state={diffStateOf(file)} split={false} wrap={false} retry={() => undefined} t={diffLabelsOf(t)} /></div>
+                  </div>
+                )}
+              </div>
+            )
+          })}
+        </div>
       ) : null}
       {deps.map((dep) => (
         <TreeItem
@@ -992,16 +983,6 @@ function shownStatus(task: TaskRow) {
   return task.status
 }
 
-function dotOf(status: string) {
-  if (status === 'developing') return 'ongoing'
-  if (status === 'awaiting-agent') return 'warning'
-  if (status === 'failed') return 'error'
-  if (status === 'accepted' || status === 'merged') return 'done'
-  if (status === 'pending-merge') return 'warning'
-  if (status === 'waiting' || status === 'pending-acceptance' || status === 'accepting') return 'warning'
-  return 'idle'
-}
-
 function matchFilter(filter: string, task: TaskRow) {
   if (filter === 'pending') return task.status === 'pending-acceptance'
   if (filter === 'dev') return task.status === 'developing' || task.status === 'waiting' || task.status === 'failed'
@@ -1065,101 +1046,6 @@ function taskChips(task: TaskRow) {
   })
 }
 
-function diffRows(patch: string) {
-  const rows: { kind: string, text: string, oldNo: number | '', newNo: number | '' }[] = []
-  let oldNo = 0
-  let newNo = 0
-  for (const line of patch.split('\n')) {
-    if (line.startsWith('@@')) {
-      const match = /@@ -(\d+)(?:,\d+)? \+(\d+)/.exec(line)
-      oldNo = match ? Number(match[1]) : oldNo
-      newNo = match ? Number(match[2]) : newNo
-      rows.push({ kind: 'hunk', text: line, oldNo: '', newNo: '' })
-      continue
-    }
-    if (line.startsWith('diff --git') || line.startsWith('index ') || line.startsWith('--- ') || line.startsWith('+++ ')) {
-      rows.push({ kind: 'meta', text: line, oldNo: '', newNo: '' })
-      continue
-    }
-    if (line.startsWith('-')) { rows.push({ kind: 'del', text: line.slice(1), oldNo: oldNo || '', newNo: '' }); oldNo += 1; continue }
-    if (line.startsWith('+')) { rows.push({ kind: 'add', text: line.slice(1), oldNo: '', newNo: newNo || '' }); newNo += 1; continue }
-    rows.push({ kind: 'context', text: line.slice(1), oldNo: oldNo || '', newNo: newNo || '' })
-    oldNo += 1
-    newNo += 1
-  }
-  return rows
-}
-
-function textsFromPatch(patch: string) {
-  const oldLines: string[] = []
-  const newLines: string[] = []
-  for (const line of patch.split('\n')) {
-    if (line.startsWith('diff --git') || line.startsWith('index ') || line.startsWith('--- ') || line.startsWith('+++ ') || line.startsWith('@@')) continue
-    if (line.startsWith('-')) { oldLines.push(line.slice(1)); continue }
-    if (line.startsWith('+')) { newLines.push(line.slice(1)); continue }
-    const text = line.startsWith(' ') ? line.slice(1) : line
-    oldLines.push(text)
-    newLines.push(text)
-  }
-  return { oldText: oldLines.join('\n'), newText: newLines.join('\n') }
-}
-
-function diffLabels(t: Translate) {
-  return {
-    codeLabel: 'text',
-    wrapLabel: 'wrap',
-    unwrapLabel: 'nowrap',
-    copy: t('diff.copy'),
-    copied: t('diff.copied'),
-    collapseAria: t('diff.collapse'),
-    expandAria: (hidden: number) => `+${hidden}`,
-    collapse: t('diff.collapse'),
-    expand: (hidden: number) => `+${hidden}`,
-  }
-}
-
-function diffLabelsOf(t: Translate) {
-  const strings: Record<string, string> = {
-    'diff.loading': '加载中',
-    'diff.missing': '文件已不存在',
-    'diff.error': '读取失败',
-    'presented.retry': '重试',
-    'diff.binary': '二进制文件',
-    'diff.oversized': '文件过大',
-  }
-  return (key: string) => strings[key] ?? key
-}
-
-function diffStateOf(file: TaskDiffFile) {
-  if (file.binary) return { kind: 'binary' as const, path: file.path, display: file.path }
-  return {
-    kind: 'text' as const,
-    path: file.path,
-    display: file.path,
-    before: true,
-    after: true,
-    hunks: file.hunks ?? [],
-    coarse: false,
-  }
-}
-
-function DiffLines({ patch, maxLines }: { patch: string, maxLines?: number }) {
-  const rows = diffRows(patch)
-  const shown = maxLines === undefined ? rows : rows.slice(0, maxLines)
-  return (
-    <div className="df-difflines">
-      {shown.map((row, index) => (
-        <div key={index} className="df-diffline" data-kind={row.kind}>
-          <span className="df-diffline-no">{row.oldNo}</span>
-          <span className="df-diffline-no">{row.newNo}</span>
-          <span className="df-diffline-sign">{row.kind === 'add' ? '+' : row.kind === 'del' ? '-' : ' '}</span>
-          <span className="df-diffline-text">{row.text}</span>
-        </div>
-      ))}
-    </div>
-  )
-}
-
 function createdText(createdAt?: string | null) {
   if (!createdAt) return undefined
   const date = new Date(createdAt)
@@ -1185,7 +1071,7 @@ function taskFacts(task: TaskRow, t: Translate) {
   return rows
 }
 
-function formatTokens(total) {
+function formatTokens(total: number) {
   if (total >= 10000) return `${Math.round(total / 1000)}k`
   if (total >= 1000) return `${(total / 1000).toFixed(1)}k`
   return String(total)

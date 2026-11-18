@@ -1,3 +1,5 @@
+import { DIFF_KIND, DIFF_PATTERN, DIFF_TYPE_ID, diffAddress, diffTitle } from './diff'
+import { DiffTab } from './diff-tab'
 import { en, NAMESPACE, zh } from './locale'
 import { ensureSheet } from './sheet'
 import { Panel, SettingsForm, Title, WorkflowSwitch } from './pages'
@@ -34,6 +36,16 @@ function definition(t: Translate) {
   }
 }
 
+function diffDefinition(t: Translate) {
+  return {
+    id: DIFF_TYPE_ID,
+    kind: DIFF_KIND,
+    priority: 'extension',
+    patterns: [DIFF_PATTERN],
+    title: (address: string) => diffTitle(address) || t('tab.diff'),
+  }
+}
+
 export function apply(ctx: ClientContext) {
   ensureSheet()
   const ui: UiKit = loadUi()
@@ -57,8 +69,22 @@ export function apply(ctx: ClientContext) {
     name: 'sidebar.right.pane.tab',
     key: TYPE_ID,
     locale: NAMESPACE,
-    inject: (sessionId: unknown) => ({ ...(typeof sessionId === 'string' ? { sessionId } : {}), call, ui }),
+    inject: (sessionId: unknown) => ({
+      ...(typeof sessionId === 'string' ? { sessionId } : {}),
+      call,
+      ui,
+      openDiff: (taskId: string, title: string, index: number) => ctx.sidebarRight.openResource(diffAddress({ taskId, title }), { params: { index } }),
+    }),
   }, Panel)), 'dev-flow: body')
+
+  ctx.effect(() => ctx.sidebarRightTabs.register(diffDefinition(t)), 'dev-flow: diff type')
+
+  ctx.effect(() => ctx.slots.inject('sidebar.right.pane.tab', () => ctx.slots.register({
+    name: 'sidebar.right.pane.tab',
+    key: DIFF_TYPE_ID,
+    locale: NAMESPACE,
+    inject: (sessionId: unknown) => ({ ...(typeof sessionId === 'string' ? { sessionId } : {}), call, t, ui }),
+  }, DiffTab)), 'dev-flow: diff body')
 
   ctx.effect(() => ctx.slots.inject('sidebar.right.pane.tab.title', () => ctx.slots.register({
     name: 'sidebar.right.pane.tab.title',

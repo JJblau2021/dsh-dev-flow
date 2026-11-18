@@ -14,6 +14,28 @@ export interface UiKit {
   Pill?: React.ComponentType<{ active?: boolean, onClick?: () => void, children?: React.ReactNode }>
   Tag?: React.ComponentType<{ tone?: string, children?: React.ReactNode, className?: string }>
   StateDot?: React.ComponentType<{ state: string }>
+  /** diff 页的文件选择菜单。 */
+  Menu?: React.ComponentType<{
+    className?: string
+    open?: boolean
+    autoFocus?: boolean
+    portal?: boolean
+    align?: 'start' | 'end'
+    dense?: boolean
+    onClose?: () => void
+    anchor?: React.ReactNode
+    items: { id: string, label: React.ReactNode }[]
+    selectedId?: string
+    onSelect?: (id: string) => void
+  }>
+  /** 路径显示：目录淡化、文件名正常。 */
+  PathLabel?: React.ComponentType<{ path: string, className?: string, title?: string }>
+  Tooltip?: React.ComponentType<{ label: string, side?: 'top' | 'bottom', delayMs?: number, children?: React.ReactNode }>
+  IconChevronDownOutlineRegular?: React.ComponentType<{ size?: number, className?: string }>
+  IconCompareSplitOutlineRegular?: React.ComponentType<{ size?: number, className?: string }>
+  IconWrapFillRegular?: React.ComponentType<{ size?: number, className?: string }>
+  IconNowrapFillRegular?: React.ComponentType<{ size?: number, className?: string }>
+  IconInspectOutlineRegular?: React.ComponentType<{ size?: number, className?: string }>
 }
 
 declare function require(id: string): unknown

@@ -10,8 +10,13 @@ interface WorkspaceDiffHunk {
   newLines: number
   lines: string[]
 }
-interface ChangesDiff { kind: string, path: string, display: string, before: boolean, after: boolean, hunks: WorkspaceDiffHunk[], coarse: boolean }
+interface TextualDiff { kind: 'text', path: string, display: string, before: boolean, after: boolean, hunks: WorkspaceDiffHunk[], coarse: boolean }
+interface BinaryDiff { kind: 'binary', path: string, display: string }
+interface OversizedDiff { kind: 'oversized', path: string, display: string }
+type ChangesDiff = TextualDiff | BinaryDiff | OversizedDiff
 type ChangesDiffState = ChangesDiff | 'missing' | 'error' | 'loading'
+/** Localized copy handed in by the host panel. */
+type Translate = (key: string, params?: Record<string, string>) => string
 import css from './FileDiff.module.css'
 
 /** Maximum rendered lines per comparison. */
@@ -147,6 +152,7 @@ export function FileDiff({ state, split, wrap, retry, t }: {
   split: boolean
   wrap: boolean
   retry: () => void
+  t: Translate
 }): ReactNode {
   if (state === undefined || state === 'loading') return <p className={css.status} role="status">{t('diff.loading')}</p>
   if (state === 'missing') return <p className={css.status}>{t('diff.missing')}</p>
@@ -222,7 +228,7 @@ function SplitColumns({ hunks, highlights }: { hunks: readonly WorkspaceDiffHunk
 }
 
 /** The hunks of a text comparison with their line numbers, unified or side by side. */
-function TextDiff({ diff, split, wrap, t }: { diff: Extract<ChangesDiff, { kind: 'text' }>; split: boolean; wrap: boolean }): ReactNode {
+function TextDiff({ diff, split, wrap, t }: { diff: Extract<ChangesDiff, { kind: 'text' }>; split: boolean; wrap: boolean; t: Translate }): ReactNode {
   const note = noteOf(diff)
   const { hunks, truncated } = useMemo(() => renderedHunks(diff.hunks), [diff.hunks])
   const highlighter = useCodeHighlighter(languageForPath(diff.path))
