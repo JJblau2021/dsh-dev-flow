@@ -671,7 +671,7 @@ function DevTaskItem({
   const openDetails = onToggleDetails === undefined ? selfOpen : detailsOpen
   const toggleDetails = onToggleDetails ?? (() => setSelfOpen(!selfOpen))
   const expandable = facts.length > 0 || deps.length > 0
-  const pickable = task.selectable === true || task.deletable === true
+  const pickable = !nested && (task.selectable === true || task.deletable === true)
   const leading = pickable
     ? <input className="df-check" type="checkbox" checked={picked.includes(task.id)} onClick={(event) => event.stopPropagation()} onChange={() => setPicked(togglePick(picked, task.id))} />
     : undefined
