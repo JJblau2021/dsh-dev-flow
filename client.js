@@ -529,12 +529,21 @@ var zh = {
   "empty.init": "\u5C1A\u672A\u521D\u59CB\u5316\u3002\u521D\u59CB\u5316\u540E\u624D\u4F1A\u626B\u63CF\u4ED3\u5E93\u3002",
   "empty.root": "\u8BF7\u5728\u5DE5\u4F5C\u533A\u6839\u6253\u5F00\u4F1A\u8BDD",
   "settings.summary": "\u5F00\u53D1\u4E0E\u9A8C\u6536\u7684\u6A21\u578B\u3001\u63A8\u7406\u7B49\u7EA7\u3001\u76EE\u5F55\u548C\u5206\u652F",
-  "metric.projects": "\u9879\u76EE",
-  "metric.agents": "\u6D3B\u8DC3\u5B50\u4EE3\u7406",
-  "metric.tasks": "\u6D3B\u8DC3\u4EFB\u52A1",
-  "metric.slots": "\u6D3B\u8DC3\u69FD\u4F4D",
-  "metric.pending": "\u5F85\u9A8C\u6536",
-  "metric.dirty": "\u57FA\u7EBF\u4E0D\u5E72\u51C0",
+  "metric.agents": "\u5B50\u4EE3\u7406",
+  "metric.baseSlots": "\u57FA\u7EBF\u69FD\u4F4D",
+  "metric.devTasks": "\u5F00\u53D1\u4EFB\u52A1",
+  "metric.active": "\u6D3B\u8DC3",
+  "metric.limit": "\u4E0A\u9650",
+  "metric.total": "\u603B\u6570",
+  "overview.metrics": "\u6307\u6807\u603B\u89C8",
+  "overview.noTasks": "\u6CA1\u6709\u672A\u5B8C\u6210\u7684\u4EFB\u52A1",
+  "overview.allShown": "\u5DF2\u663E\u793A\u5168\u90E8\u672A\u5B8C\u6210\u4EFB\u52A1",
+  "filter.allProjects": "\u5168\u90E8\u9879\u76EE",
+  "project.idle": "\u6B63\u5E38",
+  "project.dirty": "\u57FA\u7EBF\u4E0D\u5E72\u51C0",
+  "project.active": "\u5F00\u53D1\u6D3B\u8DC3\u4E2D",
+  "project.pending": "\u4EFB\u52A1\u5F85\u9A8C\u6536",
+  "section.emptyProjects": "\u6CA1\u6709\u9879\u76EE",
   "section.scheduleTasks": "\u8C03\u5EA6\u4EFB\u52A1",
   "section.emptySchedule": "\u6CA1\u6709\u8C03\u5EA6\u4EFB\u52A1",
   "section.devTasks": "\u5F00\u53D1\u4EFB\u52A1",
@@ -553,7 +562,8 @@ var zh = {
   "usage.input": "\u8F93\u5165",
   "usage.output": "\u8F93\u51FA",
   "usage.cache": "\u7F13\u5B58",
-  "section.projects": "\u9879\u76EE",
+  "section.projects": "\u9879\u76EE\u6982\u89C8",
+  "overview.tasks": "\u4EFB\u52A1\u6982\u89C8",
   "section.bases": "\u57FA\u7EBF",
   "empty.bases": "\u8FD8\u6CA1\u6709\u57FA\u7EBF",
   "empty.basesHint": "\u7528\u4EFB\u52A1\u6216\u8C03\u5EA6\u6307\u5B9A\u57FA\u7EBF\u5206\u652F\u540E\uFF0C\u4F1A\u81EA\u52A8\u5EFA\u7ACB\u57FA\u7EBF\u69FD\u4F4D",
@@ -687,12 +697,21 @@ var en = {
   "empty.init": "Not initialized. Repositories are scanned after initialization.",
   "empty.root": "Open the session at the workspace root",
   "settings.summary": "Models, reasoning effort, directories, and branch names",
-  "metric.projects": "Projects",
-  "metric.agents": "Active agents",
-  "metric.tasks": "Active tasks",
-  "metric.slots": "Active slots",
-  "metric.pending": "Pending",
-  "metric.dirty": "Dirty baselines",
+  "metric.agents": "Agents",
+  "metric.baseSlots": "Base slots",
+  "metric.devTasks": "Dev tasks",
+  "metric.active": "Active",
+  "metric.limit": "Limit",
+  "metric.total": "Total",
+  "overview.metrics": "Metrics overview",
+  "overview.noTasks": "No unfinished tasks",
+  "overview.allShown": "All unfinished tasks shown",
+  "filter.allProjects": "All projects",
+  "project.idle": "All clear",
+  "project.dirty": "Dirty baselines",
+  "project.active": "Development active",
+  "project.pending": "Awaiting acceptance",
+  "section.emptyProjects": "No projects",
   "section.scheduleTasks": "Scheduling",
   "section.emptySchedule": "No scheduling tasks",
   "section.devTasks": "Development",
@@ -711,7 +730,8 @@ var en = {
   "usage.input": "in",
   "usage.output": "out",
   "usage.cache": "cache",
-  "section.projects": "Projects",
+  "section.projects": "Project overview",
+  "overview.tasks": "Task overview",
   "section.bases": "Baselines",
   "empty.bases": "No baselines yet",
   "empty.basesHint": "Name a baseline branch when creating a task or schedule; its base slot is created automatically",
@@ -810,24 +830,58 @@ var panelSheet = `
 .df-view > .df-foot { flex: none; position: static; padding: 10px 16px 8px; }
 
 /* \u5206\u533A\u6807\u9898 */
-.df-section { margin: 6px 0 0; font-size: 11px; font-weight: 600; letter-spacing: 0.02em; color: var(--dsw-alias-label-tertiary); }
+.df-section { margin: 4px 0 0; font-size: 11px; font-weight: 600; letter-spacing: 0.02em; color: var(--dsw-alias-label-tertiary); }
+.df-subsection { margin: 2px 0 0; display: flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 600; color: var(--dsw-alias-label-secondary); }
+.df-subsection-count { font-weight: 500; color: var(--dsw-alias-label-tertiary); font-variant-numeric: tabular-nums; }
 
-/* \u6307\u6807 */
-.df-metrics { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0; padding: 2px 0 8px; border-bottom: 0.5px solid var(--dsw-alias-border-l2); }
+/* \u6982\u89C8\uFF1A\u6574\u9875\u6EDA\u52A8\uFF0C\u9879\u76EE\u7B5B\u9009\uFF0C\u4E09\u683C\u6307\u6807 */
+.df-scroll { flex: 1 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain; display: flex; flex-direction: column; gap: 8px; margin: 0 -16px; padding: 0 16px; }
+.df-scope { display: flex; align-items: center; flex-wrap: wrap; gap: 6px 10px; }
+.df-scope .df-filters { flex: 1 1 220px; min-width: 0; margin-left: -8px; }
+.df-metrics { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); column-gap: 12px; row-gap: 8px; padding: 2px 0 8px; border-bottom: 0.5px solid var(--dsw-alias-border-l2); }
 .df-metric, .df-empty { border: 0; background: transparent; }
-.df-metric { padding: 2px 0; }
+.df-metric { padding: 1px 0; }
 .df-kicker { color: var(--dsw-alias-label-tertiary); font-size: 11px; line-height: 16px; }
+.df-metric-value { display: flex; align-items: baseline; gap: 2px; margin-top: 1px; }
+.df-metric-part { display: inline-flex; align-items: baseline; gap: 2px; }
+.df-metric-sep { color: var(--dsw-alias-label-tertiary); font-size: 12px; line-height: 24px; }
 .df-metric strong {
-  display: block;
-  margin-top: 1px;
+  display: inline;
+  margin-top: 0;
   font-family: var(--ds-font-family-code, ui-monospace, SFMono-Regular, Menlo, monospace);
   font-size: 17px;
   line-height: 24px;
   font-weight: 600;
   font-variant-numeric: tabular-nums;
 }
-.df-metric[data-tone='info'] strong { color: var(--dsw-alias-state-business-primary); }
-.df-metric[data-tone='warn'] strong { color: var(--dsw-alias-state-warn-primary); }
+.df-metric strong[data-tone='info'] { color: var(--dsw-alias-state-business-primary); }
+.df-metric strong[data-tone='warn'] { color: var(--dsw-alias-state-warn-primary); }
+.df-metric-legend { display: block; margin-top: 1px; color: var(--dsw-alias-label-tertiary); font-size: 10.5px; line-height: 15px; }
+
+/* \u9879\u76EE\u6982\u89C8 */
+.df-project { display: flex; flex-direction: column; gap: 2px; padding: 6px 0; border-bottom: 0.5px solid var(--dsw-alias-border-l2); }
+.df-project:last-child { border-bottom: 0; }
+.df-project[data-scoped='true'] { margin-left: -8px; padding-left: 8px; background: var(--dsw-alias-interactive-bg-hover, rgba(38, 49, 72, 0.06)); box-shadow: inset 2px 0 0 var(--dsw-alias-state-business-primary); }
+.df-project-head { display: flex; align-items: center; gap: 6px; min-width: 0; }
+.df-project-head .df-name { flex: 0 1 auto; display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.df-project-desc { margin: 0; color: var(--dsw-alias-label-tertiary); font-size: 11.5px; line-height: 16px; display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden; }
+.df-project-status { display: flex; flex-wrap: wrap; justify-content: flex-end; align-items: center; gap: 4px; flex: 0 1 auto; max-width: 62%; margin-left: auto; }
+.df-project-tag { gap: 4px; }
+.df-status-count { margin-left: 4px; font-weight: 600; font-variant-numeric: tabular-nums; opacity: 0.85; }
+.df-filter-count { margin-left: 4px; font-weight: 500; font-variant-numeric: tabular-nums; opacity: 0.7; }
+
+/* \u6982\u89C8\u4EFB\u52A1\u884C */
+.df-task-line { display: flex; align-items: flex-start; gap: 10px; padding: 7px 0; border-bottom: 0.5px solid var(--dsw-alias-border-l2); }
+.df-task-line:last-child { border-bottom: 0; }
+.df-task-main { display: flex; flex-direction: column; gap: 4px; flex: 1 1 auto; min-width: 0; }
+.df-task-main .df-name { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.df-task-sub { display: flex; flex-wrap: wrap; align-items: center; gap: 5px; }
+.df-task-side { display: flex; align-items: center; gap: 6px; flex: none; }
+.df-task-panel { display: flex; flex-direction: column; flex: 1 0 auto; min-height: 180px; margin: 4px -16px 0; padding: 10px 16px 12px; background: var(--dsw-alias-bg-layer-2); border-top: 0.5px solid var(--dsw-alias-border-l2); }
+.df-task-panel .df-section { margin-top: 0; }
+.df-task-panel .df-subsection { margin-top: 6px; }
+.df-task-rest { flex: 1 1 auto; display: flex; align-items: center; justify-content: center; min-height: 56px; padding: 12px 0 4px; color: var(--dsw-alias-label-tertiary); font-size: 11px; text-align: center; }
+.df-task-side .df-meta { white-space: nowrap; }
 
 /* \u5217\u8868\uFF1A\u901A\u680F\u3001\u53D1\u4E1D\u5206\u9694\uFF0C\u4E0D\u7528\u5361\u7247\u6846 */
 .df-card { border: 0; border-radius: 0; background: transparent; }
@@ -1243,15 +1297,49 @@ ${all()}`;
 }
 
 // src/client/snapshot.ts
+var DEV_ACTIVE = /* @__PURE__ */ new Set(["waiting", "developing", "paused", "failed"]);
+function baseCounts(bases) {
+  return {
+    active: bases.filter((base) => base.tasks > 0).length,
+    dirty: bases.filter((base) => base.dirty).length,
+    total: bases.length
+  };
+}
+function devCounts(tasks) {
+  const dev = tasks.filter((task) => task.kind !== "accept");
+  return {
+    developing: dev.filter((task) => DEV_ACTIVE.has(task.status)).length,
+    pending: dev.filter((task) => task.status === "pending-acceptance").length,
+    total: dev.length
+  };
+}
 function normalizeSnapshot(value) {
   if (value === null || typeof value !== "object") return null;
   const snapshot = value;
-  if (Array.isArray(snapshot.projects)) {
-    snapshot.projects = snapshot.projects.map((project) => typeof project === "string" ? { name: project, dirty: false } : project);
-  }
+  const projects = Array.isArray(snapshot.projects) ? snapshot.projects.map((project) => typeof project === "string" ? { name: project, dirty: false } : project) : [];
+  snapshot.projects = projects;
   if (!Array.isArray(snapshot.bases)) snapshot.bases = [];
-  if (snapshot.counts !== void 0 && snapshot.counts.dirtyBases === void 0) {
-    snapshot.counts.dirtyBases = snapshot.counts.dirtyTrunks ?? 0;
+  if (!Array.isArray(snapshot.tasks)) snapshot.tasks = [];
+  if (!Array.isArray(snapshot.agents)) snapshot.agents = [];
+  if (snapshot.counts !== void 0) {
+    if (snapshot.counts.dirtyBases === void 0) {
+      snapshot.counts.dirtyBases = snapshot.counts.dirtyTrunks ?? 0;
+    }
+    if (snapshot.counts.baseSlots === void 0) {
+      snapshot.counts.baseSlots = baseCounts(snapshot.bases);
+    }
+    if (snapshot.counts.devTasks === void 0) {
+      snapshot.counts.devTasks = devCounts(snapshot.tasks);
+    }
+  }
+  for (const project of projects) {
+    if (project.stats !== void 0) continue;
+    const bases = snapshot.bases.filter((base) => base.repo === project.name);
+    const tasks = snapshot.tasks.filter((task) => task.kind !== "accept" && (task.repos ?? []).includes(project.name));
+    const activeAgents = snapshot.agents.filter(
+      (agent) => agent.status === "running" && snapshot.tasks.some((task) => task.id === agent.taskId && (task.repos ?? []).includes(project.name))
+    ).length;
+    project.stats = { activeAgents, baseSlots: baseCounts(bases), devTasks: devCounts(tasks) };
   }
   return snapshot;
 }
@@ -1340,19 +1428,96 @@ function PageBody(props) {
   if (props.page === "bases") return /* @__PURE__ */ React.createElement(Bases, { ui: props.ui, data: props.data, t: props.t, call: props.call, reload: props.reload, show: props.show, sessionId: props.sessionId });
   return /* @__PURE__ */ React.createElement(Agents, { ui: props.ui, data: props.data, t: props.t });
 }
+var OVERVIEW_DEV_ORDER = {
+  failed: 0,
+  "pending-acceptance": 1,
+  "pending-merge": 2,
+  developing: 3,
+  waiting: 4,
+  paused: 5
+};
+var OVERVIEW_ACCEPT_STATUSES = /* @__PURE__ */ new Set(["accepting", "pending-merge"]);
+function newestFirst(left, right) {
+  return String(right.createdAt ?? "").localeCompare(String(left.createdAt ?? ""));
+}
+function overviewCounts(data, projectName) {
+  const emptyBases = { active: 0, dirty: 0, total: 0 };
+  const emptyTasks = { developing: 0, pending: 0, total: 0 };
+  if (projectName === void 0) {
+    return {
+      activeAgents: data.counts.activeAgents,
+      agentLimit: data.counts.agentLimit ?? 0,
+      baseSlots: data.counts.baseSlots ?? emptyBases,
+      devTasks: data.counts.devTasks ?? emptyTasks
+    };
+  }
+  const stats = (data.projects ?? []).find((project) => project.name === projectName)?.stats;
+  return {
+    activeAgents: stats?.activeAgents ?? 0,
+    agentLimit: data.counts.agentLimit,
+    baseSlots: stats?.baseSlots ?? emptyBases,
+    devTasks: stats?.devTasks ?? emptyTasks
+  };
+}
+function ProjectTag({ ui, tone, label, count }) {
+  return ui.Tag ? /* @__PURE__ */ React.createElement(ui.Tag, { tone, className: "df-project-tag" }, label, /* @__PURE__ */ React.createElement("span", { className: "df-status-count" }, count)) : /* @__PURE__ */ React.createElement("span", { className: "df-chip" }, label, /* @__PURE__ */ React.createElement("span", { className: "df-status-count" }, count));
+}
+function OverviewTaskRow({ ui, t, task }) {
+  const created = createdText(task.createdAt);
+  const status = shownStatus(task);
+  return /* @__PURE__ */ React.createElement("div", { className: "df-task-line", "data-tone": toneOf(status) }, /* @__PURE__ */ React.createElement("div", { className: "df-task-main" }, /* @__PURE__ */ React.createElement("span", { className: "df-name", title: `${task.title} \xB7 ${task.id}` }, task.title), /* @__PURE__ */ React.createElement("span", { className: "df-task-sub" }, task.repos.map((repo) => /* @__PURE__ */ React.createElement("span", { key: repo, className: "df-chip" }, repo)), task.base ? /* @__PURE__ */ React.createElement("span", { className: "df-chip" }, task.base) : null)), /* @__PURE__ */ React.createElement("div", { className: "df-task-side" }, task.agentStatus === "running" ? /* @__PURE__ */ React.createElement("span", { className: "df-live", "aria-hidden": "true" }) : null, created ? /* @__PURE__ */ React.createElement("span", { className: "df-meta" }, created) : null, /* @__PURE__ */ React.createElement(StatusTag, { ui, t, status })));
+}
+function OverviewAcceptRow({ ui, t, task }) {
+  const created = createdText(task.createdAt);
+  const count = (task.taskIds ?? []).length;
+  return /* @__PURE__ */ React.createElement("div", { className: "df-task-line", "data-tone": toneOf(task.status) }, /* @__PURE__ */ React.createElement("div", { className: "df-task-main" }, /* @__PURE__ */ React.createElement("span", { className: "df-name", title: `${task.title} \xB7 ${task.id}` }, task.title), /* @__PURE__ */ React.createElement("span", { className: "df-task-sub" }, task.repos.map((repo) => /* @__PURE__ */ React.createElement("span", { key: repo, className: "df-chip" }, repo)), count > 0 ? /* @__PURE__ */ React.createElement("span", { className: "df-meta" }, t("base.tasks").replace("{count}", String(count))) : null)), /* @__PURE__ */ React.createElement("div", { className: "df-task-side" }, created ? /* @__PURE__ */ React.createElement("span", { className: "df-meta" }, created) : null, /* @__PURE__ */ React.createElement(StatusTag, { ui, t, status: task.status })));
+}
 function Overview({ ui, data, t }) {
-  const dev = data.counts.devSlots;
-  const accept = data.counts.acceptSlots;
+  const [scope, setScope] = useState2("all");
+  const projects = data.projects ?? [];
+  const selected = projects.some((project) => project.name === scope) ? scope : "all";
+  const counts = overviewCounts(data, selected === "all" ? void 0 : selected);
   const cards = [
-    [t("metric.projects"), data.counts.projects],
-    [t("metric.agents"), `${data.counts.activeAgents}/${data.counts.agentLimit}`, data.counts.activeAgents > 0 ? "info" : void 0],
-    [t("metric.tasks"), data.counts.activeTasks],
-    [t("metric.slots"), data.counts.activeSlots],
-    [t("metric.pending"), data.counts.pending, data.counts.pending > 0 ? "warn" : void 0],
-    [t("metric.dirty"), `${data.counts.dirtyBases}/${data.counts.projects}`, data.counts.dirtyBases > 0 ? "warn" : void 0]
+    {
+      key: "agents",
+      label: t("metric.agents"),
+      parts: [
+        { value: counts.activeAgents, tone: counts.activeAgents > 0 ? "info" : void 0 },
+        { value: counts.agentLimit }
+      ],
+      legend: `${t("metric.active")} / ${t("metric.limit")}`
+    },
+    {
+      key: "bases",
+      label: t("metric.baseSlots"),
+      parts: [
+        { value: counts.baseSlots.active },
+        { value: counts.baseSlots.dirty, tone: counts.baseSlots.dirty > 0 ? "warn" : void 0 },
+        { value: counts.baseSlots.total }
+      ],
+      legend: `${t("metric.active")} / ${t("base.dirty")} / ${t("metric.total")}`
+    },
+    {
+      key: "tasks",
+      label: t("metric.devTasks"),
+      parts: [
+        { value: counts.devTasks.developing, tone: counts.devTasks.developing > 0 ? "info" : void 0 },
+        { value: counts.devTasks.pending, tone: counts.devTasks.pending > 0 ? "warn" : void 0 },
+        { value: counts.devTasks.total }
+      ],
+      legend: `${t("filter.dev")} / ${t("filter.pending")} / ${t("metric.total")}`
+    }
   ];
-  const running = (data.agents ?? []).filter((agent) => agent.status === "running");
-  return /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("div", { className: "df-metrics" }, cards.map(([label, value, tone]) => /* @__PURE__ */ React.createElement("div", { key: label, className: "df-metric", "data-tone": tone }, /* @__PURE__ */ React.createElement("div", { className: "df-kicker" }, label), /* @__PURE__ */ React.createElement("strong", null, String(value))))), /* @__PURE__ */ React.createElement("h3", { className: "df-section" }, t("section.projects")), /* @__PURE__ */ React.createElement("div", { className: "df-card" }, (data.projects ?? []).map((project) => /* @__PURE__ */ React.createElement("div", { key: project.name, className: "df-line" }, /* @__PURE__ */ React.createElement("span", { className: "df-name" }, project.name, project.branch ? /* @__PURE__ */ React.createElement("span", { className: "df-branch" }, project.branch) : null), /* @__PURE__ */ React.createElement("span", { className: "df-line-states" }, /* @__PURE__ */ React.createElement("span", { className: "df-meta" }, t("base.count").replace("{count}", String(project.bases ?? 0))), /* @__PURE__ */ React.createElement("span", { className: project.dirty ? "df-warn" : "df-ok" }, project.dirty ? t("base.dirty") : t("base.clean")))))), /* @__PURE__ */ React.createElement("h3", { className: "df-section" }, t("section.active")), running.length === 0 ? /* @__PURE__ */ React.createElement("p", { className: "df-empty-line" }, t("section.none")) : /* @__PURE__ */ React.createElement("div", { className: "df-active" }, running.map((agent) => /* @__PURE__ */ React.createElement("article", { key: agent.id, className: "df-active-card" }, /* @__PURE__ */ React.createElement("div", { className: "df-active-top" }, /* @__PURE__ */ React.createElement("span", { className: "df-name" }, /* @__PURE__ */ React.createElement("span", { className: "df-live", "aria-hidden": "true" }), agent.id), /* @__PURE__ */ React.createElement(StatusTag, { ui, t, status: agentPhase(agent) })), /* @__PURE__ */ React.createElement("div", { className: "df-active-title" }, taskTitle(data, agent.taskId)), /* @__PURE__ */ React.createElement("div", { className: "df-chips" }, agentSlots(data, agent).map((slot) => /* @__PURE__ */ React.createElement("span", { key: slot, className: "df-chip" }, slot)))))), dev || accept ? /* @__PURE__ */ React.createElement("p", { className: "df-meta" }, `${t("slot.dev")} ${dev?.used ?? 0}/${dev?.total ?? 0} \xB7 ${t("slot.accept")} ${accept?.used ?? 0}/${accept?.total ?? 0}`) : null);
+  const inScope = (task) => selected === "all" || task.repos.includes(selected);
+  const devRows = (data.tasks ?? []).filter((task) => task.kind !== "accept" && OVERVIEW_DEV_ORDER[task.status] !== void 0 && inScope(task)).sort((left, right) => (OVERVIEW_DEV_ORDER[left.status] ?? 9) - (OVERVIEW_DEV_ORDER[right.status] ?? 9) || newestFirst(left, right));
+  const acceptRows = (data.tasks ?? []).filter((task) => task.kind === "accept" && OVERVIEW_ACCEPT_STATUSES.has(task.status) && inScope(task)).sort(newestFirst);
+  return /* @__PURE__ */ React.createElement("div", { className: "df-scroll" }, /* @__PURE__ */ React.createElement("h3", { className: "df-section" }, t("overview.metrics")), /* @__PURE__ */ React.createElement("div", { className: "df-scope" }, /* @__PURE__ */ React.createElement("div", { className: "df-filters" }, ui.Pill ? /* @__PURE__ */ React.createElement(ui.Pill, { active: selected === "all", onClick: () => setScope("all") }, t("filter.allProjects"), /* @__PURE__ */ React.createElement("span", { className: "df-filter-count" }, projects.length)) : /* @__PURE__ */ React.createElement("button", { type: "button", "aria-pressed": selected === "all", onClick: () => setScope("all") }, t("filter.allProjects"), /* @__PURE__ */ React.createElement("span", { className: "df-filter-count" }, projects.length)), projects.map((project) => ui.Pill ? /* @__PURE__ */ React.createElement(ui.Pill, { key: project.name, active: selected === project.name, onClick: () => setScope(project.name) }, project.name) : /* @__PURE__ */ React.createElement("button", { key: project.name, type: "button", "aria-pressed": selected === project.name, onClick: () => setScope(project.name) }, project.name)))), /* @__PURE__ */ React.createElement("div", { className: "df-metrics" }, cards.map((card) => /* @__PURE__ */ React.createElement("div", { key: card.key, className: "df-metric" }, /* @__PURE__ */ React.createElement("div", { className: "df-kicker" }, card.label), /* @__PURE__ */ React.createElement("div", { className: "df-metric-value" }, card.parts.map((part, index) => /* @__PURE__ */ React.createElement("span", { key: `${card.key}:${index}`, className: "df-metric-part" }, index > 0 ? /* @__PURE__ */ React.createElement("span", { className: "df-metric-sep", "aria-hidden": "true" }, "/") : null, /* @__PURE__ */ React.createElement("strong", { "data-tone": part.tone }, part.value)))), card.legend ? /* @__PURE__ */ React.createElement("span", { className: "df-metric-legend" }, card.legend) : null))), /* @__PURE__ */ React.createElement("h3", { className: "df-section" }, t("section.projects")), projects.length === 0 ? /* @__PURE__ */ React.createElement("p", { className: "df-empty-line" }, t("section.emptyProjects")) : /* @__PURE__ */ React.createElement("div", { className: "df-card" }, projects.map((project) => {
+    const stats = project.stats;
+    const dirty = stats?.baseSlots.dirty ?? 0;
+    const active = stats?.devTasks.developing ?? 0;
+    const pending = stats?.devTasks.pending ?? 0;
+    return /* @__PURE__ */ React.createElement("article", { key: project.name, className: "df-project", "data-scoped": selected === project.name ? "true" : "false", title: project.path }, /* @__PURE__ */ React.createElement("div", { className: "df-project-head" }, /* @__PURE__ */ React.createElement("span", { className: "df-name" }, project.name), project.branch ? /* @__PURE__ */ React.createElement("span", { className: "df-branch" }, project.branch) : null, /* @__PURE__ */ React.createElement("div", { className: "df-project-status" }, dirty > 0 ? /* @__PURE__ */ React.createElement(ProjectTag, { ui, tone: "danger", label: t("project.dirty"), count: dirty }) : null, active > 0 ? /* @__PURE__ */ React.createElement(ProjectTag, { ui, tone: "info", label: t("project.active"), count: active }) : null, pending > 0 ? /* @__PURE__ */ React.createElement(ProjectTag, { ui, tone: "warning", label: t("project.pending"), count: pending }) : null, dirty + active + pending === 0 ? /* @__PURE__ */ React.createElement("span", { className: "df-meta" }, t("project.idle")) : null)), project.description ? /* @__PURE__ */ React.createElement("p", { className: "df-project-desc" }, project.description) : null);
+  })), /* @__PURE__ */ React.createElement("section", { className: "df-task-panel" }, /* @__PURE__ */ React.createElement("h3", { className: "df-section" }, t("overview.tasks")), devRows.length === 0 && acceptRows.length === 0 ? /* @__PURE__ */ React.createElement("div", { className: "df-task-rest" }, t("overview.noTasks")) : /* @__PURE__ */ React.createElement(React.Fragment, null, devRows.length > 0 ? /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("h4", { className: "df-subsection" }, t("section.devTasks"), /* @__PURE__ */ React.createElement("span", { className: "df-subsection-count" }, devRows.length)), /* @__PURE__ */ React.createElement("div", { className: "df-card" }, devRows.map((task) => /* @__PURE__ */ React.createElement(OverviewTaskRow, { key: task.id, ui, t, task })))) : null, acceptRows.length > 0 ? /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("h4", { className: "df-subsection" }, t("section.acceptTasks"), /* @__PURE__ */ React.createElement("span", { className: "df-subsection-count" }, acceptRows.length)), /* @__PURE__ */ React.createElement("div", { className: "df-card" }, acceptRows.map((task) => /* @__PURE__ */ React.createElement(OverviewAcceptRow, { key: task.id, ui, t, task })))) : null, /* @__PURE__ */ React.createElement("div", { className: "df-task-rest" }, t("overview.allShown")))));
 }
 function Tasks({
   ui,
@@ -2289,11 +2454,6 @@ function agentPhase(agent) {
   if (agent.kind === "accept") return "accepting";
   if (agent.kind === "schedule") return "scheduling";
   return "developing";
-}
-function agentSlots(data, agent) {
-  const task = data.tasks.find((item) => item.id === agent.taskId || item.id === agent.lastTaskId);
-  if (!task?.slots) return [];
-  return Object.entries(task.slots).map(([repo, slot]) => slot.number ? `${repo}-${slot.number}` : `${repo} ${slot.port ?? ""}`.trim());
 }
 function baseChips(task) {
   if (task.kind === "accept") return Object.values(task.bases ?? {}).filter((base) => typeof base === "string" && base !== "");

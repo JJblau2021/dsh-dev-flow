@@ -24,7 +24,11 @@ test('an old snapshot with project names as strings keeps the project rows reada
     repos: [],
     agents: [],
   });
-  assert.deepEqual(snapshot.projects, [{ name: 'kit', dirty: false }, { name: 'glose', dirty: false }]);
+  const emptyStats = { activeAgents: 0, baseSlots: { active: 0, dirty: 0, total: 0 }, devTasks: { developing: 0, pending: 0, total: 0 } };
+  assert.deepEqual(snapshot.projects, [
+    { name: 'kit', dirty: false, stats: emptyStats },
+    { name: 'glose', dirty: false, stats: emptyStats },
+  ]);
   assert.deepEqual(snapshot.bases, []);
   assert.equal(snapshot.counts.dirtyBases, 1);
 });

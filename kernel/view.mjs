@@ -1,8 +1,9 @@
-import { existsSync } from 'node:fs';
+import { closeSync, existsSync, openSync, readFileSync, readSync } from 'node:fs';
+import { join } from 'node:path';
 
 import { discoverRepos, samePath, scan, worktreeBranches } from './flow.mjs';
 import { gitResult } from './git.mjs';
-import { DEFAULT_SETTINGS, resolveSettings } from './settings.mjs';
+import { resolveSettings } from './settings.mjs';
 import { hasState, loadState } from './state.mjs';
 
 const ACTIVE = new Set(['waiting', 'developing', 'paused', 'failed']);
@@ -23,7 +24,19 @@ export function snapshot(workspace, sessionId, settingsOverride) {
       initialized: false,
       enabled: false,
       workspace,
-      counts: { projects: 0, activeAgents: 0, agentLimit: DEFAULT_SETTINGS.agentLimit, activeTasks: 0, activeSlots: 0, pending: 0, devSlots: { used: 0, total: 0 }, acceptSlots: { used: 0, total: 0 }, dirtyBases: 0 },
+      counts: {
+        projects: 0,
+        activeAgents: 0,
+        agentLimit: settings.agentLimit,
+        activeTasks: 0,
+        activeSlots: 0,
+        pending: 0,
+        devSlots: { used: 0, total: 0 },
+        acceptSlots: { used: 0, total: 0 },
+        dirtyBases: 0,
+        baseSlots: { active: 0, dirty: 0, total: 0 },
+        devTasks: { developing: 0, pending: 0, total: 0 },
+      },
       projects: [],
       bases: [],
       tasks: [],
@@ -43,7 +56,8 @@ export function snapshot(workspace, sessionId, settingsOverride) {
   const acceptRecords = Object.values(state.acceptSlots);
   const accepting = Object.values(state.batches).filter((batch) => batch.status === 'accepting');
   const pending = Object.values(state.tasks).filter((task) => task.status === 'pending-acceptance');
-  const activeTasks = Object.values(state.tasks).filter((task) => ACTIVE.has(task.status)).length + accepting.length;
+  const allTasks = Object.values(state.tasks);
+  const activeTasks = allTasks.filter((task) => ACTIVE.has(task.status)).length + accepting.length;
   const devUsed = devRecords.filter((slot) => slot.taskId != null).length;
   const acceptUsed = acceptRecords.filter((slot) => slot.batchId != null && slot.batchId !== '').length;
   const { groups: baseGroups, members: bases } = baseGroupView(state, repos);
@@ -51,27 +65,38 @@ export function snapshot(workspace, sessionId, settingsOverride) {
     initialized: true,
     enabled: state.sessions[sessionId]?.enabled === true,
     workspace,
-    projects: repos.map((repo) => repo.name),
     counts: {
       projects: repos.length,
       activeAgents: (state.agents ?? []).filter((agent) => agent.status === 'running').length,
-      agentLimit: DEFAULT_SETTINGS.agentLimit,
+      agentLimit: settings.agentLimit,
       activeTasks,
       activeSlots: devUsed + acceptUsed,
       pending: pending.length,
       devSlots: { used: devUsed, total: devRecords.length },
       acceptSlots: { used: acceptUsed, total: acceptRecords.length },
       dirtyBases: bases.filter((base) => base.dirty).length,
+      baseSlots: baseCounts(bases),
+      devTasks: devCounts(allTasks),
     },
-    projects: repos.map((repo) => ({
-      name: repo.name,
-      path: repo.path,
-      defaultBranch: repo.defaultBranch,
-      branch: repo.branch || repo.defaultBranch,
-      dirty: repo.dirty,
-      bases: bases.filter((base) => base.repo === repo.name).length,
-      branches: availableBranches(repo, settings),
-    })),
+    projects: repos.map((repo) => {
+      const projectBases = bases.filter((base) => base.repo === repo.name);
+      const projectTasks = allTasks.filter((task) => (task.repos ?? []).some((item) => item.name === repo.name));
+      return {
+        name: repo.name,
+        path: repo.path,
+        description: repoIntro(repo.path),
+        defaultBranch: repo.defaultBranch,
+        branch: repo.branch || repo.defaultBranch,
+        dirty: repo.dirty,
+        bases: projectBases.length,
+        branches: availableBranches(repo, settings),
+        stats: {
+          activeAgents: activeAgentsOn(state, repo.name),
+          baseSlots: baseCounts(projectBases),
+          devTasks: devCounts(projectTasks),
+        },
+      };
+    }),
     bases,
     baseGroups,
     tasks: [
@@ -136,6 +161,129 @@ export function snapshot(workspace, sessionId, settingsOverride) {
     agents: state.agents ?? [],
     schedules: Object.values(state.schedules ?? {}).map((schedule) => scheduleView(state, schedule)),
   };
+}
+
+/**
+ * 指标用的基线槽位统计。活跃指仍有未结束任务的基线成员。
+ * @param {{ tasks: number, dirty: boolean }[]} bases
+ */
+function baseCounts(bases) {
+  return {
+    active: bases.filter((base) => base.tasks > 0).length,
+    dirty: bases.filter((base) => base.dirty).length,
+    total: bases.length,
+  };
+}
+
+/**
+ * 指标用的开发任务统计。开发中沿用内核的 ACTIVE 集合，总数含所有开发任务。
+ * @param {{ status: string }[]} tasks
+ */
+function devCounts(tasks) {
+  return {
+    developing: tasks.filter((task) => ACTIVE.has(task.status)).length,
+    pending: tasks.filter((task) => task.status === 'pending-acceptance').length,
+    total: tasks.length,
+  };
+}
+
+/** 一个运行中的代理关联的仓库名：开发代理看任务，验收代理看批次。 */
+function agentRepos(state, agent) {
+  if (agent.kind === 'accept') {
+    return Object.keys(state.batches?.[agent.taskId]?.repos ?? {});
+  }
+  return (state.tasks?.[agent.taskId]?.repos ?? []).map((repo) => repo.name);
+}
+
+function activeAgentsOn(state, project) {
+  return (state.agents ?? []).filter(
+    (agent) => agent.status === 'running' && agentRepos(state, agent).includes(project),
+  ).length;
+}
+
+const INTRO_FILES = ['README.md', 'README.markdown', 'README', 'readme.md'];
+const INTRO_LIMIT = 120;
+
+/**
+ * 项目介绍：优先用 package.json 的 description，否则取 README 的第一段正文。
+ * README 可能很大，只读开头一段；读不到时返回空串，由面板显示缺省文案。
+ * @param {string} repoPath
+ */
+function repoIntro(repoPath) {
+  try {
+    const pkg = JSON.parse(readFileSync(join(repoPath, 'package.json'), 'utf8'));
+    if (typeof pkg.description === 'string' && pkg.description.trim() !== '') {
+      return clipText(pkg.description.trim());
+    }
+  } catch {
+    // 没有 package.json 或内容不是 JSON，继续看 README。
+  }
+  for (const name of INTRO_FILES) {
+    const text = readHead(join(repoPath, name));
+    if (text === '') continue;
+    const line = firstProseLine(text);
+    if (line !== '') return clipText(line);
+  }
+  return '';
+}
+
+/** 只读文件开头，避免为了一个介绍把整篇 README 读进来。 */
+function readHead(file) {
+  if (!existsSync(file)) return '';
+  let fd;
+  try {
+    fd = openSync(file, 'r');
+    const buffer = Buffer.alloc(16 * 1024);
+    const length = readSync(fd, buffer, 0, buffer.length, 0);
+    return buffer.subarray(0, length).toString('utf8');
+  } catch {
+    return '';
+  } finally {
+    if (fd !== undefined) closeSync(fd);
+  }
+}
+
+/** 跳过标题、徽章、代码块、HTML 和表格，取第一行能当介绍的正文。 */
+function firstProseLine(text) {
+  let heading = '';
+  let fenced = false;
+  for (const raw of text.split(/\r?\n/u)) {
+    const line = raw.trim();
+    if (line.startsWith('```') || line.startsWith('~~~')) {
+      fenced = !fenced;
+      continue;
+    }
+    if (fenced || line === '') continue;
+    if (line.startsWith('#')) {
+      if (heading === '') heading = cleanMarkdown(line.replace(/^#+\s*/u, ''));
+      continue;
+    }
+    if (
+      line.startsWith('<')
+      || line.startsWith('|')
+      || /^[-*_]{3,}$/u.test(line)
+      || line.startsWith('![')
+      || /^\[!\[/u.test(line)
+    ) continue;
+    const clean = cleanMarkdown(line.replace(/^[-*+]\s+/u, '').replace(/^>\s*/u, ''));
+    if (clean !== '') return clean;
+  }
+  return heading;
+}
+
+function cleanMarkdown(line) {
+  return line
+    .replace(/!\[[^\]]*\]\([^)]*\)/gu, '')
+    .replace(/\[([^\]]*)\]\([^)]*\)/gu, '$1')
+    .replace(/<[^>]*>/gu, '')
+    .replace(/[`*_~]/gu, '')
+    .replace(/\s+/gu, ' ')
+    .trim();
+}
+
+function clipText(text) {
+  const chars = [...text];
+  return chars.length <= INTRO_LIMIT ? text : `${chars.slice(0, INTRO_LIMIT - 1).join('')}…`;
 }
 
 /**

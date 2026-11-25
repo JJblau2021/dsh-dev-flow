@@ -34,6 +34,15 @@ test('an uninitialized workspace reports zero counts until init', () => {
   const ready = handle(root, 'session-a', 'init');
   assert.equal(ready.initialized, true);
   assert.deepEqual(ready.projects.map((project) => project.name), ['kit']);
+  assert.equal(ready.projects[0].description, 'base');
+  assert.deepEqual(ready.projects[0].stats, {
+    activeAgents: 0,
+    baseSlots: { active: 0, dirty: 0, total: 0 },
+    devTasks: { developing: 0, pending: 0, total: 0 },
+  });
+  assert.equal(ready.counts.agentLimit, 3);
+  assert.deepEqual(ready.counts.baseSlots, { active: 0, dirty: 0, total: 0 });
+  assert.deepEqual(ready.counts.devTasks, { developing: 0, pending: 0, total: 0 });
   rmSync(root, { recursive: true, force: true });
 });
 
@@ -65,6 +74,11 @@ test('the session switch is per session and acceptance keeps dev slot numbers', 
   assert.equal(after.tasks.find((task) => task.id === 'login').batchId, 'batch-1');
   assert.equal(after.counts.pending, 2);
   assert.equal(after.counts.activeAgents, 0);
+  assert.deepEqual(after.counts.baseSlots, { active: 2, dirty: 0, total: 2 });
+  assert.deepEqual(after.counts.devTasks, { developing: 0, pending: 2, total: 2 });
+  const kitStats = after.projects.find((project) => project.name === 'kit').stats;
+  assert.deepEqual(kitStats.baseSlots, { active: 1, dirty: 0, total: 1 });
+  assert.deepEqual(kitStats.devTasks, { developing: 0, pending: 1, total: 1 });
   const finished = handle(root, 'session-a', 'accept-finish', { id: 'batch-1', result: 'accepted' });
   assert.equal(finished.tasks.find((task) => task.id === 'login').status, 'merged');
   assert.equal(finished.repos.every((repo) => repo.acceptSlot.batchId == null), true);

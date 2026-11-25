@@ -1,7 +1,7 @@
 import type React from 'react'
 
 const { useEffect, useRef, useState } = React
-import type { AgentRow, BaseGroupRow, Call, DevSlot, ModelCatalog, ModelChoice, ProjectRow, RepoRow, ScheduleRow, Settings, Snapshot, TaskDiff, TaskDiffFile, TaskRow, TokenUsage, Translate } from './types'
+import type { AgentRow, BaseGroupRow, BaseSlotCounts, Call, DevSlot, DevTaskCounts, ModelCatalog, ModelChoice, ProjectRow, RepoRow, ScheduleRow, Settings, Snapshot, TaskDiff, TaskDiffFile, TaskRow, TokenUsage, Translate } from './types'
 import { ActionButton, Dot, type UiKit } from './ui'
 import { FileDiff } from './vendor/FileDiff'
 import { diffLabelsOf, diffStateOf } from './diff'
@@ -147,62 +147,224 @@ function PageBody(props: {
   return <Agents ui={props.ui} data={props.data} t={props.t} />
 }
 
-function Overview({ ui, data, t }: { ui: UiKit, data: Snapshot, t: Translate }) {
-  const dev = data.counts.devSlots
-  const accept = data.counts.acceptSlots
-  const cards: [string, string | number, string?][] = [
-    [t('metric.projects'), data.counts.projects],
-    [t('metric.agents'), `${data.counts.activeAgents}/${data.counts.agentLimit}`, data.counts.activeAgents > 0 ? 'info' : undefined],
-    [t('metric.tasks'), data.counts.activeTasks],
-    [t('metric.slots'), data.counts.activeSlots],
-    [t('metric.pending'), data.counts.pending, data.counts.pending > 0 ? 'warn' : undefined],
-    [t('metric.dirty'), `${data.counts.dirtyBases}/${data.counts.projects}`, data.counts.dirtyBases > 0 ? 'warn' : undefined],
-  ]
-  const running = (data.agents ?? []).filter((agent) => agent.status === 'running')
+const OVERVIEW_DEV_ORDER: Record<string, number> = {
+  failed: 0,
+  'pending-acceptance': 1,
+  'pending-merge': 2,
+  developing: 3,
+  waiting: 4,
+  paused: 5,
+}
+const OVERVIEW_ACCEPT_STATUSES = new Set(['accepting', 'pending-merge'])
+
+type OverviewMetricPart = { value: number, tone?: 'info' | 'warn' }
+
+function newestFirst(left: TaskRow, right: TaskRow) {
+  return String(right.createdAt ?? '').localeCompare(String(left.createdAt ?? ''))
+}
+
+function overviewCounts(data: Snapshot, projectName?: string) {
+  const emptyBases: BaseSlotCounts = { active: 0, dirty: 0, total: 0 }
+  const emptyTasks: DevTaskCounts = { developing: 0, pending: 0, total: 0 }
+  if (projectName === undefined) {
+    return {
+      activeAgents: data.counts.activeAgents,
+      agentLimit: data.counts.agentLimit ?? 0,
+      baseSlots: data.counts.baseSlots ?? emptyBases,
+      devTasks: data.counts.devTasks ?? emptyTasks,
+    }
+  }
+  const stats = (data.projects ?? []).find((project) => project.name === projectName)?.stats
+  return {
+    activeAgents: stats?.activeAgents ?? 0,
+    agentLimit: data.counts.agentLimit,
+    baseSlots: stats?.baseSlots ?? emptyBases,
+    devTasks: stats?.devTasks ?? emptyTasks,
+  }
+}
+
+function ProjectTag({ ui, tone, label, count }: { ui: UiKit, tone: string, label: string, count: number }) {
+  return ui.Tag
+    ? <ui.Tag tone={tone} className="df-project-tag">{label}<span className="df-status-count">{count}</span></ui.Tag>
+    : <span className="df-chip">{label}<span className="df-status-count">{count}</span></span>
+}
+
+function OverviewTaskRow({ ui, t, task }: { ui: UiKit, t: Translate, task: TaskRow }) {
+  const created = createdText(task.createdAt)
+  const status = shownStatus(task)
   return (
-    <>
+    <div className="df-task-line" data-tone={toneOf(status)}>
+      <div className="df-task-main">
+        <span className="df-name" title={`${task.title} · ${task.id}`}>{task.title}</span>
+        <span className="df-task-sub">
+          {task.repos.map((repo) => <span key={repo} className="df-chip">{repo}</span>)}
+          {task.base ? <span className="df-chip">{task.base}</span> : null}
+        </span>
+      </div>
+      <div className="df-task-side">
+        {task.agentStatus === 'running' ? <span className="df-live" aria-hidden="true" /> : null}
+        {created ? <span className="df-meta">{created}</span> : null}
+        <StatusTag ui={ui} t={t} status={status} />
+      </div>
+    </div>
+  )
+}
+
+function OverviewAcceptRow({ ui, t, task }: { ui: UiKit, t: Translate, task: TaskRow }) {
+  const created = createdText(task.createdAt)
+  const count = (task.taskIds ?? []).length
+  return (
+    <div className="df-task-line" data-tone={toneOf(task.status)}>
+      <div className="df-task-main">
+        <span className="df-name" title={`${task.title} · ${task.id}`}>{task.title}</span>
+        <span className="df-task-sub">
+          {task.repos.map((repo) => <span key={repo} className="df-chip">{repo}</span>)}
+          {count > 0 ? <span className="df-meta">{t('base.tasks').replace('{count}', String(count))}</span> : null}
+        </span>
+      </div>
+      <div className="df-task-side">
+        {created ? <span className="df-meta">{created}</span> : null}
+        <StatusTag ui={ui} t={t} status={task.status} />
+      </div>
+    </div>
+  )
+}
+
+function Overview({ ui, data, t }: { ui: UiKit, data: Snapshot, t: Translate }) {
+  const [scope, setScope] = useState('all')
+  const projects = data.projects ?? []
+  const selected = projects.some((project) => project.name === scope) ? scope : 'all'
+  const counts = overviewCounts(data, selected === 'all' ? undefined : selected)
+  const cards: { key: string, label: string, parts: OverviewMetricPart[], legend?: string }[] = [
+    {
+      key: 'agents',
+      label: t('metric.agents'),
+      parts: [
+        { value: counts.activeAgents, tone: counts.activeAgents > 0 ? 'info' : undefined },
+        { value: counts.agentLimit },
+      ],
+      legend: `${t('metric.active')} / ${t('metric.limit')}`,
+    },
+    {
+      key: 'bases',
+      label: t('metric.baseSlots'),
+      parts: [
+        { value: counts.baseSlots.active },
+        { value: counts.baseSlots.dirty, tone: counts.baseSlots.dirty > 0 ? 'warn' : undefined },
+        { value: counts.baseSlots.total },
+      ],
+      legend: `${t('metric.active')} / ${t('base.dirty')} / ${t('metric.total')}`,
+    },
+    {
+      key: 'tasks',
+      label: t('metric.devTasks'),
+      parts: [
+        { value: counts.devTasks.developing, tone: counts.devTasks.developing > 0 ? 'info' : undefined },
+        { value: counts.devTasks.pending, tone: counts.devTasks.pending > 0 ? 'warn' : undefined },
+        { value: counts.devTasks.total },
+      ],
+      legend: `${t('filter.dev')} / ${t('filter.pending')} / ${t('metric.total')}`,
+    },
+  ]
+  const inScope = (task: TaskRow) => selected === 'all' || task.repos.includes(selected)
+  const devRows = (data.tasks ?? [])
+    .filter((task) => task.kind !== 'accept' && OVERVIEW_DEV_ORDER[task.status] !== undefined && inScope(task))
+    .sort((left, right) => (OVERVIEW_DEV_ORDER[left.status] ?? 9) - (OVERVIEW_DEV_ORDER[right.status] ?? 9) || newestFirst(left, right))
+  const acceptRows = (data.tasks ?? [])
+    .filter((task) => task.kind === 'accept' && OVERVIEW_ACCEPT_STATUSES.has(task.status) && inScope(task))
+    .sort(newestFirst)
+  return (
+    <div className="df-scroll">
+      <h3 className="df-section">{t('overview.metrics')}</h3>
+      <div className="df-scope">
+        <div className="df-filters">
+          {ui.Pill
+            ? (
+              <ui.Pill active={selected === 'all'} onClick={() => setScope('all')}>
+                {t('filter.allProjects')}
+                <span className="df-filter-count">{projects.length}</span>
+              </ui.Pill>
+            )
+            : (
+              <button type="button" aria-pressed={selected === 'all'} onClick={() => setScope('all')}>
+                {t('filter.allProjects')}
+                <span className="df-filter-count">{projects.length}</span>
+              </button>
+            )}
+          {projects.map((project) => (ui.Pill
+            ? <ui.Pill key={project.name} active={selected === project.name} onClick={() => setScope(project.name)}>{project.name}</ui.Pill>
+            : <button key={project.name} type="button" aria-pressed={selected === project.name} onClick={() => setScope(project.name)}>{project.name}</button>))}
+        </div>
+      </div>
       <div className="df-metrics">
-        {cards.map(([label, value, tone]) => (
-          <div key={label} className="df-metric" data-tone={tone}>
-            <div className="df-kicker">{label}</div>
-            <strong>{String(value)}</strong>
+        {cards.map((card) => (
+          <div key={card.key} className="df-metric">
+            <div className="df-kicker">{card.label}</div>
+            <div className="df-metric-value">
+              {card.parts.map((part, index) => (
+                <span key={`${card.key}:${index}`} className="df-metric-part">
+                  {index > 0 ? <span className="df-metric-sep" aria-hidden="true">/</span> : null}
+                  <strong data-tone={part.tone}>{part.value}</strong>
+                </span>
+              ))}
+            </div>
+            {card.legend ? <span className="df-metric-legend">{card.legend}</span> : null}
           </div>
         ))}
       </div>
       <h3 className="df-section">{t('section.projects')}</h3>
-      <div className="df-card">
-        {(data.projects ?? []).map((project) => (
-          <div key={project.name} className="df-line">
-            <span className="df-name">
-              {project.name}
-              {project.branch ? <span className="df-branch">{project.branch}</span> : null}
-            </span>
-            <span className="df-line-states">
-              <span className="df-meta">{t('base.count').replace('{count}', String(project.bases ?? 0))}</span>
-              <span className={project.dirty ? 'df-warn' : 'df-ok'}>{project.dirty ? t('base.dirty') : t('base.clean')}</span>
-            </span>
-          </div>
-        ))}
-      </div>
-      <h3 className="df-section">{t('section.active')}</h3>
-      {running.length === 0 ? <p className="df-empty-line">{t('section.none')}</p> : (
-        <div className="df-active">
-          {running.map((agent) => (
-            <article key={agent.id} className="df-active-card">
-              <div className="df-active-top">
-                <span className="df-name"><span className="df-live" aria-hidden="true" />{agent.id}</span>
-                <StatusTag ui={ui} t={t} status={agentPhase(agent)} />
-              </div>
-              <div className="df-active-title">{taskTitle(data, agent.taskId)}</div>
-              <div className="df-chips">
-                {agentSlots(data, agent).map((slot) => <span key={slot} className="df-chip">{slot}</span>)}
-              </div>
-            </article>
-          ))}
+      {projects.length === 0 ? <p className="df-empty-line">{t('section.emptyProjects')}</p> : (
+        <div className="df-card">
+          {projects.map((project) => {
+            const stats = project.stats
+            const dirty = stats?.baseSlots.dirty ?? 0
+            const active = stats?.devTasks.developing ?? 0
+            const pending = stats?.devTasks.pending ?? 0
+            return (
+              <article key={project.name} className="df-project" data-scoped={selected === project.name ? 'true' : 'false'} title={project.path}>
+                <div className="df-project-head">
+                  <span className="df-name">{project.name}</span>
+                  {project.branch ? <span className="df-branch">{project.branch}</span> : null}
+                  <div className="df-project-status">
+                    {dirty > 0 ? <ProjectTag ui={ui} tone="danger" label={t('project.dirty')} count={dirty} /> : null}
+                    {active > 0 ? <ProjectTag ui={ui} tone="info" label={t('project.active')} count={active} /> : null}
+                    {pending > 0 ? <ProjectTag ui={ui} tone="warning" label={t('project.pending')} count={pending} /> : null}
+                    {dirty + active + pending === 0 ? <span className="df-meta">{t('project.idle')}</span> : null}
+                  </div>
+                </div>
+                {project.description ? <p className="df-project-desc">{project.description}</p> : null}
+              </article>
+            )
+          })}
         </div>
       )}
-      {dev || accept ? <p className="df-meta">{`${t('slot.dev')} ${dev?.used ?? 0}/${dev?.total ?? 0} · ${t('slot.accept')} ${accept?.used ?? 0}/${accept?.total ?? 0}`}</p> : null}
-    </>
+      <section className="df-task-panel">
+        <h3 className="df-section">{t('overview.tasks')}</h3>
+        {devRows.length === 0 && acceptRows.length === 0 ? (
+          <div className="df-task-rest">{t('overview.noTasks')}</div>
+        ) : (
+          <>
+            {devRows.length > 0 ? (
+              <>
+                <h4 className="df-subsection">{t('section.devTasks')}<span className="df-subsection-count">{devRows.length}</span></h4>
+                <div className="df-card">
+                  {devRows.map((task) => <OverviewTaskRow key={task.id} ui={ui} t={t} task={task} />)}
+                </div>
+              </>
+            ) : null}
+            {acceptRows.length > 0 ? (
+              <>
+                <h4 className="df-subsection">{t('section.acceptTasks')}<span className="df-subsection-count">{acceptRows.length}</span></h4>
+                <div className="df-card">
+                  {acceptRows.map((task) => <OverviewAcceptRow key={task.id} ui={ui} t={t} task={task} />)}
+                </div>
+              </>
+            ) : null}
+            <div className="df-task-rest">{t('overview.allShown')}</div>
+          </>
+        )}
+      </section>
+    </div>
   )
 }
 

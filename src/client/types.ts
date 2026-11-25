@@ -6,6 +6,27 @@ export type Call = (
   signal?: AbortSignal,
 ) => Promise<Snapshot | Settings | ModelCatalog | undefined>
 
+/** 基线槽位的一组数字：有未结束任务 / 检出脏 / 全部成员。 */
+export interface BaseSlotCounts {
+  active: number
+  dirty: number
+  total: number
+}
+
+/** 开发任务的一组数字：开发中 / 待验收 / 全部开发任务。 */
+export interface DevTaskCounts {
+  developing: number
+  pending: number
+  total: number
+}
+
+/** 项目维度下和总览卡片一致的统计。 */
+export interface ProjectStats {
+  activeAgents: number
+  baseSlots: BaseSlotCounts
+  devTasks: DevTaskCounts
+}
+
 export interface Counts {
   projects: number
   activeAgents: number
@@ -16,16 +37,20 @@ export interface Counts {
   dirtyBases: number
   devSlots?: { used: number, total: number }
   acceptSlots?: { used: number, total: number }
+  baseSlots?: BaseSlotCounts
+  devTasks?: DevTaskCounts
 }
 
 export interface ProjectRow {
   name: string
   path?: string
+  description?: string
   dirty: boolean
   branch?: string
   defaultBranch?: string
   bases?: number
   branches?: string[]
+  stats?: ProjectStats
 }
 
 /** 一条基线分支：合并位置、当前检出、脏状态和在用的任务数。 */
