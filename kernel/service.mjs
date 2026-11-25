@@ -1,7 +1,7 @@
-import { deleteAcceptances, deleteDevTasks, finishAcceptance, finishTaskAcceptance, mergePendingTask, refreshSchedules, saveBaseGroup, sessionEnabled, setSessionEnabled, settlePendingMerges, settleStaleAcceptSlots, startAcceptance } from './flow.mjs';
+import { deleteAcceptances, deleteDevTasks, finishAcceptance, finishTaskAcceptance, mergePendingTask, pauseDevTask, refreshSchedules, resumeDevTask, saveBaseGroup, sessionEnabled, setSessionEnabled, settlePendingMerges, settleStaleAcceptSlots, startAcceptance, stopDevTask } from './flow.mjs';
 import { diffTask } from './diff.mjs';
 import { loadPluginSettings, savePluginSettings } from './plugin-settings.mjs';
-import { hasState, initializeWorkspace } from './state.mjs';
+import { hasState, initializeWorkspace, loadState } from './state.mjs';
 import { snapshot } from './view.mjs';
 
 /**
@@ -57,6 +57,25 @@ export function handle(workspace, sessionId, endpoint, payload = {}, settingsHom
       label: typeof payload.label === 'string' ? payload.label : '',
       members,
     }, loadPluginSettings(settingsHome));
+    return snapshot(workspace, sessionId, loadPluginSettings(settingsHome));
+  }
+  if (endpoint === 'task-pause' || endpoint === 'task-stop') {
+    const task = endpoint === 'task-pause'
+      ? pauseDevTask(workspace, String(payload.taskId ?? ''))
+      : stopDevTask(workspace, String(payload.taskId ?? ''));
+    const state = loadState(workspace);
+    const schedule = task.scheduleId ? state.schedules?.[task.scheduleId] : undefined;
+    return {
+      task,
+      // 宿主在写回状态后拿这些字段去中断真正的开发子代理。
+      agentSessionId: task.agentSessionId ?? null,
+      parentSessionId: task.sessionId ?? schedule?.sessionId ?? null,
+      slotPaths: Object.values(task.slots ?? {}).map((slot) => slot.path).filter((item) => typeof item === 'string' && item !== ''),
+      snapshot: snapshot(workspace, sessionId, loadPluginSettings(settingsHome)),
+    };
+  }
+  if (endpoint === 'task-resume') {
+    resumeDevTask(workspace, String(payload.taskId ?? ''));
     return snapshot(workspace, sessionId, loadPluginSettings(settingsHome));
   }
   if (endpoint === 'accept-delete') {

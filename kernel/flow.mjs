@@ -7,8 +7,10 @@ import { assertId, branchName, FlowError, resolveSettings } from './settings.mjs
 import { loadState, saveState } from './state.mjs';
 
 const READY = new Set(['pending-acceptance', 'accepted']);
+/** 暂停和停止都会中断子代理，停止还会释放槽位。 */
+const STOPTABLE = new Set(['developing', 'paused', 'waiting', 'failed']);
 /** 只有已经结束、不会再有子代理往里写代码的任务才允许删除。 */
-const DELETABLE = new Set(['merged', 'abandoned', 'failed', 'rejected', 'pending-acceptance']);
+const DELETABLE = new Set(['merged', 'abandoned', 'failed', 'rejected', 'pending-acceptance', 'stopped']);
 
 /**
  * @param {string} workspace
@@ -87,7 +89,9 @@ export function createDevTask(workspace, request) {
   for (const dep of dependsOn) {
     const task = state.tasks[dep];
     if (task === undefined) throw new FlowError(`依赖的任务 ${dep} 不存在`, 'missing-dep');
-    if (task.status === 'abandoned') throw new FlowError(`放弃的任务 ${dep} 不能当作代码依赖`, 'abandoned-dep');
+    if (task.status === 'abandoned' || task.status === 'stopped') {
+      throw new FlowError(`已停止或放弃的任务 ${dep} 不能当作代码依赖`, 'abandoned-dep');
+    }
   }
   const blocked = dependsOn.filter((dep) => !READY.has(state.tasks[dep].status));
   const now = new Date().toISOString();
@@ -212,7 +216,7 @@ export function failDevTask(workspace, id) {
 export function abandonDevTask(workspace, id) {
   const state = loadState(workspace);
   const task = requireTask(state, id);
-  if (task.status !== 'developing' && task.status !== 'failed' && task.status !== 'waiting') {
+  if (task.status !== 'developing' && task.status !== 'failed' && task.status !== 'waiting' && task.status !== 'paused') {
     throw new FlowError(`任务 ${id} 不能放弃`, 'status');
   }
   for (const slot of Object.values(task.slots ?? {})) {
@@ -226,6 +230,63 @@ export function abandonDevTask(workspace, id) {
   task.updatedAt = new Date().toISOString();
   noteAgent(state, 'dev', task.id, 'idle');
   releaseDevSlots(state, task, 'abandoned');
+  saveState(workspace, state);
+  return task;
+}
+
+/** 暂停开发：保留工作树和槽位，中断由宿主在接口返回后做。 */
+export function pauseDevTask(workspace, id) {
+  const state = loadState(workspace);
+  const task = requireTask(state, id);
+  if (task.status !== 'developing') {
+    throw new FlowError(`任务 ${id} 不在开发中，不能暂停`, 'status');
+  }
+  task.status = 'paused';
+  task.agentStatus = 'idle';
+  task.pausedAt = new Date().toISOString();
+  task.updatedAt = task.pausedAt;
+  noteAgent(state, 'dev', task.id, 'idle');
+  if (task.scheduleId) refreshSchedule(state, task.scheduleId);
+  saveState(workspace, state);
+  return task;
+}
+
+/** 恢复暂停的开发任务；子代理由主会话重新 dispatch。 */
+export function resumeDevTask(workspace, id) {
+  const state = loadState(workspace);
+  const task = requireTask(state, id);
+  if (task.status !== 'paused') throw new FlowError(`任务 ${id} 不在暂停中`, 'status');
+  task.status = 'developing';
+  task.agentStatus = 'idle';
+  task.agentSessionId = null;
+  task.resumedAt = new Date().toISOString();
+  task.updatedAt = task.resumedAt;
+  noteAgent(state, 'dev', task.id, 'idle');
+  if (task.scheduleId) refreshSchedule(state, task.scheduleId);
+  saveState(workspace, state);
+  return task;
+}
+
+/** 停止开发：终态，释放槽位；任务分支保留，之后可删除任务时清理。 */
+export function stopDevTask(workspace, id) {
+  const state = loadState(workspace);
+  const task = requireTask(state, id);
+  if (!STOPTABLE.has(task.status)) {
+    throw new FlowError(`任务 ${id} 是 ${task.status}，不能停止`, 'status');
+  }
+  for (const slot of Object.values(task.slots ?? {})) {
+    if (slot.end === null || slot.end === undefined) {
+      const result = gitResult(slot.path, ['rev-parse', 'HEAD']);
+      slot.end = result.ok ? result.stdout : null;
+    }
+  }
+  task.status = 'stopped';
+  task.agentStatus = 'idle';
+  task.stoppedAt = new Date().toISOString();
+  task.updatedAt = task.stoppedAt;
+  noteAgent(state, 'dev', task.id, 'idle');
+  releaseDevSlots(state, task, 'stopped');
+  if (task.scheduleId) refreshSchedule(state, task.scheduleId);
   saveState(workspace, state);
   return task;
 }
@@ -681,6 +742,49 @@ function mergeTaskIntoBase(workspace, settings, state, task) {
 }
 
 /**
+ * 编辑一组基线：改某个成员的分支，或改组名，未提到的成员保持不动。
+ * 改分支时旧槽位会释放、按新分支重新分配；组里还有未结束任务时由 saveBaseGroup 拒绝。
+ * @param {string} workspace
+ * @param {string} groupNumber
+ * @param {string|undefined} repoName
+ * @param {string|undefined} branch
+ * @param {string|undefined} label
+ * @param {object} [settingsOverride]
+ */
+export function editBase(workspace, groupNumber, repoName, branch, label, settingsOverride) {
+  const state = loadState(workspace);
+  const group = state.baseGroups?.[groupNumber];
+  if (group === undefined) throw new FlowError(`基线组 ${groupNumber} 不存在`, 'missing-base-group');
+  const hasRepo = typeof repoName === 'string' && repoName.trim() !== '';
+  const hasBranch = typeof branch === 'string' && branch.trim() !== '';
+  const nextLabel = typeof label === 'string' && label.trim() !== '' ? label.trim() : group.label;
+  if (!hasRepo && !hasBranch && nextLabel === group.label) {
+    throw new FlowError('没有要修改的内容：给出 --repo/--branch，或用 --label 改组名', 'invalid');
+  }
+  if (hasRepo !== hasBranch) throw new FlowError('修改成员分支要同时给出 --repo 和 --branch', 'invalid');
+  let editedRepo = null;
+  let members;
+  if (hasRepo) {
+    const repo = resolveRepos(workspace, [repoName.trim()])[0];
+    if (group.repos?.[repo.name] === undefined) {
+      throw new FlowError(`基线组 ${group.number} 里没有 ${repo.name}，增补成员请用 base-add`, 'missing');
+    }
+    editedRepo = repo.name;
+    members = Object.entries(group.repos).map(([name, member]) => ({
+      repo: name,
+      branch: name === repo.name ? branch.trim() : member.branch,
+    }));
+  } else {
+    members = Object.entries(group.repos ?? {}).map(([name, member]) => ({ repo: name, branch: member.branch }));
+  }
+  const saved = saveBaseGroup(workspace, { number: group.number, label: nextLabel, members }, settingsOverride);
+  return {
+    ...saved,
+    ...(editedRepo === null ? {} : { repo: editedRepo, branch: branch.trim() }),
+  };
+}
+
+/**
  * 给基线组补一个仓库的基线槽位；不给组号时按分支找组，没有就新建一组。
  * @param {string} workspace
  * @param {string} repoName
@@ -716,7 +820,7 @@ export function addBase(workspace, repoName, branch, groupNumber, settingsOverri
 
 function busyBaseTasks(state, number) {
   return Object.values(state.tasks ?? {}).filter((task) => {
-    if (task.status === 'merged' || task.status === 'abandoned') return false;
+    if (task.status === 'merged' || task.status === 'abandoned' || task.status === 'stopped') return false;
     if (task.baseGroup === number) return true;
     return Object.values(task.slots ?? {}).some((slot) => slot.baseGroup === number);
   });
@@ -834,7 +938,7 @@ export function removeBase(workspace, groupNumber, repoName, settingsOverride) {
   const member = group.repos?.[repo.name];
   if (member === undefined) throw new FlowError(`基线组 ${group.number} 里没有 ${repo.name}`, 'missing');
   const busy = Object.values(state.tasks ?? {}).some((task) => {
-    if (task.status === 'merged' || task.status === 'abandoned') return false;
+    if (task.status === 'merged' || task.status === 'abandoned' || task.status === 'stopped') return false;
     return Object.values(task.slots ?? {}).some((slot) => slot.baseGroup === group.number && slot.target === member.branch);
   });
   if (busy) throw new FlowError(`基线组 ${group.number} 还有任务在用，不能删除`, 'busy');
@@ -879,6 +983,7 @@ export function planDispatch(workspace, sessionId, request) {
     if (task.agentStatus === 'running') throw new FlowError(`任务 ${task.id} 已有子代理`, 'busy');
     if (runningAgents(state) >= settings.agentLimit) throw new FlowError('子代理已达上限', 'capacity');
     task.agentStatus = 'running';
+    task.sessionId = sessionId;
     task.updatedAt = new Date().toISOString();
     const agentId = noteAgent(state, 'dev', task.id, 'running');
     linkScheduleAgent(state, task.scheduleId, agentId);
@@ -889,7 +994,9 @@ export function planDispatch(workspace, sessionId, request) {
       kind: 'dev',
       agentId,
       taskId: task.id,
-      model: settings.devModel || null,
+      model: settings.devModel?.model ?? null,
+      provider: settings.devModel?.provider || null,
+      reasoningEffort: settings.devModel?.reasoningEffort ?? null,
       cwd: slotPaths.length === 1 ? slotPaths[0] : workspace,
       slots: task.slots,
     };
@@ -906,7 +1013,9 @@ export function planDispatch(workspace, sessionId, request) {
     kind: 'accept',
     agentId,
     batchId: batch.id,
-    model: settings.acceptModel || null,
+    model: settings.acceptModel?.model ?? null,
+    provider: settings.acceptModel?.provider || null,
+    reasoningEffort: settings.acceptModel?.reasoningEffort ?? null,
     cwd: workspace,
     repos: batch.repos,
   };
@@ -986,6 +1095,8 @@ function baseTask(request, repos, dependsOn, status, now, base, baseGroup) {
     batchId: null,
     agentStatus: 'idle',
     scheduleId: request.scheduleId ?? null,
+    // 主会话会话 id：停止/暂停时用来取得中断子代理的父 Agent。
+    sessionId: request.sessionId ?? null,
     createdAt: now,
     updatedAt: now,
   };
@@ -1029,7 +1140,7 @@ function refreshSchedule(state, scheduleId) {
   const schedule = state.schedules?.[scheduleId];
   if (schedule === undefined) return;
   const tasks = schedule.taskIds.map((id) => state.tasks[id]).filter(Boolean);
-  const stillScheduling = tasks.length === 0 || tasks.some((task) => task.status === 'waiting' || (task.status === 'developing' && task.agentStatus !== 'running'));
+  const stillScheduling = tasks.length === 0 || tasks.some((task) => task.status === 'waiting' || task.status === 'paused' || (task.status === 'developing' && task.agentStatus !== 'running'));
   schedule.status = stillScheduling ? 'scheduling' : 'dispatched';
 }
 
@@ -1232,7 +1343,7 @@ function ensureBaseMember(workspace, settings, state, group, repo, branch) {
   group.repos = group.repos ?? {};
   const existing = group.repos[repo.name];
   if (existing !== undefined && existing.branch !== branch) {
-    throw new FlowError(`基线组 ${group.number} 里 ${repo.name} 已经是 ${existing.branch}`, 'base-mismatch');
+    throw new FlowError(`基线组 ${group.number} 里 ${repo.name} 已经是 ${existing.branch}；要换分支请用 base-edit`, 'base-mismatch');
   }
   const current = gitResult(repo.path, ['branch', '--show-current']).stdout;
   if (current === branch) {

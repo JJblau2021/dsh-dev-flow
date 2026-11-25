@@ -6,7 +6,8 @@ import { fileURLToPath } from 'node:url';
 import { attachLiveAgent, finishAcceptance, planDispatch, releaseLiveAgent, sessionEnabled } from './kernel/flow.mjs';
 import { handle } from './kernel/service.mjs';
 import { flushStateWrites, loadState, setStateWriter, statePath } from './kernel/state.mjs';
-import { bindChildSession, findUsageTarget, normalizeUsage, recordUsage } from './kernel/usage.mjs';
+import { loadPluginSettings } from './kernel/plugin-settings.mjs';
+import { bindChildSession, findUsageTarget, inferActiveTask, normalizeUsage, recordUsage } from './kernel/usage.mjs';
 import { verificationNotes } from './kernel/verify.mjs';
 
 export const name = 'dev-flow';
@@ -101,7 +102,7 @@ export function apply(ctx) {
   ctx.inject(['sandboxPolicy'], (scoped) => {
     sandboxPolicy = scoped.sandboxPolicy;
   });
-  ctx.inject(['connection', 'webServer', 'agents', 'sessions', 'workingDirectory', 'fs', 'subprocess', 'subagents'], (rpc) => {
+  ctx.inject(['connection', 'webServer', 'agents', 'sessions', 'workingDirectory', 'fs', 'subprocess', 'subagents', 'llm'], (rpc) => {
     setStateWriter((file, body) => writeWorkspaceFile(rpc, file, body));
     const route = rpc.webServer.register({
       kind: 'prefix',
@@ -133,7 +134,7 @@ export function apply(ctx) {
           const payload = body.payload ?? {};
           const sessionId = typeof payload.sessionId === 'string' ? payload.sessionId : '';
           const workspace = withState(resolveWorkspace(rpc, sessionId) ?? (typeof payload.workspace === 'string' ? payload.workspace : ''));
-          if (workspace === '' && endpoint !== 'settings-get' && endpoint !== 'settings-set') {
+          if (workspace === '' && endpoint !== 'settings-get' && endpoint !== 'settings-set' && endpoint !== 'models-list' && endpoint !== 'subagent-routes') {
             const value = endpoint === 'snapshot'
               ? { initialized: false, enabled: false, problem: '找不到工作区', counts: emptyCounts(), projects: [], bases: [], tasks: [], repos: [], agents: [] }
               : null;
@@ -146,8 +147,15 @@ export function apply(ctx) {
           activeWrite.session = asSession(rpc.agents?.get?.(sessionId))
             ?? asSession(rpc.sessions?.get?.(sessionId))
             ?? { id: sessionId, header: { cwd: workspace } };
-          const value = handle(workspace, sessionId, endpoint, payload);
+          const value = endpoint === 'models-list'
+            ? await listModelCatalog(rpc)
+            : endpoint === 'subagent-routes'
+              ? await listSubagentRoutes(rpc)
+              : handle(workspace, sessionId, endpoint, payload);
           await flushStateWrites();
+          if (endpoint === 'task-pause' || endpoint === 'task-stop') {
+            value.interrupt = await interruptTaskAgent(rpc, value);
+          }
           if (endpoint === 'accept-start') {
             try {
               const notes = verificationNotes(workspace, value.batch);
@@ -155,7 +163,7 @@ export function apply(ctx) {
               if (notes.length === 0) {
                 value.child = null;
               } else {
-                value.child = await launchAcceptance(rpc, sessionId, workspace, value.batch, notes);
+                value.child = await launchAcceptance(rpc, sessionId, workspace, value.batch, notes, loadPluginSettings());
                 if (value.child?.id) bindChildSession(workspace, value.batch.id, value.child.id);
                 planDispatch(workspace, sessionId, { kind: 'accept', id: value.batch.id });
                 await flushStateWrites();
@@ -188,9 +196,133 @@ export function apply(ctx) {
 }
 
 const activeWrite = { workspace: '', session: undefined };
+let modelCatalogCache = { at: 0, value: null };
+
+/**
+ * 设置页的模型选择器要 Composer 同款的 provider/model/推理等级目录。
+ * Host 的 llm 服务是唯一准确来源；短暂缓存，避免每次打开设置都逐个解析。
+ */
+async function listModelCatalog(rpc) {
+  if (Date.now() - modelCatalogCache.at < 30_000) return modelCatalogCache.value;
+  if (typeof rpc.llm?.listProviders !== 'function' || typeof rpc.llm?.listModels !== 'function') {
+    return { providers: [] };
+  }
+  const providers = [];
+  for (const provider of await rpc.llm.listProviders()) {
+    let models = [];
+    try {
+      models = await rpc.llm.listModels(provider.id);
+    } catch {
+      continue;
+    }
+    const entries = [];
+    for (const model of models) {
+      let reasoning = null;
+      try {
+        const info = await rpc.llm.resolveModelInfo(provider.id, model.id);
+        reasoning = info.reasoning ?? null;
+      } catch {
+        /* 元数据缺失的模型仍可被选，只是没有推理等级。 */
+      }
+      entries.push({
+        id: model.id,
+        name: model.name || model.id,
+        description: model.description ?? '',
+        efforts: reasoning?.efforts ?? [],
+        defaultEffort: reasoning?.defaultEffort ?? null,
+      });
+    }
+    providers.push({ id: provider.id, name: provider.name || provider.id, models: entries });
+  }
+  const value = { providers };
+  modelCatalogCache = { at: Date.now(), value };
+  return value;
+}
 const acceptanceSignals = new Set();
 
-async function launchAcceptance(rpc, sessionId, workspace, batch, notes) {
+/** 当前会话允许的子代理路由：优先读最后一个策略事件，没有策略时退回父会话模型。 */
+function subagentRoutesOf(session) {
+  const events = session?.snapshotEvents?.() ?? [];
+  for (let index = events.length - 1; index >= 0; index -= 1) {
+    const event = events[index];
+    if (event?.type !== 'subagent/model-selection-policy') continue;
+    return (event.data?.allowedModels ?? [])
+      .map((item) => ({ provider: String(item?.provider ?? ''), model: String(item?.model ?? '') }))
+      .filter((item) => item.provider !== '' && item.model !== '');
+  }
+  const config = session?.requestHeader?.()?.config ?? session?.requestContext?.();
+  return config?.provider && config?.model
+    ? [{ provider: config.provider, model: config.model }]
+    : [];
+}
+
+async function routeCatalog(rpc, routes) {
+  const names = new Map();
+  try {
+    for (const provider of await rpc.llm.listProviders()) names.set(provider.id, provider.name);
+  } catch {
+    /* provider 名称只是展示用，失败时仍可用 id。 */
+  }
+  const groups = new Map();
+  for (const route of routes) {
+    let info;
+    try {
+      info = await rpc.llm.resolveModelInfo(route.provider, route.model);
+    } catch {
+      continue;
+    }
+    const group = groups.get(route.provider) ?? {
+      id: route.provider,
+      name: names.get(route.provider) ?? route.provider,
+      models: [],
+    };
+    if (group.models.some((model) => model.id === route.model)) continue;
+    group.models.push({
+      id: route.model,
+      name: info.name ?? route.model,
+      ...(info.description === undefined ? {} : { description: info.description }),
+      efforts: info.reasoning?.efforts ?? [],
+      defaultEffort: info.reasoning?.defaultEffort ?? null,
+    });
+    groups.set(route.provider, group);
+  }
+  return { providers: [...groups.values()] };
+}
+
+/** 插件设置页不知道当前会话，默认取最近创建的顶层会话。 */
+async function listSubagentRoutes(rpc) {
+  const sessions = (rpc.sessions?.list?.() ?? []).filter((session) => {
+    const header = session?.header;
+    if (header?.parentSession !== undefined && header.parentSession !== null) return false;
+    if (typeof header?.delegationDepth === 'number' && header.delegationDepth > 0) return false;
+    return true;
+  });
+  const session = sessions.at(-1);
+  const routes = session === undefined ? [] : subagentRoutesOf(session);
+  return {
+    ...(await routeCatalog(rpc, routes)),
+    sessionId: session?.header?.id ?? null,
+    source: routes.length === 0 ? 'none' : 'session',
+  };
+}
+
+async function acceptanceAgentOptions(rpc, sessionId, choice) {
+  const provider = typeof choice?.provider === 'string' ? choice.provider : '';
+  const model = typeof choice?.model === 'string' ? choice.model : '';
+  if (provider === '' || model === '') return undefined;
+  const session = rpc.sessions?.get?.(sessionId);
+  const routes = subagentRoutesOf(session);
+  if (routes.length > 0 && !routes.some((route) => route.provider === provider && route.model === model)) {
+    const available = routes.map((route) => `${route.provider}/${route.model}`).join('、');
+    const error = new Error(`验收任务模型 ${provider}/${model} 不在当前会话允许的子代理路由里；可用：${available || '无'}。请改插件设置，或新开一个包含该模型的会话。`);
+    error.code = 'model-not-allowed';
+    throw error;
+  }
+  const effort = typeof choice?.reasoningEffort === 'string' ? choice.reasoningEffort : '';
+  return { provider, model, ...(effort === '' ? {} : { reasoningEffort: effort }) };
+}
+
+async function launchAcceptance(rpc, sessionId, workspace, batch, notes, settings) {
   const parent = rpc.agents?.get?.(sessionId);
   if (parent?.session === undefined) throw new Error('找不到主会话，无法拉起验收子代理');
   if (typeof rpc.subagents?.startActivation !== 'function') throw new Error('子代理服务不可用');
@@ -201,6 +333,7 @@ async function launchAcceptance(rpc, sessionId, workspace, batch, notes) {
   acceptanceSignals.add(controller);
   const name = acceptanceName(batch.id);
   const guide = notes.map((note) => `文件 ${note.file}\n${note.text.slice(0, 8000)}`).join('\n\n');
+  const agentOptions = await acceptanceAgentOptions(rpc, sessionId, settings?.acceptModel);
   // SubagentActivationSpec 把启动参数放在顶层；旧版包在 request 里会导致 spec.parent 为空。
   const started = await rpc.subagents.startActivation({
     provider: 'spawn',
@@ -211,6 +344,7 @@ async function launchAcceptance(rpc, sessionId, workspace, batch, notes) {
     cwd,
     parent,
     maxDepth: 1,
+    ...(agentOptions === undefined ? {} : { agentOptions }),
     prompt: [{
       type: 'text',
       text: [
@@ -261,7 +395,7 @@ function observeUsage(session, event) {
       id: sessionId,
       cwd,
       parentSession: session?.header?.parentSession,
-    });
+    }) ?? inferActiveTask(state, { parentSession: session?.header?.parentSession });
     if (target?.taskId && session?.header?.parentSession) attachLiveAgent(workspace, target.taskId, sessionId);
     const usage = usageOf(event);
     if (usage === null || target === null) return;
@@ -421,6 +555,47 @@ function asSession(value) {
   return undefined;
 }
 
+/**
+ * 暂停/停止后真正中断开发子代理。优先用任务记下的 agentSessionId；没有时按槽位
+ * cwd 在父会话的子代理里找。中断失败只作为 warning 返回，任务状态已经落盘。
+ */
+async function interruptTaskAgent(rpc, value) {
+  const parentSessionId = typeof value?.parentSessionId === 'string' ? value.parentSessionId : null;
+  const slotPaths = Array.isArray(value?.slotPaths) ? value.slotPaths.filter((item) => typeof item === 'string' && item !== '') : [];
+  let childSessionId = typeof value?.agentSessionId === 'string' && value.agentSessionId !== '' ? value.agentSessionId : null;
+  if (childSessionId === null && parentSessionId !== null && slotPaths.length > 0 && typeof rpc.subagents?.listDescendants === 'function') {
+    try {
+      const rows = await rpc.subagents.listDescendants(parentSessionId);
+      for (const row of Array.isArray(rows) ? rows : []) {
+        if (row?.kind !== 'child' || typeof row.id !== 'string') continue;
+        const agent = asSession(rpc.agents?.get?.(row.id));
+        const cwd = agent?.header?.cwd;
+        if (typeof cwd === 'string' && slotPaths.some((item) => resolve(item) === resolve(cwd))) {
+          childSessionId = row.id;
+          break;
+        }
+      }
+    } catch {
+      /* 列不出子代理时退回 agentSessionId；都没有就不中断。 */
+    }
+  }
+  if (childSessionId === null) return { attempted: false };
+  const parent = parentSessionId === null ? undefined : asSession(rpc.agents?.get?.(parentSessionId));
+  try {
+    if (parent !== undefined && typeof rpc.subagents?.interrupt === 'function') {
+      rpc.subagents.interrupt(childSessionId, { kind: 'ancestor', agent: parent });
+      return { attempted: true, ok: true };
+    }
+    if (typeof rpc.subagents?.interruptByUser === 'function') {
+      rpc.subagents.interruptByUser(childSessionId);
+      return { attempted: true, ok: true };
+    }
+  } catch (error) {
+    return { attempted: true, ok: false, warning: error instanceof Error ? error.message : String(error) };
+  }
+  return { attempted: true, ok: false, warning: '宿主没有可用的子代理中断接口' };
+}
+
 function reject(res, status, message) {
   res.writeHead(status, { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store' });
   res.end(JSON.stringify({ message }));
@@ -434,3 +609,5 @@ function readBody(req) {
     req.on('error', fail);
   });
 }
+
+export { acceptanceAgentOptions, launchAcceptance, listSubagentRoutes, subagentRoutesOf };

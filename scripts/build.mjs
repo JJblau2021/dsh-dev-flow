@@ -1,7 +1,7 @@
 import { createHash } from 'node:crypto'
 import { readFileSync, writeFileSync } from 'node:fs'
 import { createRequire } from 'node:module'
-import { dirname, resolve } from 'node:path'
+import { dirname, relative, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..')
@@ -30,7 +30,8 @@ const cssModules = {
       for (const match of source.matchAll(/\.([A-Za-z_][\w-]*)/g)) names.add(match[1])
       // 面板样式注入到 document.head，是全局生效的；类名必须带文件哈希，
       // 否则 `.text`、`.line` 这类通用名字会命中宿主自己的界面。
-      const hash = createHash('sha1').update(args.path).update('\0').update(source).digest('hex').slice(0, 6)
+      const file = relative(root, args.path).replaceAll('\\', '/')
+      const hash = createHash('sha1').update(file).update('\0').update(source).digest('hex').slice(0, 6)
       const mapping = Object.fromEntries([...names].map((name) => [name, `df-${name}-${hash}`]))
       const scoped = source.replace(/\.([A-Za-z_][\w-]*)/g, (whole, name) => `.${mapping[name]}`)
       return {

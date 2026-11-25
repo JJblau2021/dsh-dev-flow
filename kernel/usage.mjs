@@ -68,6 +68,11 @@ export function bindChildSession(workspace, batchId, sessionId) {
  */
 export function findUsageTarget(state, session) {
   const cwd = session.cwd ?? '';
+  if (session.id) {
+    for (const task of Object.values(state.tasks)) {
+      if (task.agentSessionId === session.id) return { taskId: task.id };
+    }
+  }
   if (cwd !== '') {
     for (const task of Object.values(state.tasks)) {
       const hit = Object.values(task.slots ?? {}).some((slot) => slot.path === cwd);
@@ -88,4 +93,24 @@ export function findUsageTarget(state, session) {
   owned.sort((left, right) => String(right.updatedAt).localeCompare(String(left.updatedAt)));
   const active = owned.find((item) => item.status === 'scheduling') ?? owned[0];
   return { scheduleId: active.id };
+}
+
+/**
+ * A dev subagent runs with the workspace directory as its session cwd, so its
+ * model usage cannot be matched by slot path. When exactly one task under the
+ * parent lead is waiting for its first event, that task owns the session.
+ */
+export function inferActiveTask(state, session) {
+  const parent = session?.parentSession;
+  if (!parent) return null;
+  // An acceptance subagent whose id is not bound yet must not fall through to
+  // a running development task.
+  const unbound = Object.values(state.batches ?? {}).some((batch) => batch.agentStatus === 'running' && !batch.childSessionId);
+  if (unbound) return null;
+  const running = Object.values(state.tasks).filter((task) => task.agentStatus === 'running' && !task.agentSessionId);
+  if (running.length !== 1) return null;
+  const task = running[0];
+  const schedule = task.scheduleId ? state.schedules?.[task.scheduleId] : undefined;
+  if (schedule !== undefined && schedule.sessionId !== parent) return null;
+  return { taskId: task.id };
 }

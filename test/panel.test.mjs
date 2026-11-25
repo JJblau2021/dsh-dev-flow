@@ -77,6 +77,10 @@ test('plugin settings reject a branch format without xxx and keep the file out o
   assert.throws(() => handle(root, 'session-a', 'settings-set', { settings: { taskBranch: 'plain' } }, home), (error) => error instanceof FlowError);
   const saved = handle(root, 'session-a', 'settings-set', { settings: { taskBranch: 'team/xxx', acceptBranch: 'review/xxx' } }, home);
   assert.equal(saved.taskBranch, 'team/xxx');
+  const model = { provider: 'deepseek', model: 'deepseek-v4.1-flash', reasoningEffort: 'high' };
+  const withModel = handle(root, 'session-a', 'settings-set', { settings: { devModel: model } }, home);
+  assert.deepEqual(withModel.devModel, model);
+  assert.deepEqual(handle(root, 'session-a', 'settings-get', {}, home).devModel, model);
   assert.equal(handle(root, 'session-a', 'snapshot').initialized, false);
   rmSync(home, { recursive: true, force: true });
   rmSync(root, { recursive: true, force: true });
@@ -130,5 +134,30 @@ test('task-delete surfaces branch cleanup warnings without keeping the task reco
   assert.equal(result.deleteWarnings.length, 1);
   assert.match(result.deleteWarnings[0], /df-task\/busy/u);
   assert.equal(result.snapshot.tasks.some((task) => task.id === 'busy'), false);
+  rmSync(root, { recursive: true, force: true });
+});
+
+test('task-pause and task-stop expose interrupt metadata and update the panel view', () => {
+  const root = mkdtempSync(path.join(tmpdir(), 'dev-flow-view-'));
+  makeRepo(root, 'kit');
+  createDevTask(root, { id: 'pausable', title: '可暂停', repos: ['kit'], sessionId: 'session-a' });
+
+  const paused = handle(root, 'session-a', 'task-pause', { taskId: 'pausable' });
+  assert.equal(paused.task.status, 'paused');
+  assert.equal(paused.parentSessionId, 'session-a');
+  assert.equal(paused.agentSessionId, null);
+  assert.equal(paused.slotPaths.length, 1);
+  assert.equal(paused.snapshot.counts.activeTasks, 1);
+  assert.equal(paused.snapshot.tasks.find((task) => task.id === 'pausable').status, 'paused');
+
+  const resumed = handle(root, 'session-a', 'task-resume', { taskId: 'pausable' });
+  assert.equal(resumed.tasks.find((task) => task.id === 'pausable').status, 'developing');
+
+  const stopped = handle(root, 'session-a', 'task-stop', { taskId: 'pausable' });
+  assert.equal(stopped.task.status, 'stopped');
+  assert.equal(stopped.snapshot.counts.activeTasks, 0);
+  assert.equal(stopped.snapshot.tasks.find((task) => task.id === 'pausable').deletable, true);
+  assert.equal(stopped.snapshot.bases.length, 1);
+  assert.equal(stopped.snapshot.bases[0].tasks, 0);
   rmSync(root, { recursive: true, force: true });
 });

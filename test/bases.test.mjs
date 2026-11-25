@@ -9,6 +9,7 @@ import {
   addBase,
   completeDevTask,
   createDevTask,
+  editBase,
   finishAcceptance,
   removeBase,
   saveBaseGroup,
@@ -283,6 +284,50 @@ test('base-add backfills a baseline slot for an existing schedule', () => {
   assert.equal(branch(added.path), 'feat/chatV1');
   const row = snapshot(root, 'session-a').bases.find((item) => item.branch === 'feat/chatV1');
   assert.equal(row.location, 'slot');
+  rmSync(root, { recursive: true, force: true });
+});
+
+test('base-edit changes one member branch and keeps the other members', () => {
+  const { root, kit } = workspace();
+  makeRepo(root, 'glose');
+  git(kit, ['branch', 'feat/chatV1']);
+  git(kit, ['branch', 'feat/chat-ui']);
+  startSchedule(root, { id: 'chatv1', title: 'chat', base: 'feat/chatV1' });
+  const before = loadState(root).baseGroups['01'];
+  assert.equal(before.repos.kit.branch, 'feat/chatV1');
+  assert.equal(branch(before.repos.kit.path), 'feat/chatV1');
+
+  const edited = editBase(root, '01', 'kit', 'feat/chat-ui');
+  assert.equal(edited.group, '01');
+  assert.equal(edited.repo, 'kit');
+  assert.equal(edited.branch, 'feat/chat-ui');
+  const after = loadState(root).baseGroups['01'];
+  assert.equal(after.label, 'feat/chatV1');
+  assert.equal(after.repos.kit.branch, 'feat/chat-ui');
+  assert.equal(branch(after.repos.kit.path), 'feat/chat-ui');
+  assert.equal(branch(kit), 'main');
+
+  assert.throws(
+    () => addBase(root, 'kit', 'feat/chatV1', '01'),
+    (error) => error.code === 'base-mismatch' && error.message.includes('base-edit'),
+  );
+  assert.throws(
+    () => editBase(root, '01', 'glose', 'main'),
+    (error) => error.code === 'missing',
+  );
+  rmSync(root, { recursive: true, force: true });
+});
+
+test('base-edit can rename a group without touching its members', () => {
+  const { root, kit } = workspace();
+  git(kit, ['branch', 'feat/chatV1']);
+  startSchedule(root, { id: 'chatv1', title: 'chat', base: 'feat/chatV1' });
+  const edited = editBase(root, '01', undefined, undefined, 'chat-ui');
+  assert.equal(edited.label, 'chat-ui');
+  const group = loadState(root).baseGroups['01'];
+  assert.equal(group.label, 'chat-ui');
+  assert.equal(group.repos.kit.branch, 'feat/chatV1');
+  assert.equal(branch(group.repos.kit.path), 'feat/chatV1');
   rmSync(root, { recursive: true, force: true });
 });
 

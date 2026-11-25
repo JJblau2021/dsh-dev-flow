@@ -1,7 +1,7 @@
 /** Defaults used until the plugin detail page saves its own config. */
 export const DEFAULT_SETTINGS = Object.freeze({
-  devModel: '',
-  acceptModel: '',
+  devModel: null,
+  acceptModel: null,
   devDir: 'task',
   acceptDir: 'check',
   baseDir: 'base',
@@ -28,6 +28,8 @@ export class FlowError extends Error {
  */
 export function resolveSettings(override = {}) {
   const settings = { ...DEFAULT_SETTINGS, ...clean(override) };
+  settings.devModel = normalizeModelChoice(settings.devModel);
+  settings.acceptModel = normalizeModelChoice(settings.acceptModel);
   assertBranchFormat(settings.taskBranch, '任务分支格式');
   assertBranchFormat(settings.acceptBranch, '验收分支格式');
   if (branchName(settings.taskBranch, 'same') === branchName(settings.acceptBranch, 'same')) {
@@ -40,6 +42,24 @@ export function resolveSettings(override = {}) {
     throw new FlowError('端口起点无效');
   }
   return settings;
+}
+
+/**
+ * 设置里保存的是 Composer 同款的 { provider, model, reasoningEffort }；
+ * 旧版本只存一个模型名，仍按模型名继续用。
+ * @param {unknown} value
+ */
+export function normalizeModelChoice(value) {
+  if (value === undefined || value === null || value === '') return null;
+  if (typeof value === 'string') return { provider: '', model: value, reasoningEffort: null };
+  if (typeof value !== 'object') throw new FlowError('模型设置格式不正确');
+  const model = typeof value.model === 'string' ? value.model.trim() : '';
+  if (model === '') return null;
+  return {
+    provider: typeof value.provider === 'string' ? value.provider : '',
+    model,
+    reasoningEffort: typeof value.reasoningEffort === 'string' && value.reasoningEffort !== '' ? value.reasoningEffort : null,
+  };
 }
 
 function clean(override) {

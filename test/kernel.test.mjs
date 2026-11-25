@@ -14,7 +14,10 @@ import {
   completeDevTask,
   createDevTask,
   failDevTask,
+  pauseDevTask,
+  resumeDevTask,
   startSchedule,
+  stopDevTask,
   finishAcceptance,
   finishTaskAcceptance,
   planDispatch,
@@ -23,7 +26,7 @@ import {
   setSessionEnabled,
   startAcceptance,
 } from '../kernel/flow.mjs';
-import { FlowError } from '../kernel/settings.mjs';
+import { FlowError, resolveSettings } from '../kernel/settings.mjs';
 import { loadState } from '../kernel/state.mjs';
 
 function git(cwd, args) {
@@ -129,6 +132,54 @@ test('completion releases the slot, failure keeps it, and abandon records histor
   const history = loadState(root).devSlots.glose['01'].history;
   assert.equal(history.at(-1).result, 'abandoned');
   assert.equal(history[0].taskId, 'copy');
+  rmSync(root, { recursive: true, force: true });
+});
+
+test('pause keeps the slot and resume returns to developing; stop releases it', () => {
+  const root = workspace();
+  createDevTask(root, { id: 'pausable', title: '可暂停', repos: ['kit'] });
+  const slot = loadState(root).tasks.pausable.slots.kit.path;
+  attachLiveAgent(root, 'pausable', 'child-pause');
+  const paused = pauseDevTask(root, 'pausable');
+  assert.equal(paused.status, 'paused');
+  assert.equal(paused.agentStatus, 'idle');
+  assert.equal(loadState(root).devSlots.kit['01'].taskId, 'pausable');
+  assert.throws(() => completeDevTask(root, 'pausable'), (error) => error.code === 'status');
+
+  const resumed = resumeDevTask(root, 'pausable');
+  assert.equal(resumed.status, 'developing');
+  assert.equal(resumed.agentStatus, 'idle');
+  assert.equal(resumed.agentSessionId, null);
+  assert.equal(loadState(root).devSlots.kit['01'].taskId, 'pausable');
+
+  attachLiveAgent(root, 'pausable', 'child-stop');
+  const stopped = stopDevTask(root, 'pausable');
+  assert.equal(stopped.status, 'stopped');
+  assert.equal(stopped.agentStatus, 'idle');
+  assert.equal(loadState(root).devSlots.kit['01'].taskId, null);
+  assert.equal(loadState(root).devSlots.kit['01'].history.at(-1).result, 'stopped');
+  assert.equal(hasBranch(path.join(root, 'kit'), 'df-task/pausable'), true);
+  assert.equal(branch(slot), 'df-task/pausable');
+  assert.equal(loadState(root).tasks.pausable.stoppedAt !== undefined, true);
+
+  // 已停止的任务可以删除，删除时清理任务分支。
+  deleteDevTasks(root, ['pausable']);
+  assert.equal(loadState(root).tasks.pausable, undefined);
+  assert.equal(hasBranch(path.join(root, 'kit'), 'df-task/pausable'), false);
+  rmSync(root, { recursive: true, force: true });
+});
+
+test('pause only works while developing and stopped tasks cannot be dependencies', () => {
+  const root = workspace();
+  createDevTask(root, { id: 'base', title: '基础', repos: ['kit'] });
+  const waiting = createDevTask(root, { id: 'waiting', title: '等待', repos: ['kit'], dependsOn: ['base'] });
+  assert.equal(waiting.task.status, 'waiting');
+  assert.throws(() => pauseDevTask(root, 'waiting'), (error) => error.code === 'status');
+  stopDevTask(root, 'base');
+  assert.throws(
+    () => createDevTask(root, { id: 'child', title: '子', repos: ['kit'], dependsOn: ['base'] }),
+    (error) => error.code === 'abandoned-dep',
+  );
   rmSync(root, { recursive: true, force: true });
 });
 
@@ -351,6 +402,27 @@ test('dispatch stays closed until the session switch is on', () => {
   assert.equal(plan.model, 'dev-model');
   assert.equal(plan.cwd, loadState(root).tasks.login.slots.kit.path);
   assert.throws(() => planDispatch(root, 'session-a', { kind: 'dev', id: 'login' }), (error) => error.code === 'busy');
+  rmSync(root, { recursive: true, force: true });
+});
+
+test('dispatch carries the provider and reasoning effort from the model selection', () => {
+  const root = workspace();
+  createDevTask(root, { id: 'login', title: '登录', repos: ['kit'] });
+  setSessionEnabled(root, 'session-a', true);
+  const plan = planDispatch(root, 'session-a', {
+    kind: 'dev',
+    id: 'login',
+    settings: { devModel: { provider: 'deepseek', model: 'v4.1-flash', reasoningEffort: 'high' } },
+  });
+  assert.equal(plan.model, 'v4.1-flash');
+  assert.equal(plan.provider, 'deepseek');
+  assert.equal(plan.reasoningEffort, 'high');
+  // 旧设置只有模型名，仍按模型名工作。
+  assert.deepEqual(resolveSettings({ devModel: 'legacy-model' }).devModel, {
+    provider: '',
+    model: 'legacy-model',
+    reasoningEffort: null,
+  });
   rmSync(root, { recursive: true, force: true });
 });
 

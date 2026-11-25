@@ -5,10 +5,10 @@ import { gitResult } from './git.mjs';
 import { DEFAULT_SETTINGS, resolveSettings } from './settings.mjs';
 import { hasState, loadState } from './state.mjs';
 
-const ACTIVE = new Set(['waiting', 'developing', 'failed']);
-const DONE = new Set(['merged', 'abandoned']);
+const ACTIVE = new Set(['waiting', 'developing', 'paused', 'failed']);
+const DONE = new Set(['merged', 'abandoned', 'stopped']);
 /** 和 kernel/flow.mjs 的删除范围保持一致；视图只按单条任务判断。 */
-const DELETABLE = new Set(['merged', 'abandoned', 'failed', 'rejected', 'pending-acceptance']);
+const DELETABLE = new Set(['merged', 'abandoned', 'failed', 'rejected', 'pending-acceptance', 'stopped']);
 
 /**
  * Read-only panel model. Counts stay at zero until `.dev-flow/` exists.
@@ -90,6 +90,8 @@ export function snapshot(workspace, sessionId, settingsOverride) {
         usage: task.usage ?? null,
         acceptance: task.acceptance ?? null,
         createdAt: task.createdAt ?? null,
+        pausedAt: task.pausedAt ?? null,
+        stoppedAt: task.stoppedAt ?? null,
         dependsOn: (task.dependsOn ?? []).map((depId) => dependencyView(state, task, depId)),
         selectable: task.status === 'pending-acceptance' && task.batchId == null,
         deletable: deletableTask(state, task),
@@ -294,6 +296,7 @@ function scheduleView(state, schedule) {
         target: slot.target ?? task.base ?? null,
         baseGroup: slot.baseGroup ?? task.baseGroup ?? null,
       })),
+      usage: task.usage ?? null,
     })),
   };
 }

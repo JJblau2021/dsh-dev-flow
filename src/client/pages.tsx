@@ -1,7 +1,7 @@
 import type React from 'react'
 
 const { useEffect, useRef, useState } = React
-import type { AgentRow, BaseGroupRow, Call, DevSlot, ProjectRow, RepoRow, ScheduleRow, Settings, Snapshot, TaskDiff, TaskDiffFile, TaskRow, Translate } from './types'
+import type { AgentRow, BaseGroupRow, Call, DevSlot, ModelCatalog, ModelChoice, ProjectRow, RepoRow, ScheduleRow, Settings, Snapshot, TaskDiff, TaskDiffFile, TaskRow, TokenUsage, Translate } from './types'
 import { ActionButton, Dot, type UiKit } from './ui'
 import { FileDiff } from './vendor/FileDiff'
 import { diffLabelsOf, diffStateOf } from './diff'
@@ -225,6 +225,7 @@ function Tasks({
   const [opened, setOpened] = useState<Record<string, boolean>>({})
   const [scheduleOpen, setScheduleOpen] = useState<Record<string, boolean>>({})
   const [pickedBatches, setPickedBatches] = useState<string[]>([])
+  const [selectionMode, setSelectionMode] = useState<'accept' | 'delete' | null>(null)
   const [removing, setRemoving] = useState(false)
   const [details, setDetails] = useState<Record<string, boolean>>({})
   const detailProps = (id: string) => ({
@@ -245,11 +246,12 @@ function Tasks({
   const pickedDev = data.tasks.filter((task) => task.kind !== 'accept' && picked.includes(task.id))
   const acceptSelected = pickedDev.filter((task) => task.selectable === true)
   const deleteSelected = pickedDev.filter((task) => task.deletable === true)
-  const acceptBlocked = pickedDev.filter((task) => task.selectable !== true)
   const deleteBlocked = pickedDev.filter((task) => task.deletable !== true)
-  const showAccept = pickedDev.length > 0 && acceptBlocked.length === 0
-  const showDelete = deleteSelected.length > 0
   const deleteHint = t('hint.deleteTasks').replace('{count}', String(deleteSelected.length))
+  const chooseMode = (next: 'accept' | 'delete') => {
+    setSelectionMode((current) => (current === next ? null : next))
+    setPicked([])
+  }
   const deleteReason = deleteBlocked.length === 0
     ? ''
     : `${t('hint.deleteBlocked')}：${deleteBlocked.map((task) => task.title).join('、')}`
@@ -263,7 +265,7 @@ function Tasks({
     if (busy || reason !== '') return
     setBusy(true)
     start(call, sessionId, acceptSelected.map((task) => task.id), setPicked, reload)
-      .then(() => show(t('toast.started'), 'info'))
+      .then(() => { setSelectionMode(null); show(t('toast.started'), 'info') })
       .catch(() => undefined)
       .finally(() => setBusy(false))
   }
@@ -379,40 +381,66 @@ function Tasks({
           </div>
         ) : null}
         {id === 'dev' && open.dev ? <>
-      <div className="df-filters">
-        {filters.map(([value, label]) => {
-          const count = devAll.filter((task) => matchFilter(value, task)).length
-          const text = `${label} ${count}`
-          return ui.Pill
-            ? <ui.Pill key={value} active={filter === value} onClick={() => setFilter(value)}>{text}</ui.Pill>
-            : <button key={value} type="button" aria-pressed={filter === value} onClick={() => setFilter(value)}>{text}</button>
-        })}
+      <div className="df-pane-tools">
+        <div className="df-filters">
+          {filters.map(([value, label]) => {
+            const count = devAll.filter((task) => matchFilter(value, task)).length
+            const text = `${label} ${count}`
+            return ui.Pill
+              ? <ui.Pill key={value} active={filter === value} onClick={() => setFilter(value)}>{text}</ui.Pill>
+              : <button key={value} type="button" aria-pressed={filter === value} onClick={() => setFilter(value)}>{text}</button>
+          })}
+        </div>
+        <div className="df-pane-actions">
+          <ActionButton
+            ui={ui}
+            variant="ghost"
+            className={`df-icon-btn${selectionMode === 'delete' ? ' df-icon-btn-active' : ''}`}
+            title={t('action.delete')}
+            ariaLabel={t('action.delete')}
+            onClick={() => chooseMode('delete')}
+          >
+            <TrashIcon />
+            {deleteSelected.length > 0 ? <span className="df-icon-badge">{deleteSelected.length}</span> : null}
+          </ActionButton>
+          <ActionButton
+            ui={ui}
+            variant="ghost"
+            className={`df-icon-btn${selectionMode === 'accept' ? ' df-icon-btn-active' : ''}`}
+            title={t('action.accept')}
+            ariaLabel={t('action.accept')}
+            onClick={() => chooseMode('accept')}
+          >
+            <AcceptIcon />
+            {acceptSelected.length > 0 ? <span className="df-icon-badge">{acceptSelected.length}</span> : null}
+          </ActionButton>
+        </div>
       </div>
       <div className="df-view-body">
       <div className="df-card">
         {devRows.length === 0 ? <div className="df-empty"><p>{t('section.emptyDev')}</p></div> : devRows.map((task) => (
-          <DevTaskItem key={task.id} ui={ui} t={t} task={task} picked={picked} setPicked={setPicked} sessionId={sessionId} call={call} reload={reload} show={show} onDeleteTask={removeOne} {...detailProps(task.id)} onOpenDiff={(file, index) => openDiff?.(task.id, task.title, index)} />
+          <DevTaskItem key={task.id} ui={ui} t={t} task={task} picked={picked} setPicked={setPicked} sessionId={sessionId} call={call} reload={reload} show={show} selectionMode={selectionMode} onDeleteTask={removeOne} {...detailProps(task.id)} onOpenDiff={(file, index) => openDiff?.(task.id, task.title, index)} />
         ))}
       </div>
       </div>
-      {showAccept || showDelete ? (
+      {selectionMode !== null ? (
         <div className="df-foot">
-          {showAccept ? (
+          {selectionMode === 'accept' ? (
             <>
-              <ActionButton ui={ui} className="df-go" variant="primary" disabled={busy || reason !== ''} title={reason} onClick={launch}>
-                {busy ? t('action.working') : t('action.accept')}
+              <ActionButton ui={ui} className="df-go" variant="primary" disabled={busy || reason !== '' || acceptSelected.length === 0} title={reason} onClick={launch}>
+                {busy ? t('action.working') : `${t('action.accept')} (${acceptSelected.length})`}
               </ActionButton>
               <p className="df-hint">{reason !== '' ? reason : `${t('hint.order')}：${acceptSelected.map((task) => task.title).join(' → ')}`}</p>
             </>
-          ) : null}
-          {showDelete ? (
+          ) : (
             <>
-              <ActionButton ui={ui} className="df-go" disabled={removing || deleteReason !== ''} title={deleteReason || deleteHint} onClick={removeSelected}>
-                {removing ? t('action.deleting') : t('action.delete')}
+              <ActionButton ui={ui} className="df-go" disabled={removing || deleteReason !== '' || deleteSelected.length === 0} title={deleteReason || deleteHint} onClick={removeSelected}>
+                {removing ? t('action.deleting') : `${t('action.delete')} (${deleteSelected.length})`}
               </ActionButton>
               <p className="df-hint">{deleteReason !== '' ? deleteReason : deleteHint}</p>
             </>
-          ) : null}
+          )}
+          <ActionButton ui={ui} variant="ghost" className="df-cancel" onClick={() => chooseMode(selectionMode)}>{t('action.cancel')}</ActionButton>
         </div>
       ) : null}
         </> : null}
@@ -495,7 +523,7 @@ function savePaneLayout(layout: ReturnType<typeof loadPaneLayout>) {
 function toneOf(status: string) {
   if (status === 'merged' || status === 'accepted' || status === 'dispatched') return 'success'
   if (status === 'failed' || status === 'rejected') return 'error'
-  if (status === 'pending-merge' || status === 'waiting' || status === 'pending-acceptance' || status === 'accepting' || status === 'awaiting-agent') return 'warn'
+  if (status === 'pending-merge' || status === 'waiting' || status === 'pending-acceptance' || status === 'accepting' || status === 'awaiting-agent' || status === 'paused') return 'warn'
   if (status === 'developing' || status === 'running' || status === 'scheduling') return 'info'
   return 'neutral'
 }
@@ -504,6 +532,23 @@ function Chevron() {
   return (
     <svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true" focusable="false">
       <path d="M1.6 3.6 L5 7 L8.4 3.6" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  )
+}
+
+function TrashIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 16 16" aria-hidden="true" focusable="false">
+      <path d="M2.5 4.2h11M6 4.2V2.6h4v1.6M4.1 4.2l.7 9.2h6.4l.7-9.2M6.6 6.6v4.6M9.4 6.6v4.6" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  )
+}
+
+function AcceptIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 16 16" aria-hidden="true" focusable="false">
+      <circle cx="8" cy="8" r="5.7" fill="none" stroke="currentColor" strokeWidth="1.2" />
+      <path d="M5.1 8.1l1.9 1.9 3.9-4" fill="none" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   )
 }
@@ -594,6 +639,7 @@ function ScheduleItem({ ui, t, schedule, open, onToggle, depth = 0 }: {
       facts={[
         ...(schedule.base ? [{ slot: t('page.bases'), detail: schedule.baseGroup ? `#${schedule.baseGroup} · ${schedule.base}` : schedule.base }] : []),
         ...(schedule.warnings ?? []).map((warning) => ({ slot: t('fact.warning'), detail: warning })),
+        ...usageRows(schedule.usage, t),
       ]}
       expandable
       expanded={open}
@@ -611,6 +657,7 @@ function ScheduleItem({ ui, t, schedule, open, onToggle, depth = 0 }: {
             slot: '槽位',
             detail: `${slot.number ? `${slot.repo}-${slot.number}` : slot.repo}${slot.branch ? ` · ${slot.branch}` : ''}`,
           })),
+          ...usageRows(task.usage, t),
         ]
         return (
           <TreeItem
@@ -633,7 +680,7 @@ function ScheduleItem({ ui, t, schedule, open, onToggle, depth = 0 }: {
 
 /** 开发任务。 */
 function DevTaskItem({
-  ui, t, task, picked, setPicked, sessionId, call, reload, show, detailsOpen = false, onToggleDetails, onOpenDiff, onDeleteTask, nested = false, reviewing = false, batchId, depth = 0,
+  ui, t, task, picked, setPicked, sessionId, call, reload, show, selectionMode = null, detailsOpen = false, onToggleDetails, onOpenDiff, onDeleteTask, nested = false, reviewing = false, batchId, depth = 0,
 }: {
   ui: UiKit
   t: Translate
@@ -644,6 +691,7 @@ function DevTaskItem({
   call?: Call
   reload?: (failure?: unknown) => unknown
   show?: (text: string, tone?: string) => void
+  selectionMode?: 'accept' | 'delete' | null
   detailsOpen?: boolean
   onToggleDetails?: () => void
   onDeleteTask?: (id: string) => void
@@ -671,25 +719,41 @@ function DevTaskItem({
   const openDetails = onToggleDetails === undefined ? selfOpen : detailsOpen
   const toggleDetails = onToggleDetails ?? (() => setSelfOpen(!selfOpen))
   const expandable = facts.length > 0 || deps.length > 0
-  const pickable = !nested && (task.selectable === true || task.deletable === true)
-  const leading = pickable
-    ? <input className="df-check" type="checkbox" checked={picked.includes(task.id)} onClick={(event) => event.stopPropagation()} onChange={() => setPicked(togglePick(picked, task.id))} />
+  const selectable = selectionMode === 'accept' ? task.selectable === true : task.deletable === true
+  const checked = selectable && picked.includes(task.id)
+  const leading = !nested && selectionMode !== null
+    ? <input className="df-check" type="checkbox" checked={checked} disabled={!selectable} title={selectable ? undefined : t('hint.notSelectable')} onClick={(event) => event.stopPropagation()} onChange={() => { if (selectable) setPicked(togglePick(picked, task.id)) }} />
     : undefined
   return (
     <TreeItem
       kind="dev"
       title={task.title}
-      chips={[...baseChips(task), ...taskBranchChips(task), ...taskChips(task)]}
+      chips={task.kind === 'accept'
+        ? [...baseChips(task), ...taskBranchChips(task), ...taskChips(task)]
+        : [...baseBranchChips(task), ...taskBranchChips(task)]}
       time={createdText(task.createdAt)}
       leading={leading}
       actions={(
         <>
           <StatusTag ui={ui} t={t} status={shownStatus(task)} />
+          {!nested && call && reload && task.kind !== 'accept' ? (
+            <>
+              {task.status === 'developing' ? (
+                <ActionButton ui={ui} title={t('hint.pause')} onClick={(event) => { event.stopPropagation(); controlTask(call, sessionId, task.id, 'pause', reload, show, t) }}>{t('action.pause')}</ActionButton>
+              ) : null}
+              {task.status === 'paused' ? (
+                <ActionButton ui={ui} title={t('hint.resume')} onClick={(event) => { event.stopPropagation(); controlTask(call, sessionId, task.id, 'resume', reload, show, t) }}>{t('action.resume')}</ActionButton>
+              ) : null}
+              {task.status === 'developing' || task.status === 'paused' || task.status === 'waiting' || task.status === 'failed' ? (
+                <ActionButton ui={ui} title={t('hint.stop')} onClick={(event) => { event.stopPropagation(); controlTask(call, sessionId, task.id, 'stop', reload, show, t) }}>{t('action.stop')}</ActionButton>
+              ) : null}
+            </>
+          ) : null}
           {task.status === 'pending-merge' && task.kind !== 'accept' && call && reload ? (
             <ActionButton ui={ui} onClick={(event) => { event.stopPropagation(); mergeTask(call, sessionId, task.id, reload, show) }}>{t('action.merge')}</ActionButton>
           ) : null}
           {task.deletable && !nested && call && reload && onDeleteTask ? (
-            <ActionButton ui={ui} title={t('hint.deleteSingle')} onClick={(event) => { event.stopPropagation(); onDeleteTask(task.id) }}>{t('action.delete')}</ActionButton>
+            <ActionButton ui={ui} className="df-icon-btn" title={t('hint.deleteSingle')} ariaLabel={t('hint.deleteSingle')} onClick={(event) => { event.stopPropagation(); onDeleteTask(task.id) }}><TrashIcon /></ActionButton>
           ) : null}
           {nested && reviewing && task.acceptance !== 'accepted' && batchId && call && reload ? (
             <>
@@ -703,7 +767,7 @@ function DevTaskItem({
       expandable={expandable}
       expanded={openDetails}
       onToggle={expandable ? toggle : undefined}
-      onClick={pickable ? () => setPicked(togglePick(picked, task.id)) : undefined}
+      onClick={!nested && selectionMode !== null && selectable ? () => setPicked(togglePick(picked, task.id)) : undefined}
       depth={depth}
       tone={toneOf(shownStatus(task))}
     >
@@ -795,6 +859,7 @@ function AcceptTaskItem({
       time={createdText(batch.createdAt)}
       leading={leading}
       actions={<StatusTag ui={ui} t={t} status={shownStatus(batch)} />}
+      facts={usageRows(batch.usage, t)}
       expandable={onToggle !== undefined}
       expanded={open}
       onToggle={onToggle}
@@ -1091,6 +1156,9 @@ function StatusTag({ ui, t, status }: { ui: UiKit, t: Translate, status: string 
 
 export function SettingsForm({ ui, view, call, t }: { ui: UiKit, view?: string, call: Call, t: Translate }) {
   const [draft, setDraft] = useState<Settings | null>(null)
+  const [catalog, setCatalog] = useState<ModelCatalog | null>(null)
+  const [catalogError, setCatalogError] = useState('')
+  const [routeSession, setRouteSession] = useState<string | null | undefined>(undefined)
   const [message, setMessage] = useState('')
   useEffect(() => {
     if (view === 'summary') return undefined
@@ -1098,13 +1166,24 @@ export function SettingsForm({ ui, view, call, t }: { ui: UiKit, view?: string, 
     call('settings-get', {}, controller.signal)
       .then((value) => setDraft(value as Settings))
       .catch((reason: unknown) => setMessage(reason instanceof Error ? reason.message : String(reason)))
+    call('subagent-routes', {}, controller.signal)
+      .then((value) => {
+        const routes = value as ModelCatalog & { sessionId?: string | null }
+        if (routes.providers?.some((provider) => provider.models.length > 0)) {
+          setCatalog(routes)
+          setRouteSession(routes.sessionId ?? null)
+          return undefined
+        }
+        return call('models-list', {}, controller.signal).then((fallback) => setCatalog(fallback as ModelCatalog))
+      })
+      .catch(() => call('models-list', {}, controller.signal)
+        .then((fallback) => setCatalog(fallback as ModelCatalog))
+        .catch((reason: unknown) => setCatalogError(reason instanceof Error ? reason.message : String(reason))))
     return () => controller.abort()
   }, [view, call])
   if (view === 'summary') return <span className="df-meta">{t('settings.summary')}</span>
   if (!draft) return <p className="df-meta">{message || '…'}</p>
-  const fields: [keyof Settings, string][] = [
-    ['devModel', '开发任务模型'],
-    ['acceptModel', '验收任务模型'],
+  const textFields: ['devDir' | 'acceptDir' | 'baseDir' | 'taskBranch' | 'acceptBranch', string][] = [
     ['devDir', '开发槽位目录'],
     ['acceptDir', '验收槽位目录'],
     ['baseDir', '基线槽位目录'],
@@ -1118,15 +1197,195 @@ export function SettingsForm({ ui, view, call, t }: { ui: UiKit, view?: string, 
         .then((saved) => { setDraft(saved as Settings); setMessage('已保存') })
         .catch((reason: unknown) => setMessage(reason instanceof Error ? reason.message : String(reason)))
     }}>
-      {fields.map(([key, label]) => (
+      <ModelField
+        ui={ui}
+        label="开发任务模型"
+        value={draft.devModel}
+        catalog={catalog}
+        error={catalogError}
+        onChange={(next) => setDraft({ ...draft, devModel: next })}
+      />
+      <ModelField
+        ui={ui}
+        label="验收任务模型"
+        value={draft.acceptModel}
+        catalog={catalog}
+        error={catalogError}
+        onChange={(next) => setDraft({ ...draft, acceptModel: next })}
+      />
+      {routeSession === undefined ? null : (
+        <p className="df-form-note">模型列表来自最近会话{routeSession === null ? '' : ` ${routeSession}`} 的可用路由；新会话可能不同。</p>
+      )}
+      {textFields.map(([key, label]) => (
         <label key={key} className="df-field">
           {label}
           <input value={draft[key] ?? ''} onChange={(event) => setDraft({ ...draft, [key]: event.target.value })} />
         </label>
       ))}
       <ActionButton ui={ui} type="submit" variant="primary">{t('action.save')}</ActionButton>
-      {message ? <p className="df-note" role="status">{message}</p> : null}
+      {message ? <p className="df-form-note" role="status">{message}</p> : null}
     </form>
+  )
+}
+
+/** 旧设置里只存了模型名；统一成 Composer 的三段选择。 */
+function modelChoiceOf(value: Settings['devModel'] | Settings['acceptModel']): ModelChoice | null {
+  if (value === null || value === undefined || value === '') return null
+  if (typeof value === 'string') return { provider: '', model: value, reasoningEffort: null }
+  if (typeof value.model !== 'string' || value.model === '') return null
+  return value
+}
+
+function catalogEntry(catalog: ModelCatalog | null, choice: ModelChoice | null) {
+  if (choice === null || catalog === null) return undefined
+  for (const provider of catalog.providers) {
+    if (choice.provider !== '' && provider.id !== choice.provider) continue
+    const model = provider.models.find((item) => item.id === choice.model)
+    if (model !== undefined) return model
+  }
+  return undefined
+}
+
+function ModelChevron({ ui }: { ui: UiKit }) {
+  const Icon = ui.IconChevronDownOutlineRegular
+  return Icon === undefined ? <span aria-hidden="true">›</span> : <Icon size={12} />
+}
+
+/**
+ * Composer 同款：模型和推理等级是两行选择器，点开各自弹出列表。
+ * 目录来自宿主 llm 服务，设置里保存 provider/model/reasoningEffort。
+ */
+function ModelField({ ui, label, value, catalog, error, onChange }: {
+  ui: UiKit
+  label: string
+  value: Settings['devModel'] | Settings['acceptModel']
+  catalog: ModelCatalog | null
+  error: string
+  onChange: (next: ModelChoice | null) => void
+}) {
+  const [open, setOpen] = useState<'model' | 'effort' | null>(null)
+  const root = useRef<HTMLDivElement | null>(null)
+  useEffect(() => {
+    if (open === null) return undefined
+    const close = (event: MouseEvent) => {
+      if (root.current?.contains(event.target as Node) === true) return
+      setOpen(null)
+    }
+    document.addEventListener('mousedown', close)
+    return () => document.removeEventListener('mousedown', close)
+  }, [open])
+  const choice = modelChoiceOf(value)
+  const selected = catalogEntry(catalog, choice)
+  const efforts = selected?.efforts ?? []
+  const effort = choice?.reasoningEffort === null || choice?.reasoningEffort === undefined
+    ? '模型默认'
+    : efforts.find((item) => item.id === choice.reasoningEffort)?.name ?? choice.reasoningEffort
+  const groups = catalog?.providers.filter((provider) => provider.models.length > 0) ?? []
+  return (
+    <div className="df-field df-model-field" ref={root}>
+      <span>{label}</span>
+      <button
+        type="button"
+        className="df-model-trigger"
+        aria-haspopup="listbox"
+        aria-expanded={open === 'model'}
+        onClick={() => setOpen(open === 'model' ? null : 'model')}
+      >
+        <span className="df-model-value">{selected?.name ?? choice?.model ?? '跟随主会话'}</span>
+        <ModelChevron ui={ui} />
+      </button>
+      {efforts.length > 0 ? (
+        <button
+          type="button"
+          className="df-model-trigger"
+          aria-haspopup="listbox"
+          aria-expanded={open === 'effort'}
+          onClick={() => setOpen(open === 'effort' ? null : 'effort')}
+        >
+          <span className="df-model-hint">推理等级</span>
+          <span className="df-model-value">{effort}</span>
+          <ModelChevron ui={ui} />
+        </button>
+      ) : null}
+      {open === null ? null : (
+        <div className="df-model-pop" role="listbox" aria-label={label}>
+          {open === 'model' ? (
+            <>
+              <button
+                type="button"
+                role="option"
+                aria-selected={choice === null}
+                className="df-model-option"
+                onClick={() => { onChange(null); setOpen(null) }}
+              >
+                <span>跟随主会话</span>
+                {choice === null ? <span className="df-model-check">✓</span> : null}
+              </button>
+              {groups.length === 0 ? (
+                <p className="df-model-error">{error || '宿主没有返回模型列表，请完全重启 DSH 后再试'}</p>
+              ) : groups.map((provider) => (
+                <div key={provider.id} className="df-model-group">
+                  <span className="df-model-provider">{provider.name}</span>
+                  {provider.models.map((model) => {
+                    const active = choice?.provider === provider.id && choice.model === model.id
+                    return (
+                      <button
+                        key={`${provider.id}:${model.id}`}
+                        type="button"
+                        role="option"
+                        aria-selected={active}
+                        className="df-model-option"
+                        title={model.description ?? ''}
+                        onClick={() => {
+                          onChange({ provider: provider.id, model: model.id, reasoningEffort: model.defaultEffort ?? null })
+                          setOpen(null)
+                        }}
+                      >
+                        <span className="df-model-option-name">{model.name}</span>
+                        {active ? <span className="df-model-check">✓</span> : null}
+                      </button>
+                    )
+                  })}
+                </div>
+              ))}
+            </>
+          ) : (
+            <>
+              <button
+                type="button"
+                role="option"
+                aria-selected={choice?.reasoningEffort === null || choice?.reasoningEffort === undefined}
+                className="df-model-option"
+                onClick={() => {
+                  if (choice !== null) onChange({ ...choice, reasoningEffort: null })
+                  setOpen(null)
+                }}
+              >
+                <span>模型默认</span>
+                {choice?.reasoningEffort === null || choice?.reasoningEffort === undefined ? <span className="df-model-check">✓</span> : null}
+              </button>
+              {efforts.map((item) => (
+                <button
+                  key={item.id}
+                  type="button"
+                  role="option"
+                  aria-selected={choice?.reasoningEffort === item.id}
+                  className="df-model-option"
+                  title={item.description ?? ''}
+                  onClick={() => {
+                    if (choice !== null) onChange({ ...choice, reasoningEffort: item.id })
+                    setOpen(null)
+                  }}
+                >
+                  <span className="df-model-option-name">{item.name}</span>
+                  {choice?.reasoningEffort === item.id ? <span className="df-model-check">✓</span> : null}
+                </button>
+              ))}
+            </>
+          )}
+        </div>
+      )}
+    </div>
   )
 }
 
@@ -1217,8 +1476,28 @@ function removeTasks(
     .finally(() => setBusy(false))
 }
 
-function mergeTask(call: Call, sessionId: string | undefined, taskId: string, reload: (failure?: unknown) => unknown, show?: (text: string, tone?: string) => void) {
-  call('task-merge', { sessionId, taskId }).then((value) => {
+function controlTask(
+  call: Call,
+  sessionId: string | undefined,
+  taskId: string,
+  action: 'pause' | 'resume' | 'stop',
+  reload: (failure?: unknown) => unknown,
+  show?: (text: string, tone?: string) => void,
+  t?: Translate,
+) {
+  call(`task-${action}`, { sessionId, taskId }).then((value) => {
+    const result = value as { interrupt?: { warning?: string } } | undefined
+    const warning = result?.interrupt?.warning
+    if (warning) show?.(warning, 'error')
+    else show?.(t?.(`toast.${action}`) ?? action, 'info')
+    return reload()
+  }).catch((reason: unknown) => {
+    show?.(textOf(reason), 'error')
+    return reload(reason)
+  })
+}
+
+function mergeTask(call: Call, sessionId: string | undefined, taskId: string, reload: (failure?: unknown) => unknown, show?: (text: string, tone?: string) => void) {  call('task-merge', { sessionId, taskId }).then((value) => {
     const task = (value as Snapshot | undefined)?.tasks?.find((item) => item.id === taskId)
     if (task?.status === 'pending-merge') show?.(task.warnings?.join('，') || '没有合入', 'error')
     else show?.('已合入基线', 'info')
@@ -1241,8 +1520,8 @@ function shownStatus(task: TaskRow) {
 
 function matchFilter(filter: string, task: TaskRow) {
   if (filter === 'pending') return task.status === 'pending-acceptance'
-  if (filter === 'dev') return task.status === 'developing' || task.status === 'waiting' || task.status === 'failed'
-  if (filter === 'earlier') return task.status === 'accepted' || task.status === 'merged' || task.status === 'abandoned' || task.status === 'rejected'
+  if (filter === 'dev') return task.status === 'developing' || task.status === 'waiting' || task.status === 'paused' || task.status === 'failed'
+  if (filter === 'earlier') return task.status === 'accepted' || task.status === 'merged' || task.status === 'abandoned' || task.status === 'rejected' || task.status === 'stopped'
   return true
 }
 
@@ -1291,6 +1570,10 @@ function baseChips(task: TaskRow) {
   return chips
 }
 
+function baseBranchChips(task: TaskRow) {
+  return typeof task.base === 'string' && task.base !== '' ? [task.base] : []
+}
+
 function taskChips(task: TaskRow) {
   return Object.entries(task.slots ?? {}).map(([repo, slot]) => {
     if (slot.port) return `${repo} · ${slot.port}`
@@ -1315,18 +1598,38 @@ function taskFacts(task: TaskRow, t: Translate) {
   const batchLabel = zh ? '批次' : 'batch'
   const rows: { slot: string, detail: string }[] = []
   for (const [repo, slot] of Object.entries(task.slots ?? {})) {
-    if (slot.branch) rows.push({ slot: repo, detail: slot.branch })
+    const label = task.kind === 'dev' && slot.number ? `${repo}-${slot.number}` : repo
+    if (slot.branch || (task.kind === 'dev' && slot.number)) rows.push({ slot: label, detail: slot.branch ?? '' })
   }
   if (task.batchId && task.kind === 'dev') rows.push({ slot: batchLabel, detail: task.batchId })
+  if (task.status === 'paused' && task.pausedAt) rows.push({ slot: t('fact.paused'), detail: createdText(task.pausedAt) ?? '' })
+  if (task.status === 'stopped' && task.stoppedAt) rows.push({ slot: t('fact.stopped'), detail: createdText(task.stoppedAt) ?? '' })
   if (task.warnings?.length) rows.push({ slot: t('status.pending-merge'), detail: task.warnings.join('，') })
-  if (task.usage?.totalTokens) rows.push({ slot: 'token', detail: formatTokens(task.usage.totalTokens) })
+  rows.push(...usageRows(task.usage, t))
   return rows
+}
+
+/** Token usage facts for one task, batch, or schedule. */
+function usageRows(usage: TokenUsage | null | undefined, t: Translate) {
+  if (!usage?.totalTokens) return []
+  const parts = [
+    `${t('usage.total')} ${formatCount(usage.totalTokens)}`,
+    `${t('usage.input')} ${formatCount(usage.inputTokens)}`,
+    `${t('usage.output')} ${formatCount(usage.outputTokens)}`,
+  ]
+  const cache = (usage.cacheReadTokens ?? 0) + (usage.cacheWriteTokens ?? 0)
+  if (cache > 0) parts.push(`${t('usage.cache')} ${formatCount(cache)}`)
+  return [{ slot: t('fact.usage'), detail: parts.join(' · ') }]
 }
 
 function formatTokens(total: number) {
   if (total >= 10000) return `${Math.round(total / 1000)}k`
   if (total >= 1000) return `${(total / 1000).toFixed(1)}k`
   return String(total)
+}
+
+function formatCount(total: number) {
+  return String(total).replace(/\B(?=(\d{3})+(?!\d))/gu, ',')
 }
 
 function devDetail(data: Snapshot, repo: RepoRow, slot: DevSlot, t: Translate) {

@@ -4,7 +4,7 @@ export type Call = (
   endpoint: string,
   payload?: Record<string, unknown>,
   signal?: AbortSignal,
-) => Promise<Snapshot | Settings | undefined>
+) => Promise<Snapshot | Settings | ModelCatalog | undefined>
 
 export interface Counts {
   projects: number
@@ -84,6 +84,8 @@ export interface TaskRow {
   warnings?: string[]
   usage?: TokenUsage | null
   acceptance?: 'accepted' | null
+  pausedAt?: string | null
+  stoppedAt?: string | null
   createdAt?: string | null
   dependsOn?: { id: string, title: string, status: string, merged: boolean, branch?: string | null }[]
   selectable?: boolean
@@ -143,6 +145,7 @@ export interface ScheduleTask {
   agentStatus?: string
   dependsOn: { id: string, title: string, status: string, merged: boolean, branch?: string | null }[]
   slots: { repo: string, number?: string, branch?: string | null, target?: string | null, baseGroup?: string | null }[]
+  usage?: TokenUsage | null
 }
 
 export interface ScheduleRow {
@@ -175,9 +178,28 @@ export interface Snapshot {
   schedules?: ScheduleRow[]
 }
 
+/** 和 Composer 的模型选择一致：provider + model + 可选的推理等级。 */
+export interface ModelChoice {
+  provider: string
+  model: string
+  reasoningEffort?: string | null
+}
+
+export interface ModelCatalogModel {
+  id: string
+  name: string
+  description?: string
+  efforts?: { id: string, name: string, description?: string }[]
+  defaultEffort?: string | null
+}
+
+export interface ModelCatalog {
+  providers: { id: string, name: string, models: ModelCatalogModel[] }[]
+}
+
 export interface Settings {
-  devModel?: string
-  acceptModel?: string
+  devModel?: ModelChoice | string | null
+  acceptModel?: ModelChoice | string | null
   devDir?: string
   acceptDir?: string
   baseDir?: string

@@ -141,12 +141,13 @@ function ActionButton({
   variant = "outline",
   size = "sm",
   type = "button",
-  className
+  className,
+  ariaLabel
 }) {
   if (ui.Button) {
-    return /* @__PURE__ */ React.createElement(ui.Button, { type, className, variant, size, disabled, title, onClick }, children);
+    return /* @__PURE__ */ React.createElement(ui.Button, { type, className, variant, size, disabled, title, "aria-label": ariaLabel, onClick }, children);
   }
-  return /* @__PURE__ */ React.createElement("button", { type, className, disabled, title, onClick }, children);
+  return /* @__PURE__ */ React.createElement("button", { type, className, disabled, title, "aria-label": ariaLabel, onClick }, children);
 }
 
 // src/client/vendor/FileDiff.tsx
@@ -163,8 +164,8 @@ function all() {
 }
 
 // src/client/vendor/FileDiff.module.css
-register("/** Shared comparison layout, header, states, and numbered diff lines for previews and review tabs. */\n.df-root-ed1877 { --diff-empty-fill: color-mix(in srgb, var(--dsw-alias-interactive-bg-hover) 50%, transparent); display: flex; flex-direction: column; box-sizing: border-box; width: 100%; min-height: 0; color: var(--dsw-alias-label-primary); }\n.df-header-ed1877 { display: flex; flex: 0 0 auto; gap: 6px; align-items: center; box-sizing: border-box; height: 38px; padding: 0 6px 0 8px; border-bottom: 0.5px solid var(--dsw-alias-border-l3); }\n.df-status-ed1877 { display: flex; gap: 12px; align-items: center; margin: 0; padding: 16px; font-size: 13px; color: var(--dsw-alias-label-secondary); }\n.df-body-ed1877 { display: flex; flex: 1 1 auto; flex-direction: column; min-height: 0; overflow: auto; padding: 8px 0 16px; font: var(--dsw-font-markdown-code-block); }\n.df-columns-ed1877 { display: grid; flex: 1 1 auto; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); min-height: 0; }\n/* One intrinsic-width track keeps every hunk and row painted across the scrollable content. */\n.df-column-ed1877, .df-body-ed1877[data-review-view='unified']:not([data-review-wrap]) { display: grid; grid-template-columns: minmax(max-content, 100%); align-content: start; }\n.df-column-ed1877 { min-width: 0; overflow-x: scroll; overscroll-behavior: none; }\n.df-column-ed1877 + .df-column-ed1877 { border-left: 0.5px solid var(--dsw-alias-border-l3); }\n.df-sideLine-ed1877 { display: grid; grid-template-columns: 3.5em max-content; box-sizing: border-box; min-width: 100%; width: max-content; min-height: 22px; line-height: 22px; white-space: pre; }\n.df-note-ed1877 { margin: 0; padding: 4px 16px 8px; font: var(--dsw-font-xs-13); color: var(--dsw-alias-label-tertiary); }\n.df-hunk-ed1877 { margin-bottom: 8px; }\n.df-hunkHeader-ed1877 { padding: 4px 16px; color: var(--dsw-alias-label-tertiary); white-space: pre; }\n.df-line-ed1877 { display: grid; grid-template-columns: 3.5em 3.5em 1.2em minmax(0, 1fr); box-sizing: border-box; min-height: 22px; line-height: 22px; white-space: pre; }\n.df-splitLine-ed1877 { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); min-height: 22px; line-height: 22px; white-space: pre; }\n.df-cell-ed1877 { display: grid; grid-template-columns: 3.5em minmax(0, 1fr); box-sizing: border-box; min-width: 0; }\n.df-cell-ed1877 + .df-cell-ed1877 { border-left: 0.5px solid var(--dsw-alias-border-l3); }\n.df-number-ed1877 { padding-right: 8px; color: var(--dsw-alias-label-tertiary); text-align: right; user-select: none; }\n.df-sign-ed1877 { text-align: center; user-select: none; }\n.df-text-ed1877 { padding-right: 16px; }\n.df-body-ed1877[data-review-wrap] .df-line-ed1877, .df-body-ed1877[data-review-wrap] .df-splitLine-ed1877 { white-space: pre-wrap; }\n.df-body-ed1877[data-review-wrap] .df-text-ed1877 { overflow-wrap: anywhere; }\n.df-add-ed1877 { --diff-gutter-fill: var(--dsw-alias-file-diff-added-gutter); --diff-marker: var(--dsw-alias-file-diff-added-marker); background: var(--dsw-alias-file-diff-added-bg); }\n.df-del-ed1877 { --diff-gutter-fill: var(--dsw-alias-file-diff-deleted-gutter); --diff-marker: var(--dsw-alias-file-diff-deleted-marker); background: var(--dsw-alias-file-diff-deleted-bg); }\n.df-add-ed1877 .df-number-ed1877, .df-del-ed1877 .df-number-ed1877 { background: var(--diff-gutter-fill); color: var(--diff-marker); }\n.df-add-ed1877 .df-number-ed1877:first-child, .df-del-ed1877 .df-number-ed1877:first-child { box-shadow: inset 3px 0 0 var(--diff-marker); }\n.df-add-ed1877 .df-sign-ed1877, .df-del-ed1877 .df-sign-ed1877 { color: var(--diff-marker); }\n.df-context-ed1877 .df-text-ed1877 { color: var(--dsw-alias-label-secondary); }\n.df-empty-ed1877 { background: var(--diff-empty-fill); }\n");
-var FileDiff_default = { "root": "df-root-ed1877", "header": "df-header-ed1877", "status": "df-status-ed1877", "body": "df-body-ed1877", "columns": "df-columns-ed1877", "column": "df-column-ed1877", "sideLine": "df-sideLine-ed1877", "note": "df-note-ed1877", "hunk": "df-hunk-ed1877", "hunkHeader": "df-hunkHeader-ed1877", "line": "df-line-ed1877", "splitLine": "df-splitLine-ed1877", "cell": "df-cell-ed1877", "number": "df-number-ed1877", "sign": "df-sign-ed1877", "text": "df-text-ed1877", "add": "df-add-ed1877", "del": "df-del-ed1877", "context": "df-context-ed1877", "empty": "df-empty-ed1877" };
+register("/** Shared comparison layout, header, states, and numbered diff lines for previews and review tabs. */\n.df-root-683bfa { --diff-empty-fill: color-mix(in srgb, var(--dsw-alias-interactive-bg-hover) 50%, transparent); display: flex; flex-direction: column; box-sizing: border-box; width: 100%; min-height: 0; color: var(--dsw-alias-label-primary); }\n.df-header-683bfa { display: flex; flex: 0 0 auto; gap: 6px; align-items: center; box-sizing: border-box; height: 38px; padding: 0 6px 0 8px; border-bottom: 0.5px solid var(--dsw-alias-border-l3); }\n.df-status-683bfa { display: flex; gap: 12px; align-items: center; margin: 0; padding: 16px; font-size: 13px; color: var(--dsw-alias-label-secondary); }\n.df-body-683bfa { display: flex; flex: 1 1 auto; flex-direction: column; min-height: 0; overflow: auto; padding: 8px 0 16px; font: var(--dsw-font-markdown-code-block); }\n.df-columns-683bfa { display: grid; flex: 1 1 auto; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); min-height: 0; }\n/* One intrinsic-width track keeps every hunk and row painted across the scrollable content. */\n.df-column-683bfa, .df-body-683bfa[data-review-view='unified']:not([data-review-wrap]) { display: grid; grid-template-columns: minmax(max-content, 100%); align-content: start; }\n.df-column-683bfa { min-width: 0; overflow-x: scroll; overscroll-behavior: none; }\n.df-column-683bfa + .df-column-683bfa { border-left: 0.5px solid var(--dsw-alias-border-l3); }\n.df-sideLine-683bfa { display: grid; grid-template-columns: 3.5em max-content; box-sizing: border-box; min-width: 100%; width: max-content; min-height: 22px; line-height: 22px; white-space: pre; }\n.df-note-683bfa { margin: 0; padding: 4px 16px 8px; font: var(--dsw-font-xs-13); color: var(--dsw-alias-label-tertiary); }\n.df-hunk-683bfa { margin-bottom: 8px; }\n.df-hunkHeader-683bfa { padding: 4px 16px; color: var(--dsw-alias-label-tertiary); white-space: pre; }\n.df-line-683bfa { display: grid; grid-template-columns: 3.5em 3.5em 1.2em minmax(0, 1fr); box-sizing: border-box; min-height: 22px; line-height: 22px; white-space: pre; }\n.df-splitLine-683bfa { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); min-height: 22px; line-height: 22px; white-space: pre; }\n.df-cell-683bfa { display: grid; grid-template-columns: 3.5em minmax(0, 1fr); box-sizing: border-box; min-width: 0; }\n.df-cell-683bfa + .df-cell-683bfa { border-left: 0.5px solid var(--dsw-alias-border-l3); }\n.df-number-683bfa { padding-right: 8px; color: var(--dsw-alias-label-tertiary); text-align: right; user-select: none; }\n.df-sign-683bfa { text-align: center; user-select: none; }\n.df-text-683bfa { padding-right: 16px; }\n.df-body-683bfa[data-review-wrap] .df-line-683bfa, .df-body-683bfa[data-review-wrap] .df-splitLine-683bfa { white-space: pre-wrap; }\n.df-body-683bfa[data-review-wrap] .df-text-683bfa { overflow-wrap: anywhere; }\n.df-add-683bfa { --diff-gutter-fill: var(--dsw-alias-file-diff-added-gutter); --diff-marker: var(--dsw-alias-file-diff-added-marker); background: var(--dsw-alias-file-diff-added-bg); }\n.df-del-683bfa { --diff-gutter-fill: var(--dsw-alias-file-diff-deleted-gutter); --diff-marker: var(--dsw-alias-file-diff-deleted-marker); background: var(--dsw-alias-file-diff-deleted-bg); }\n.df-add-683bfa .df-number-683bfa, .df-del-683bfa .df-number-683bfa { background: var(--diff-gutter-fill); color: var(--diff-marker); }\n.df-add-683bfa .df-number-683bfa:first-child, .df-del-683bfa .df-number-683bfa:first-child { box-shadow: inset 3px 0 0 var(--diff-marker); }\n.df-add-683bfa .df-sign-683bfa, .df-del-683bfa .df-sign-683bfa { color: var(--diff-marker); }\n.df-context-683bfa .df-text-683bfa { color: var(--dsw-alias-label-secondary); }\n.df-empty-683bfa { background: var(--diff-empty-fill); }\n");
+var FileDiff_default = { "root": "df-root-683bfa", "header": "df-header-683bfa", "status": "df-status-683bfa", "body": "df-body-683bfa", "columns": "df-columns-683bfa", "column": "df-column-683bfa", "sideLine": "df-sideLine-683bfa", "note": "df-note-683bfa", "hunk": "df-hunk-683bfa", "hunkHeader": "df-hunkHeader-683bfa", "line": "df-line-683bfa", "splitLine": "df-splitLine-683bfa", "cell": "df-cell-683bfa", "number": "df-number-683bfa", "sign": "df-sign-683bfa", "text": "df-text-683bfa", "add": "df-add-683bfa", "del": "df-del-683bfa", "context": "df-context-683bfa", "empty": "df-empty-683bfa" };
 
 // src/client/vendor/FileDiff.tsx
 var MAX_RENDERED_LINES = 5e3;
@@ -478,9 +479,19 @@ var zh = {
   "action.merge": "\u5408\u5165",
   "action.delete": "\u5220\u9664",
   "action.deleting": "\u6B63\u5728\u5220\u9664",
+  "action.pause": "\u6682\u505C",
+  "action.resume": "\u7EE7\u7EED",
+  "action.stop": "\u505C\u6B62",
+  "hint.pause": "\u6682\u505C\u4F1A\u4E2D\u65AD\u5F00\u53D1\u5B50\u4EE3\u7406\uFF0C\u4F46\u4FDD\u7559\u5DE5\u4F5C\u6811\u548C\u69FD\u4F4D",
+  "hint.resume": "\u7EE7\u7EED\u540E\u7531\u4E3B\u4F1A\u8BDD\u91CD\u65B0\u6D3E\u53D1\u5B50\u4EE3\u7406",
+  "hint.stop": "\u505C\u6B62\u4F1A\u4E2D\u65AD\u5B50\u4EE3\u7406\u3001\u91CA\u653E\u69FD\u4F4D\u5E76\u7ED3\u675F\u4EFB\u52A1\uFF1B\u4EFB\u52A1\u5206\u652F\u4FDD\u7559",
+  "toast.pause": "\u5DF2\u6682\u505C\u5F00\u53D1\u4EFB\u52A1",
+  "toast.resume": "\u5DF2\u7EE7\u7EED\u5F00\u53D1\u4EFB\u52A1",
+  "toast.stop": "\u5DF2\u505C\u6B62\u5F00\u53D1\u4EFB\u52A1",
   "hint.deleteSingle": "\u5220\u9664\u4EFB\u52A1\u5E76\u5220\u9664\u4EFB\u52A1\u5206\u652F\uFF0C\u65E0\u6CD5\u6062\u590D",
   "hint.deleteTasks": "\u5220\u9664 {count} \u4E2A\u4EFB\u52A1\uFF0C\u540C\u65F6\u5220\u9664\u5BF9\u5E94\u4EFB\u52A1\u5206\u652F\uFF0C\u65E0\u6CD5\u6062\u590D",
   "hint.deleteBlocked": "\u52FE\u9009\u91CC\u6709\u4E0D\u53EF\u5220\u9664\u7684\u4EFB\u52A1\uFF1A\u53EA\u6709\u5DF2\u7ED3\u675F\u4E14\u6CA1\u6709\u88AB\u5176\u5B83\u4EFB\u52A1\u4F9D\u8D56\u7684\u4EFB\u52A1\u53EF\u4EE5\u5220\u9664",
+  "hint.notSelectable": "\u8BE5\u4EFB\u52A1\u5F53\u524D\u4E0D\u80FD\u9009",
   "toast.deletedTasks": "\u5DF2\u5220\u9664 {count} \u4E2A\u4EFB\u52A1",
   "toast.deleteWarnings": "\u5DF2\u5220\u9664 {count} \u4E2A\u4EFB\u52A1\uFF0C\u4F46\u8FD9\u4E9B\u5206\u652F\u6CA1\u5220\u6389\uFF1A{warnings}",
   "action.detail": "\u8BE6\u60C5",
@@ -517,7 +528,7 @@ var zh = {
   "action.init": "\u521D\u59CB\u5316",
   "empty.init": "\u5C1A\u672A\u521D\u59CB\u5316\u3002\u521D\u59CB\u5316\u540E\u624D\u4F1A\u626B\u63CF\u4ED3\u5E93\u3002",
   "empty.root": "\u8BF7\u5728\u5DE5\u4F5C\u533A\u6839\u6253\u5F00\u4F1A\u8BDD",
-  "settings.summary": "\u5F00\u53D1\u4E0E\u9A8C\u6536\u7684\u6A21\u578B\u3001\u76EE\u5F55\u548C\u5206\u652F",
+  "settings.summary": "\u5F00\u53D1\u4E0E\u9A8C\u6536\u7684\u6A21\u578B\u3001\u63A8\u7406\u7B49\u7EA7\u3001\u76EE\u5F55\u548C\u5206\u652F",
   "metric.projects": "\u9879\u76EE",
   "metric.agents": "\u6D3B\u8DC3\u5B50\u4EE3\u7406",
   "metric.tasks": "\u6D3B\u8DC3\u4EFB\u52A1",
@@ -535,6 +546,13 @@ var zh = {
   "fact.state": "\u72B6\u6001",
   "fact.notMerged": "\u672A\u5E76\u5165",
   "fact.warning": "\u8B66\u544A",
+  "fact.usage": "\u7528\u91CF",
+  "fact.paused": "\u6682\u505C\u4E8E",
+  "fact.stopped": "\u505C\u6B62\u4E8E",
+  "usage.total": "\u5171",
+  "usage.input": "\u8F93\u5165",
+  "usage.output": "\u8F93\u51FA",
+  "usage.cache": "\u7F13\u5B58",
   "section.projects": "\u9879\u76EE",
   "section.bases": "\u57FA\u7EBF",
   "empty.bases": "\u8FD8\u6CA1\u6709\u57FA\u7EBF",
@@ -583,6 +601,8 @@ var zh = {
   "status.scheduling": "\u8C03\u5EA6\u4E2D",
   "status.dispatched": "\u5DF2\u8C03\u5EA6",
   "status.failed": "\u5931\u8D25",
+  "status.paused": "\u5DF2\u6682\u505C",
+  "status.stopped": "\u5DF2\u505C\u6B62",
   "status.waiting": "\u7B49\u5F85",
   "status.pending-acceptance": "\u5F85\u9A8C\u6536",
   "status.accepted": "\u5DF2\u5B8C\u6210",
@@ -617,9 +637,19 @@ var en = {
   "action.merge": "Merge",
   "action.delete": "Delete",
   "action.deleting": "Deleting",
+  "action.pause": "Pause",
+  "action.resume": "Resume",
+  "action.stop": "Stop",
+  "hint.pause": "Pausing interrupts the dev subagent but keeps the worktree and slot",
+  "hint.resume": "Resuming lets the lead dispatch a subagent again",
+  "hint.stop": "Stopping interrupts the subagent, releases the slot, and ends the task; the task branch is kept",
+  "toast.pause": "Dev task paused",
+  "toast.resume": "Dev task resumed",
+  "toast.stop": "Dev task stopped",
   "hint.deleteSingle": "Delete the task and its task branch; this cannot be undone",
   "hint.deleteTasks": "Delete {count} tasks and their task branches; this cannot be undone",
   "hint.deleteBlocked": "Selection contains tasks that cannot be deleted; only finished tasks without other dependents can be deleted",
+  "hint.notSelectable": "This task cannot be selected now",
   "toast.deletedTasks": "Deleted {count} tasks",
   "toast.deleteWarnings": "Deleted {count} tasks, but these branches were not removed: {warnings}",
   "action.detail": "Details",
@@ -656,7 +686,7 @@ var en = {
   "action.init": "Initialize",
   "empty.init": "Not initialized. Repositories are scanned after initialization.",
   "empty.root": "Open the session at the workspace root",
-  "settings.summary": "Models, directories, and branch names",
+  "settings.summary": "Models, reasoning effort, directories, and branch names",
   "metric.projects": "Projects",
   "metric.agents": "Active agents",
   "metric.tasks": "Active tasks",
@@ -674,6 +704,13 @@ var en = {
   "fact.state": "State",
   "fact.notMerged": "Not merged",
   "fact.warning": "Warning",
+  "fact.usage": "Usage",
+  "fact.paused": "Paused at",
+  "fact.stopped": "Stopped at",
+  "usage.total": "total",
+  "usage.input": "in",
+  "usage.output": "out",
+  "usage.cache": "cache",
   "section.projects": "Projects",
   "section.bases": "Baselines",
   "empty.bases": "No baselines yet",
@@ -722,6 +759,8 @@ var en = {
   "status.scheduling": "Scheduling",
   "status.dispatched": "Dispatched",
   "status.failed": "Failed",
+  "status.paused": "Paused",
+  "status.stopped": "Stopped",
   "status.waiting": "Waiting",
   "status.pending-acceptance": "Pending",
   "status.accepted": "Done",
@@ -762,6 +801,12 @@ var panelSheet = `
 .df-toolbar > :first-child { flex: 1; min-width: 0; }
 .df-filters, .df-rowline { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
 .df-view > .df-filters { flex: none; padding: 8px 16px 6px; }
+.df-pane-tools { display: flex; align-items: flex-start; gap: 8px; padding: 8px 16px 6px; flex: none; width: 100%; box-sizing: border-box; }
+.df-pane-tools .df-filters { flex: 1 1 0; min-width: 0; padding: 0; }
+.df-pane-actions { display: flex; align-items: center; gap: 4px; flex: none; }
+.df-icon-btn { position: relative; display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; padding: 0; }
+.df-icon-btn-active { color: var(--dsw-alias-state-business-primary); background: var(--dsw-alias-interactive-bg-hover); }
+.df-icon-badge { position: absolute; top: -4px; right: -4px; min-width: 14px; height: 14px; padding: 0 3px; border-radius: 7px; background: var(--dsw-alias-state-business-primary); color: #fff; font-size: 9px; line-height: 14px; text-align: center; }
 .df-view > .df-foot { flex: none; position: static; padding: 10px 16px 8px; }
 
 /* \u5206\u533A\u6807\u9898 */
@@ -1039,8 +1084,17 @@ var panelSheet = `
 
 /* \u5E95\u90E8\u6279\u91CF\u64CD\u4F5C */
 .df-foot { display: flex; flex-direction: column; gap: 6px; padding: 10px 0 4px; }
+.df-foot .df-cancel { width: auto; align-self: center; }
 .df-go { width: 100%; }
 .df-hint { margin: 0; text-align: center; color: var(--dsw-alias-label-tertiary); font-size: 11px; line-height: 17px; }
+
+/* \u8BBE\u7F6E\u8868\u5355\u91CC\u7684\u8BF4\u660E\u6587\u5B57\uFF08\u4E0D\u662F\u8F93\u5165\u6846\u4E0A\u7684\u5F00\u5173\uFF09 */
+.df-form-note {
+  margin: 0;
+  color: var(--dsw-alias-label-tertiary);
+  font-size: 12px;
+  line-height: 18px;
+}
 
 /* \u8F93\u5165\u6846\u4E0A\u7684\u5F00\u5173 */
 .df-note {
@@ -1086,7 +1140,70 @@ var panelSheet = `
   outline: 1px solid var(--dsw-alias-state-business-primary);
   outline-offset: 1px;
 }
+/* \u6A21\u578B\u9009\u62E9\uFF1A\u6A21\u578B + \u63A8\u7406\u7B49\u7EA7\u4E24\u884C\uFF0C\u548C Composer \u7684 ModelSelect \u540C\u6784 */
+.df-model-field { position: relative; }
+.df-model-trigger {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  height: 30px;
+  padding: 0 10px;
+  box-sizing: border-box;
+  border: 0.5px solid var(--dsw-alias-border-l4);
+  border-radius: var(--dsw-radius-sm);
+  background: var(--dsw-alias-bg-base);
+  color: var(--dsw-alias-label-primary);
+  font: inherit;
+  font-size: 12px;
+  text-align: left;
+  cursor: pointer;
+}
+.df-model-trigger:hover { background: var(--dsw-alias-interactive-bg-hover, rgba(38, 49, 72, 0.06)); }
+.df-model-value { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.df-model-hint { flex: none; color: var(--dsw-alias-label-tertiary); font-size: 11px; }
+.df-model-pop {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: calc(100% + 4px);
+  z-index: 60;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  max-height: 260px;
+  overflow: auto;
+  padding: 4px;
+  box-sizing: border-box;
+  border: 0.5px solid var(--dsw-alias-border-l3);
+  border-radius: var(--dsw-radius-md);
+  background: var(--dsw-alias-bg-layer-1, var(--dsw-alias-bg-base));
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.14);
+}
+.df-model-group { display: flex; flex-direction: column; gap: 2px; }
+.df-model-provider { padding: 6px 8px 2px; color: var(--dsw-alias-label-tertiary); font-size: 10px; letter-spacing: 0.04em; text-transform: uppercase; }
+.df-model-option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 6px 8px;
+  border: 0;
+  border-radius: var(--dsw-radius-sm);
+  background: transparent;
+  color: var(--dsw-alias-label-primary);
+  font: inherit;
+  font-size: 12px;
+  text-align: left;
+  cursor: pointer;
+}
+.df-model-option:hover { background: var(--dsw-alias-interactive-bg-hover, rgba(38, 49, 72, 0.06)); }
+.df-model-option[aria-selected='true'] { background: color-mix(in srgb, var(--dsw-alias-state-business-primary) 10%, transparent); }
+.df-model-option-name { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.df-model-check { flex: none; color: var(--dsw-alias-state-business-primary); }
+.df-model-error { margin: 0; padding: 8px; color: var(--dsw-alias-state-error-primary); font-size: 11px; line-height: 16px; }
 .df-check { width: 14px; height: 14px; margin: 0; accent-color: var(--dsw-alias-state-business-primary); }
+.df-check:disabled { opacity: 0.4; cursor: not-allowed; }
 
 /* \u53F3\u4E0A\u89D2\u63D0\u793A */
 .df-toasts { position: fixed; top: 16px; right: 16px; z-index: 1300; display: flex; flex-direction: column; align-items: flex-end; gap: 8px; pointer-events: none; }
@@ -1254,6 +1371,7 @@ function Tasks({
   const [opened, setOpened] = useState2({});
   const [scheduleOpen, setScheduleOpen] = useState2({});
   const [pickedBatches, setPickedBatches] = useState2([]);
+  const [selectionMode, setSelectionMode] = useState2(null);
   const [removing, setRemoving] = useState2(false);
   const [details, setDetails] = useState2({});
   const detailProps = (id) => ({
@@ -1274,11 +1392,12 @@ function Tasks({
   const pickedDev = data.tasks.filter((task) => task.kind !== "accept" && picked.includes(task.id));
   const acceptSelected = pickedDev.filter((task) => task.selectable === true);
   const deleteSelected = pickedDev.filter((task) => task.deletable === true);
-  const acceptBlocked = pickedDev.filter((task) => task.selectable !== true);
   const deleteBlocked = pickedDev.filter((task) => task.deletable !== true);
-  const showAccept = pickedDev.length > 0 && acceptBlocked.length === 0;
-  const showDelete = deleteSelected.length > 0;
   const deleteHint = t("hint.deleteTasks").replace("{count}", String(deleteSelected.length));
+  const chooseMode = (next) => {
+    setSelectionMode((current) => current === next ? null : next);
+    setPicked([]);
+  };
   const deleteReason = deleteBlocked.length === 0 ? "" : `${t("hint.deleteBlocked")}\uFF1A${deleteBlocked.map((task) => task.title).join("\u3001")}`;
   const filters = [
     ["all", t("filter.all")],
@@ -1289,7 +1408,10 @@ function Tasks({
   const launch = () => {
     if (busy || reason !== "") return;
     setBusy(true);
-    start(call, sessionId, acceptSelected.map((task) => task.id), setPicked, reload).then(() => show(t("toast.started"), "info")).catch(() => void 0).finally(() => setBusy(false));
+    start(call, sessionId, acceptSelected.map((task) => task.id), setPicked, reload).then(() => {
+      setSelectionMode(null);
+      show(t("toast.started"), "info");
+    }).catch(() => void 0).finally(() => setBusy(false));
   };
   const removeOne = (id) => {
     void removeTasks(call, sessionId, [id], picked, setPicked, setRemoving, reload, show, t);
@@ -1393,11 +1515,35 @@ function Tasks({
       /* @__PURE__ */ React.createElement("span", { className: "df-view-chev", "aria-hidden": "true" }, /* @__PURE__ */ React.createElement(Chevron, null)),
       title,
       /* @__PURE__ */ React.createElement("span", { className: "df-view-count" }, count)
-    ), id === "schedule" && open.schedule ? /* @__PURE__ */ React.createElement("div", { className: "df-view-body" }, schedules.length === 0 ? /* @__PURE__ */ React.createElement("div", { className: "df-empty" }, /* @__PURE__ */ React.createElement("p", null, t("section.emptySchedule"))) : schedules.map((schedule) => /* @__PURE__ */ React.createElement(ScheduleItem, { key: schedule.id, ui, t, schedule, open: scheduleOpen[schedule.id] === true, onToggle: () => setScheduleOpen({ ...scheduleOpen, [schedule.id]: scheduleOpen[schedule.id] !== true }) }))) : null, id === "dev" && open.dev ? /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("div", { className: "df-filters" }, filters.map(([value, label]) => {
+    ), id === "schedule" && open.schedule ? /* @__PURE__ */ React.createElement("div", { className: "df-view-body" }, schedules.length === 0 ? /* @__PURE__ */ React.createElement("div", { className: "df-empty" }, /* @__PURE__ */ React.createElement("p", null, t("section.emptySchedule"))) : schedules.map((schedule) => /* @__PURE__ */ React.createElement(ScheduleItem, { key: schedule.id, ui, t, schedule, open: scheduleOpen[schedule.id] === true, onToggle: () => setScheduleOpen({ ...scheduleOpen, [schedule.id]: scheduleOpen[schedule.id] !== true }) }))) : null, id === "dev" && open.dev ? /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("div", { className: "df-pane-tools" }, /* @__PURE__ */ React.createElement("div", { className: "df-filters" }, filters.map(([value, label]) => {
       const count2 = devAll.filter((task) => matchFilter(value, task)).length;
       const text = `${label} ${count2}`;
       return ui.Pill ? /* @__PURE__ */ React.createElement(ui.Pill, { key: value, active: filter === value, onClick: () => setFilter(value) }, text) : /* @__PURE__ */ React.createElement("button", { key: value, type: "button", "aria-pressed": filter === value, onClick: () => setFilter(value) }, text);
-    })), /* @__PURE__ */ React.createElement("div", { className: "df-view-body" }, /* @__PURE__ */ React.createElement("div", { className: "df-card" }, devRows.length === 0 ? /* @__PURE__ */ React.createElement("div", { className: "df-empty" }, /* @__PURE__ */ React.createElement("p", null, t("section.emptyDev"))) : devRows.map((task) => /* @__PURE__ */ React.createElement(DevTaskItem, { key: task.id, ui, t, task, picked, setPicked, sessionId, call, reload, show, onDeleteTask: removeOne, ...detailProps(task.id), onOpenDiff: (file, index) => openDiff?.(task.id, task.title, index) })))), showAccept || showDelete ? /* @__PURE__ */ React.createElement("div", { className: "df-foot" }, showAccept ? /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement(ActionButton, { ui, className: "df-go", variant: "primary", disabled: busy || reason !== "", title: reason, onClick: launch }, busy ? t("action.working") : t("action.accept")), /* @__PURE__ */ React.createElement("p", { className: "df-hint" }, reason !== "" ? reason : `${t("hint.order")}\uFF1A${acceptSelected.map((task) => task.title).join(" \u2192 ")}`)) : null, showDelete ? /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement(ActionButton, { ui, className: "df-go", disabled: removing || deleteReason !== "", title: deleteReason || deleteHint, onClick: removeSelected }, removing ? t("action.deleting") : t("action.delete")), /* @__PURE__ */ React.createElement("p", { className: "df-hint" }, deleteReason !== "" ? deleteReason : deleteHint)) : null) : null) : null, id === "accept" && open.accept ? /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("div", { className: "df-view-body" }, /* @__PURE__ */ React.createElement("div", { className: "df-card" }, acceptRows.length === 0 ? /* @__PURE__ */ React.createElement("div", { className: "df-empty" }, /* @__PURE__ */ React.createElement("p", null, t("section.emptyAccept"))) : acceptRows.map((batch) => {
+    })), /* @__PURE__ */ React.createElement("div", { className: "df-pane-actions" }, /* @__PURE__ */ React.createElement(
+      ActionButton,
+      {
+        ui,
+        variant: "ghost",
+        className: `df-icon-btn${selectionMode === "delete" ? " df-icon-btn-active" : ""}`,
+        title: t("action.delete"),
+        ariaLabel: t("action.delete"),
+        onClick: () => chooseMode("delete")
+      },
+      /* @__PURE__ */ React.createElement(TrashIcon, null),
+      deleteSelected.length > 0 ? /* @__PURE__ */ React.createElement("span", { className: "df-icon-badge" }, deleteSelected.length) : null
+    ), /* @__PURE__ */ React.createElement(
+      ActionButton,
+      {
+        ui,
+        variant: "ghost",
+        className: `df-icon-btn${selectionMode === "accept" ? " df-icon-btn-active" : ""}`,
+        title: t("action.accept"),
+        ariaLabel: t("action.accept"),
+        onClick: () => chooseMode("accept")
+      },
+      /* @__PURE__ */ React.createElement(AcceptIcon, null),
+      acceptSelected.length > 0 ? /* @__PURE__ */ React.createElement("span", { className: "df-icon-badge" }, acceptSelected.length) : null
+    ))), /* @__PURE__ */ React.createElement("div", { className: "df-view-body" }, /* @__PURE__ */ React.createElement("div", { className: "df-card" }, devRows.length === 0 ? /* @__PURE__ */ React.createElement("div", { className: "df-empty" }, /* @__PURE__ */ React.createElement("p", null, t("section.emptyDev"))) : devRows.map((task) => /* @__PURE__ */ React.createElement(DevTaskItem, { key: task.id, ui, t, task, picked, setPicked, sessionId, call, reload, show, selectionMode, onDeleteTask: removeOne, ...detailProps(task.id), onOpenDiff: (file, index) => openDiff?.(task.id, task.title, index) })))), selectionMode !== null ? /* @__PURE__ */ React.createElement("div", { className: "df-foot" }, selectionMode === "accept" ? /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement(ActionButton, { ui, className: "df-go", variant: "primary", disabled: busy || reason !== "" || acceptSelected.length === 0, title: reason, onClick: launch }, busy ? t("action.working") : `${t("action.accept")} (${acceptSelected.length})`), /* @__PURE__ */ React.createElement("p", { className: "df-hint" }, reason !== "" ? reason : `${t("hint.order")}\uFF1A${acceptSelected.map((task) => task.title).join(" \u2192 ")}`)) : /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement(ActionButton, { ui, className: "df-go", disabled: removing || deleteReason !== "" || deleteSelected.length === 0, title: deleteReason || deleteHint, onClick: removeSelected }, removing ? t("action.deleting") : `${t("action.delete")} (${deleteSelected.length})`), /* @__PURE__ */ React.createElement("p", { className: "df-hint" }, deleteReason !== "" ? deleteReason : deleteHint)), /* @__PURE__ */ React.createElement(ActionButton, { ui, variant: "ghost", className: "df-cancel", onClick: () => chooseMode(selectionMode) }, t("action.cancel"))) : null) : null, id === "accept" && open.accept ? /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("div", { className: "df-view-body" }, /* @__PURE__ */ React.createElement("div", { className: "df-card" }, acceptRows.length === 0 ? /* @__PURE__ */ React.createElement("div", { className: "df-empty" }, /* @__PURE__ */ React.createElement("p", null, t("section.emptyAccept"))) : acceptRows.map((batch) => {
       const children = containedTasks(data, batch);
       const open2 = children.length > 0 && (opened[batch.id] ?? batch.status === "accepting");
       const deletable = batch.status !== "accepting";
@@ -1455,12 +1601,18 @@ function savePaneLayout(layout) {
 function toneOf(status) {
   if (status === "merged" || status === "accepted" || status === "dispatched") return "success";
   if (status === "failed" || status === "rejected") return "error";
-  if (status === "pending-merge" || status === "waiting" || status === "pending-acceptance" || status === "accepting" || status === "awaiting-agent") return "warn";
+  if (status === "pending-merge" || status === "waiting" || status === "pending-acceptance" || status === "accepting" || status === "awaiting-agent" || status === "paused") return "warn";
   if (status === "developing" || status === "running" || status === "scheduling") return "info";
   return "neutral";
 }
 function Chevron() {
   return /* @__PURE__ */ React.createElement("svg", { width: "10", height: "10", viewBox: "0 0 10 10", "aria-hidden": "true", focusable: "false" }, /* @__PURE__ */ React.createElement("path", { d: "M1.6 3.6 L5 7 L8.4 3.6", fill: "none", stroke: "currentColor", strokeWidth: "1.4", strokeLinecap: "round", strokeLinejoin: "round" }));
+}
+function TrashIcon() {
+  return /* @__PURE__ */ React.createElement("svg", { width: "14", height: "14", viewBox: "0 0 16 16", "aria-hidden": "true", focusable: "false" }, /* @__PURE__ */ React.createElement("path", { d: "M2.5 4.2h11M6 4.2V2.6h4v1.6M4.1 4.2l.7 9.2h6.4l.7-9.2M6.6 6.6v4.6M9.4 6.6v4.6", fill: "none", stroke: "currentColor", strokeWidth: "1.2", strokeLinecap: "round", strokeLinejoin: "round" }));
+}
+function AcceptIcon() {
+  return /* @__PURE__ */ React.createElement("svg", { width: "14", height: "14", viewBox: "0 0 16 16", "aria-hidden": "true", focusable: "false" }, /* @__PURE__ */ React.createElement("circle", { cx: "8", cy: "8", r: "5.7", fill: "none", stroke: "currentColor", strokeWidth: "1.2" }), /* @__PURE__ */ React.createElement("path", { d: "M5.1 8.1l1.9 1.9 3.9-4", fill: "none", stroke: "currentColor", strokeWidth: "1.3", strokeLinecap: "round", strokeLinejoin: "round" }));
 }
 function TreeItem({
   kind,
@@ -1510,7 +1662,8 @@ function ScheduleItem({ ui, t, schedule, open, onToggle, depth = 0 }) {
       actions: /* @__PURE__ */ React.createElement(StatusTag, { ui, t, status: schedule.status }),
       facts: [
         ...schedule.base ? [{ slot: t("page.bases"), detail: schedule.baseGroup ? `#${schedule.baseGroup} \xB7 ${schedule.base}` : schedule.base }] : [],
-        ...(schedule.warnings ?? []).map((warning) => ({ slot: t("fact.warning"), detail: warning }))
+        ...(schedule.warnings ?? []).map((warning) => ({ slot: t("fact.warning"), detail: warning })),
+        ...usageRows(schedule.usage, t)
       ],
       expandable: true,
       expanded: open,
@@ -1527,7 +1680,8 @@ function ScheduleItem({ ui, t, schedule, open, onToggle, depth = 0 }) {
         ...task.slots.map((slot) => ({
           slot: "\u69FD\u4F4D",
           detail: `${slot.number ? `${slot.repo}-${slot.number}` : slot.repo}${slot.branch ? ` \xB7 ${slot.branch}` : ""}`
-        }))
+        })),
+        ...usageRows(task.usage, t)
       ];
       return /* @__PURE__ */ React.createElement(
         TreeItem,
@@ -1557,6 +1711,7 @@ function DevTaskItem({
   call,
   reload,
   show,
+  selectionMode = null,
   detailsOpen = false,
   onToggleDetails,
   onOpenDiff,
@@ -1582,23 +1737,35 @@ function DevTaskItem({
   const openDetails = onToggleDetails === void 0 ? selfOpen : detailsOpen;
   const toggleDetails = onToggleDetails ?? (() => setSelfOpen(!selfOpen));
   const expandable = facts.length > 0 || deps.length > 0;
-  const pickable = !nested && (task.selectable === true || task.deletable === true);
-  const leading = pickable ? /* @__PURE__ */ React.createElement("input", { className: "df-check", type: "checkbox", checked: picked.includes(task.id), onClick: (event) => event.stopPropagation(), onChange: () => setPicked(togglePick(picked, task.id)) }) : void 0;
+  const selectable = selectionMode === "accept" ? task.selectable === true : task.deletable === true;
+  const checked = selectable && picked.includes(task.id);
+  const leading = !nested && selectionMode !== null ? /* @__PURE__ */ React.createElement("input", { className: "df-check", type: "checkbox", checked, disabled: !selectable, title: selectable ? void 0 : t("hint.notSelectable"), onClick: (event) => event.stopPropagation(), onChange: () => {
+    if (selectable) setPicked(togglePick(picked, task.id));
+  } }) : void 0;
   return /* @__PURE__ */ React.createElement(
     TreeItem,
     {
       kind: "dev",
       title: task.title,
-      chips: [...baseChips(task), ...taskBranchChips(task), ...taskChips(task)],
+      chips: task.kind === "accept" ? [...baseChips(task), ...taskBranchChips(task), ...taskChips(task)] : [...baseBranchChips(task), ...taskBranchChips(task)],
       time: createdText(task.createdAt),
       leading,
-      actions: /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement(StatusTag, { ui, t, status: shownStatus(task) }), task.status === "pending-merge" && task.kind !== "accept" && call && reload ? /* @__PURE__ */ React.createElement(ActionButton, { ui, onClick: (event) => {
+      actions: /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement(StatusTag, { ui, t, status: shownStatus(task) }), !nested && call && reload && task.kind !== "accept" ? /* @__PURE__ */ React.createElement(React.Fragment, null, task.status === "developing" ? /* @__PURE__ */ React.createElement(ActionButton, { ui, title: t("hint.pause"), onClick: (event) => {
+        event.stopPropagation();
+        controlTask(call, sessionId, task.id, "pause", reload, show, t);
+      } }, t("action.pause")) : null, task.status === "paused" ? /* @__PURE__ */ React.createElement(ActionButton, { ui, title: t("hint.resume"), onClick: (event) => {
+        event.stopPropagation();
+        controlTask(call, sessionId, task.id, "resume", reload, show, t);
+      } }, t("action.resume")) : null, task.status === "developing" || task.status === "paused" || task.status === "waiting" || task.status === "failed" ? /* @__PURE__ */ React.createElement(ActionButton, { ui, title: t("hint.stop"), onClick: (event) => {
+        event.stopPropagation();
+        controlTask(call, sessionId, task.id, "stop", reload, show, t);
+      } }, t("action.stop")) : null) : null, task.status === "pending-merge" && task.kind !== "accept" && call && reload ? /* @__PURE__ */ React.createElement(ActionButton, { ui, onClick: (event) => {
         event.stopPropagation();
         mergeTask(call, sessionId, task.id, reload, show);
-      } }, t("action.merge")) : null, task.deletable && !nested && call && reload && onDeleteTask ? /* @__PURE__ */ React.createElement(ActionButton, { ui, title: t("hint.deleteSingle"), onClick: (event) => {
+      } }, t("action.merge")) : null, task.deletable && !nested && call && reload && onDeleteTask ? /* @__PURE__ */ React.createElement(ActionButton, { ui, className: "df-icon-btn", title: t("hint.deleteSingle"), ariaLabel: t("hint.deleteSingle"), onClick: (event) => {
         event.stopPropagation();
         onDeleteTask(task.id);
-      } }, t("action.delete")) : null, nested && reviewing && task.acceptance !== "accepted" && batchId && call && reload ? /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement(ActionButton, { ui, onClick: (event) => {
+      } }, /* @__PURE__ */ React.createElement(TrashIcon, null)) : null, nested && reviewing && task.acceptance !== "accepted" && batchId && call && reload ? /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement(ActionButton, { ui, onClick: (event) => {
         event.stopPropagation();
         finishTask(call, sessionId, batchId, task.id, "accepted", reload);
       } }, t("action.pass")), /* @__PURE__ */ React.createElement(ActionButton, { ui, onClick: (event) => {
@@ -1609,7 +1776,7 @@ function DevTaskItem({
       expandable,
       expanded: openDetails,
       onToggle: expandable ? toggle : void 0,
-      onClick: pickable ? () => setPicked(togglePick(picked, task.id)) : void 0,
+      onClick: !nested && selectionMode !== null && selectable ? () => setPicked(togglePick(picked, task.id)) : void 0,
       depth,
       tone: toneOf(shownStatus(task))
     },
@@ -1669,6 +1836,7 @@ function AcceptTaskItem({
       time: createdText(batch.createdAt),
       leading,
       actions: /* @__PURE__ */ React.createElement(StatusTag, { ui, t, status: shownStatus(batch) }),
+      facts: usageRows(batch.usage, t),
       expandable: onToggle !== void 0,
       expanded: open,
       onToggle,
@@ -1823,18 +1991,28 @@ function StatusTag({ ui, t, status }) {
 }
 function SettingsForm({ ui, view, call, t }) {
   const [draft, setDraft] = useState2(null);
+  const [catalog, setCatalog] = useState2(null);
+  const [catalogError, setCatalogError] = useState2("");
+  const [routeSession, setRouteSession] = useState2(void 0);
   const [message, setMessage] = useState2("");
   useEffect2(() => {
     if (view === "summary") return void 0;
     const controller = new AbortController();
     call("settings-get", {}, controller.signal).then((value) => setDraft(value)).catch((reason) => setMessage(reason instanceof Error ? reason.message : String(reason)));
+    call("subagent-routes", {}, controller.signal).then((value) => {
+      const routes = value;
+      if (routes.providers?.some((provider) => provider.models.length > 0)) {
+        setCatalog(routes);
+        setRouteSession(routes.sessionId ?? null);
+        return void 0;
+      }
+      return call("models-list", {}, controller.signal).then((fallback) => setCatalog(fallback));
+    }).catch(() => call("models-list", {}, controller.signal).then((fallback) => setCatalog(fallback)).catch((reason) => setCatalogError(reason instanceof Error ? reason.message : String(reason))));
     return () => controller.abort();
   }, [view, call]);
   if (view === "summary") return /* @__PURE__ */ React.createElement("span", { className: "df-meta" }, t("settings.summary"));
   if (!draft) return /* @__PURE__ */ React.createElement("p", { className: "df-meta" }, message || "\u2026");
-  const fields = [
-    ["devModel", "\u5F00\u53D1\u4EFB\u52A1\u6A21\u578B"],
-    ["acceptModel", "\u9A8C\u6536\u4EFB\u52A1\u6A21\u578B"],
+  const textFields = [
     ["devDir", "\u5F00\u53D1\u69FD\u4F4D\u76EE\u5F55"],
     ["acceptDir", "\u9A8C\u6536\u69FD\u4F4D\u76EE\u5F55"],
     ["baseDir", "\u57FA\u7EBF\u69FD\u4F4D\u76EE\u5F55"],
@@ -1847,7 +2025,151 @@ function SettingsForm({ ui, view, call, t }) {
       setDraft(saved);
       setMessage("\u5DF2\u4FDD\u5B58");
     }).catch((reason) => setMessage(reason instanceof Error ? reason.message : String(reason)));
-  } }, fields.map(([key, label]) => /* @__PURE__ */ React.createElement("label", { key, className: "df-field" }, label, /* @__PURE__ */ React.createElement("input", { value: draft[key] ?? "", onChange: (event) => setDraft({ ...draft, [key]: event.target.value }) }))), /* @__PURE__ */ React.createElement(ActionButton, { ui, type: "submit", variant: "primary" }, t("action.save")), message ? /* @__PURE__ */ React.createElement("p", { className: "df-note", role: "status" }, message) : null);
+  } }, /* @__PURE__ */ React.createElement(
+    ModelField,
+    {
+      ui,
+      label: "\u5F00\u53D1\u4EFB\u52A1\u6A21\u578B",
+      value: draft.devModel,
+      catalog,
+      error: catalogError,
+      onChange: (next) => setDraft({ ...draft, devModel: next })
+    }
+  ), /* @__PURE__ */ React.createElement(
+    ModelField,
+    {
+      ui,
+      label: "\u9A8C\u6536\u4EFB\u52A1\u6A21\u578B",
+      value: draft.acceptModel,
+      catalog,
+      error: catalogError,
+      onChange: (next) => setDraft({ ...draft, acceptModel: next })
+    }
+  ), routeSession === void 0 ? null : /* @__PURE__ */ React.createElement("p", { className: "df-form-note" }, "\u6A21\u578B\u5217\u8868\u6765\u81EA\u6700\u8FD1\u4F1A\u8BDD", routeSession === null ? "" : ` ${routeSession}`, " \u7684\u53EF\u7528\u8DEF\u7531\uFF1B\u65B0\u4F1A\u8BDD\u53EF\u80FD\u4E0D\u540C\u3002"), textFields.map(([key, label]) => /* @__PURE__ */ React.createElement("label", { key, className: "df-field" }, label, /* @__PURE__ */ React.createElement("input", { value: draft[key] ?? "", onChange: (event) => setDraft({ ...draft, [key]: event.target.value }) }))), /* @__PURE__ */ React.createElement(ActionButton, { ui, type: "submit", variant: "primary" }, t("action.save")), message ? /* @__PURE__ */ React.createElement("p", { className: "df-form-note", role: "status" }, message) : null);
+}
+function modelChoiceOf(value) {
+  if (value === null || value === void 0 || value === "") return null;
+  if (typeof value === "string") return { provider: "", model: value, reasoningEffort: null };
+  if (typeof value.model !== "string" || value.model === "") return null;
+  return value;
+}
+function catalogEntry(catalog, choice) {
+  if (choice === null || catalog === null) return void 0;
+  for (const provider of catalog.providers) {
+    if (choice.provider !== "" && provider.id !== choice.provider) continue;
+    const model = provider.models.find((item) => item.id === choice.model);
+    if (model !== void 0) return model;
+  }
+  return void 0;
+}
+function ModelChevron({ ui }) {
+  const Icon = ui.IconChevronDownOutlineRegular;
+  return Icon === void 0 ? /* @__PURE__ */ React.createElement("span", { "aria-hidden": "true" }, "\u203A") : /* @__PURE__ */ React.createElement(Icon, { size: 12 });
+}
+function ModelField({ ui, label, value, catalog, error, onChange }) {
+  const [open, setOpen] = useState2(null);
+  const root = useRef2(null);
+  useEffect2(() => {
+    if (open === null) return void 0;
+    const close = (event) => {
+      if (root.current?.contains(event.target) === true) return;
+      setOpen(null);
+    };
+    document.addEventListener("mousedown", close);
+    return () => document.removeEventListener("mousedown", close);
+  }, [open]);
+  const choice = modelChoiceOf(value);
+  const selected = catalogEntry(catalog, choice);
+  const efforts = selected?.efforts ?? [];
+  const effort = choice?.reasoningEffort === null || choice?.reasoningEffort === void 0 ? "\u6A21\u578B\u9ED8\u8BA4" : efforts.find((item) => item.id === choice.reasoningEffort)?.name ?? choice.reasoningEffort;
+  const groups = catalog?.providers.filter((provider) => provider.models.length > 0) ?? [];
+  return /* @__PURE__ */ React.createElement("div", { className: "df-field df-model-field", ref: root }, /* @__PURE__ */ React.createElement("span", null, label), /* @__PURE__ */ React.createElement(
+    "button",
+    {
+      type: "button",
+      className: "df-model-trigger",
+      "aria-haspopup": "listbox",
+      "aria-expanded": open === "model",
+      onClick: () => setOpen(open === "model" ? null : "model")
+    },
+    /* @__PURE__ */ React.createElement("span", { className: "df-model-value" }, selected?.name ?? choice?.model ?? "\u8DDF\u968F\u4E3B\u4F1A\u8BDD"),
+    /* @__PURE__ */ React.createElement(ModelChevron, { ui })
+  ), efforts.length > 0 ? /* @__PURE__ */ React.createElement(
+    "button",
+    {
+      type: "button",
+      className: "df-model-trigger",
+      "aria-haspopup": "listbox",
+      "aria-expanded": open === "effort",
+      onClick: () => setOpen(open === "effort" ? null : "effort")
+    },
+    /* @__PURE__ */ React.createElement("span", { className: "df-model-hint" }, "\u63A8\u7406\u7B49\u7EA7"),
+    /* @__PURE__ */ React.createElement("span", { className: "df-model-value" }, effort),
+    /* @__PURE__ */ React.createElement(ModelChevron, { ui })
+  ) : null, open === null ? null : /* @__PURE__ */ React.createElement("div", { className: "df-model-pop", role: "listbox", "aria-label": label }, open === "model" ? /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement(
+    "button",
+    {
+      type: "button",
+      role: "option",
+      "aria-selected": choice === null,
+      className: "df-model-option",
+      onClick: () => {
+        onChange(null);
+        setOpen(null);
+      }
+    },
+    /* @__PURE__ */ React.createElement("span", null, "\u8DDF\u968F\u4E3B\u4F1A\u8BDD"),
+    choice === null ? /* @__PURE__ */ React.createElement("span", { className: "df-model-check" }, "\u2713") : null
+  ), groups.length === 0 ? /* @__PURE__ */ React.createElement("p", { className: "df-model-error" }, error || "\u5BBF\u4E3B\u6CA1\u6709\u8FD4\u56DE\u6A21\u578B\u5217\u8868\uFF0C\u8BF7\u5B8C\u5168\u91CD\u542F DSH \u540E\u518D\u8BD5") : groups.map((provider) => /* @__PURE__ */ React.createElement("div", { key: provider.id, className: "df-model-group" }, /* @__PURE__ */ React.createElement("span", { className: "df-model-provider" }, provider.name), provider.models.map((model) => {
+    const active = choice?.provider === provider.id && choice.model === model.id;
+    return /* @__PURE__ */ React.createElement(
+      "button",
+      {
+        key: `${provider.id}:${model.id}`,
+        type: "button",
+        role: "option",
+        "aria-selected": active,
+        className: "df-model-option",
+        title: model.description ?? "",
+        onClick: () => {
+          onChange({ provider: provider.id, model: model.id, reasoningEffort: model.defaultEffort ?? null });
+          setOpen(null);
+        }
+      },
+      /* @__PURE__ */ React.createElement("span", { className: "df-model-option-name" }, model.name),
+      active ? /* @__PURE__ */ React.createElement("span", { className: "df-model-check" }, "\u2713") : null
+    );
+  })))) : /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement(
+    "button",
+    {
+      type: "button",
+      role: "option",
+      "aria-selected": choice?.reasoningEffort === null || choice?.reasoningEffort === void 0,
+      className: "df-model-option",
+      onClick: () => {
+        if (choice !== null) onChange({ ...choice, reasoningEffort: null });
+        setOpen(null);
+      }
+    },
+    /* @__PURE__ */ React.createElement("span", null, "\u6A21\u578B\u9ED8\u8BA4"),
+    choice?.reasoningEffort === null || choice?.reasoningEffort === void 0 ? /* @__PURE__ */ React.createElement("span", { className: "df-model-check" }, "\u2713") : null
+  ), efforts.map((item) => /* @__PURE__ */ React.createElement(
+    "button",
+    {
+      key: item.id,
+      type: "button",
+      role: "option",
+      "aria-selected": choice?.reasoningEffort === item.id,
+      className: "df-model-option",
+      title: item.description ?? "",
+      onClick: () => {
+        if (choice !== null) onChange({ ...choice, reasoningEffort: item.id });
+        setOpen(null);
+      }
+    },
+    /* @__PURE__ */ React.createElement("span", { className: "df-model-option-name" }, item.name),
+    choice?.reasoningEffort === item.id ? /* @__PURE__ */ React.createElement("span", { className: "df-model-check" }, "\u2713") : null
+  )))));
 }
 function useToast() {
   const [toast, setToast] = useState2(null);
@@ -1904,6 +2226,18 @@ function removeTasks(call, sessionId, ids, picked, setPicked, setBusy, reload, s
     return reload();
   }).catch((reason) => reload(reason)).finally(() => setBusy(false));
 }
+function controlTask(call, sessionId, taskId, action, reload, show, t) {
+  call(`task-${action}`, { sessionId, taskId }).then((value) => {
+    const result = value;
+    const warning = result?.interrupt?.warning;
+    if (warning) show?.(warning, "error");
+    else show?.(t?.(`toast.${action}`) ?? action, "info");
+    return reload();
+  }).catch((reason) => {
+    show?.(textOf(reason), "error");
+    return reload(reason);
+  });
+}
 function mergeTask(call, sessionId, taskId, reload, show) {
   call("task-merge", { sessionId, taskId }).then((value) => {
     const task = value?.tasks?.find((item) => item.id === taskId);
@@ -1924,8 +2258,8 @@ function shownStatus(task) {
 }
 function matchFilter(filter, task) {
   if (filter === "pending") return task.status === "pending-acceptance";
-  if (filter === "dev") return task.status === "developing" || task.status === "waiting" || task.status === "failed";
-  if (filter === "earlier") return task.status === "accepted" || task.status === "merged" || task.status === "abandoned" || task.status === "rejected";
+  if (filter === "dev") return task.status === "developing" || task.status === "waiting" || task.status === "paused" || task.status === "failed";
+  if (filter === "earlier") return task.status === "accepted" || task.status === "merged" || task.status === "abandoned" || task.status === "rejected" || task.status === "stopped";
   return true;
 }
 function acceptReason(data, picked, t) {
@@ -1968,6 +2302,9 @@ function baseChips(task) {
   if (typeof task.base === "string" && task.base !== "") chips.push(task.base);
   return chips;
 }
+function baseBranchChips(task) {
+  return typeof task.base === "string" && task.base !== "" ? [task.base] : [];
+}
 function taskChips(task) {
   return Object.entries(task.slots ?? {}).map(([repo, slot]) => {
     if (slot.port) return `${repo} \xB7 ${slot.port}`;
@@ -1989,17 +2326,34 @@ function taskFacts(task, t) {
   const batchLabel = zh2 ? "\u6279\u6B21" : "batch";
   const rows = [];
   for (const [repo, slot] of Object.entries(task.slots ?? {})) {
-    if (slot.branch) rows.push({ slot: repo, detail: slot.branch });
+    const label = task.kind === "dev" && slot.number ? `${repo}-${slot.number}` : repo;
+    if (slot.branch || task.kind === "dev" && slot.number) rows.push({ slot: label, detail: slot.branch ?? "" });
   }
   if (task.batchId && task.kind === "dev") rows.push({ slot: batchLabel, detail: task.batchId });
+  if (task.status === "paused" && task.pausedAt) rows.push({ slot: t("fact.paused"), detail: createdText(task.pausedAt) ?? "" });
+  if (task.status === "stopped" && task.stoppedAt) rows.push({ slot: t("fact.stopped"), detail: createdText(task.stoppedAt) ?? "" });
   if (task.warnings?.length) rows.push({ slot: t("status.pending-merge"), detail: task.warnings.join("\uFF0C") });
-  if (task.usage?.totalTokens) rows.push({ slot: "token", detail: formatTokens(task.usage.totalTokens) });
+  rows.push(...usageRows(task.usage, t));
   return rows;
+}
+function usageRows(usage, t) {
+  if (!usage?.totalTokens) return [];
+  const parts = [
+    `${t("usage.total")} ${formatCount(usage.totalTokens)}`,
+    `${t("usage.input")} ${formatCount(usage.inputTokens)}`,
+    `${t("usage.output")} ${formatCount(usage.outputTokens)}`
+  ];
+  const cache = (usage.cacheReadTokens ?? 0) + (usage.cacheWriteTokens ?? 0);
+  if (cache > 0) parts.push(`${t("usage.cache")} ${formatCount(cache)}`);
+  return [{ slot: t("fact.usage"), detail: parts.join(" \xB7 ") }];
 }
 function formatTokens(total) {
   if (total >= 1e4) return `${Math.round(total / 1e3)}k`;
   if (total >= 1e3) return `${(total / 1e3).toFixed(1)}k`;
   return String(total);
+}
+function formatCount(total) {
+  return String(total).replace(/\B(?=(\d{3})+(?!\d))/gu, ",");
 }
 function devDetail(data, repo, slot, t) {
   if (!slot.taskId) return t("slot.reusable");

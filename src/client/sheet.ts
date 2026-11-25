@@ -26,6 +26,12 @@ export const panelSheet = `
 .df-toolbar > :first-child { flex: 1; min-width: 0; }
 .df-filters, .df-rowline { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
 .df-view > .df-filters { flex: none; padding: 8px 16px 6px; }
+.df-pane-tools { display: flex; align-items: flex-start; gap: 8px; padding: 8px 16px 6px; flex: none; width: 100%; box-sizing: border-box; }
+.df-pane-tools .df-filters { flex: 1 1 0; min-width: 0; padding: 0; }
+.df-pane-actions { display: flex; align-items: center; gap: 4px; flex: none; }
+.df-icon-btn { position: relative; display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; padding: 0; }
+.df-icon-btn-active { color: var(--dsw-alias-state-business-primary); background: var(--dsw-alias-interactive-bg-hover); }
+.df-icon-badge { position: absolute; top: -4px; right: -4px; min-width: 14px; height: 14px; padding: 0 3px; border-radius: 7px; background: var(--dsw-alias-state-business-primary); color: #fff; font-size: 9px; line-height: 14px; text-align: center; }
 .df-view > .df-foot { flex: none; position: static; padding: 10px 16px 8px; }
 
 /* 分区标题 */
@@ -303,8 +309,17 @@ export const panelSheet = `
 
 /* 底部批量操作 */
 .df-foot { display: flex; flex-direction: column; gap: 6px; padding: 10px 0 4px; }
+.df-foot .df-cancel { width: auto; align-self: center; }
 .df-go { width: 100%; }
 .df-hint { margin: 0; text-align: center; color: var(--dsw-alias-label-tertiary); font-size: 11px; line-height: 17px; }
+
+/* 设置表单里的说明文字（不是输入框上的开关） */
+.df-form-note {
+  margin: 0;
+  color: var(--dsw-alias-label-tertiary);
+  font-size: 12px;
+  line-height: 18px;
+}
 
 /* 输入框上的开关 */
 .df-note {
@@ -350,7 +365,70 @@ export const panelSheet = `
   outline: 1px solid var(--dsw-alias-state-business-primary);
   outline-offset: 1px;
 }
+/* 模型选择：模型 + 推理等级两行，和 Composer 的 ModelSelect 同构 */
+.df-model-field { position: relative; }
+.df-model-trigger {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  height: 30px;
+  padding: 0 10px;
+  box-sizing: border-box;
+  border: 0.5px solid var(--dsw-alias-border-l4);
+  border-radius: var(--dsw-radius-sm);
+  background: var(--dsw-alias-bg-base);
+  color: var(--dsw-alias-label-primary);
+  font: inherit;
+  font-size: 12px;
+  text-align: left;
+  cursor: pointer;
+}
+.df-model-trigger:hover { background: var(--dsw-alias-interactive-bg-hover, rgba(38, 49, 72, 0.06)); }
+.df-model-value { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.df-model-hint { flex: none; color: var(--dsw-alias-label-tertiary); font-size: 11px; }
+.df-model-pop {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: calc(100% + 4px);
+  z-index: 60;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  max-height: 260px;
+  overflow: auto;
+  padding: 4px;
+  box-sizing: border-box;
+  border: 0.5px solid var(--dsw-alias-border-l3);
+  border-radius: var(--dsw-radius-md);
+  background: var(--dsw-alias-bg-layer-1, var(--dsw-alias-bg-base));
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.14);
+}
+.df-model-group { display: flex; flex-direction: column; gap: 2px; }
+.df-model-provider { padding: 6px 8px 2px; color: var(--dsw-alias-label-tertiary); font-size: 10px; letter-spacing: 0.04em; text-transform: uppercase; }
+.df-model-option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 6px 8px;
+  border: 0;
+  border-radius: var(--dsw-radius-sm);
+  background: transparent;
+  color: var(--dsw-alias-label-primary);
+  font: inherit;
+  font-size: 12px;
+  text-align: left;
+  cursor: pointer;
+}
+.df-model-option:hover { background: var(--dsw-alias-interactive-bg-hover, rgba(38, 49, 72, 0.06)); }
+.df-model-option[aria-selected='true'] { background: color-mix(in srgb, var(--dsw-alias-state-business-primary) 10%, transparent); }
+.df-model-option-name { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.df-model-check { flex: none; color: var(--dsw-alias-state-business-primary); }
+.df-model-error { margin: 0; padding: 8px; color: var(--dsw-alias-state-error-primary); font-size: 11px; line-height: 16px; }
 .df-check { width: 14px; height: 14px; margin: 0; accent-color: var(--dsw-alias-state-business-primary); }
+.df-check:disabled { opacity: 0.4; cursor: not-allowed; }
 
 /* 右上角提示 */
 .df-toasts { position: fixed; top: 16px; right: 16px; z-index: 1300; display: flex; flex-direction: column; align-items: flex-end; gap: 8px; pointer-events: none; }

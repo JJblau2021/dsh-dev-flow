@@ -9,9 +9,9 @@ description: 工作流开关打开时，主会话在任何改代码、修复、�
 
 ## 开发
 
-1. 先用 `schedule-start` 创建这次调度任务。先确认这次需求基于哪条基线（默认是仓库默认分支），在 `schedule-start --base <基线分支>` 上写明：登记时会建立一组基线（编号 01、02…），把存在这条分支的每个仓库加进去并分配基线槽位 `<根>/base/<编号>/<仓库-编号>/`，下面每条任务默认继承这个组；已有组用 `--group <编号>`，单条任务也可以用 `task-create --base/--group` 覆盖。已有调度还没有槽位时用 `base-add --group <编号> --repo <仓库> --branch <基线分支>` 补建；面板的基线页也可以直接新建/编辑基线组（勾选项目和分支），失败会在编辑器里显示原因。拆分时每个任务只涉及一个服务（一个仓库）；跨服务的需求拆成多条任务，再用 `task-create --schedule <调度 id> --repos <一个仓库>` 分配开发槽位和 `df-task/<任务 id>` 分支。同一次调度下的多个开发任务共用这个调度 id。根目录检出不要改，也不要切换它的分支；合入由工作流在基线槽位里完成。
+1. 先用 `schedule-start` 创建这次调度任务。先确认这次需求基于哪条基线（默认是仓库默认分支），在 `schedule-start --base <基线分支>` 上写明：登记时会建立一组基线（编号 01、02…），把存在这条分支的每个仓库加进去并分配基线槽位 `<根>/base/<编号>/<仓库-编号>/`，下面每条任务默认继承这个组；已有组用 `--group <编号>`，单条任务也可以用 `task-create --base/--group` 覆盖。已有调度还没有槽位时用 `base-add --group <编号> --repo <仓库> --branch <基线分支>` 补建；组里已有这个仓库、只是要换分支时用 `base-edit --group <编号> --repo <仓库> --branch <新分支>`（`--label <组名>` 可改组名），它会释放旧槽位并按新分支重新分配，组里还有未结束任务时拒绝。面板的基线页也可以直接新建/编辑基线组（勾选项目和分支），失败会在编辑器里显示原因。拆分时每个任务只涉及一个服务（一个仓库）；跨服务的需求拆成多条任务，再用 `task-create --schedule <调度 id> --repos <一个仓库>` 分配开发槽位和 `df-task/<任务 id>` 分支。同一次调度下的多个开发任务共用这个调度 id。根目录检出不要改，也不要切换它的分支；合入由工作流在基线槽位里完成。
 2. 结果如果是 `waiting`，不要拉这条任务的子代理。依赖已经待验收或已完成时，不要再等。
-3. 对每条已经建好槽位、还没有子代理的任务执行 `dispatch --kind dev`。返回 `spawn` 就拉起一个子代理，工作目录用返回的 `cwd`，模型用返回的 `model`（空则跟随主会话）。不要因为另一条无关任务还在跑就停下来。
+3. 对每条已经建好槽位、还没有子代理的任务执行 `dispatch --kind dev`。返回 `spawn` 就拉起一个子代理，工作目录用返回的 `cwd`；模型参数用返回的 `provider`、`model`、`reasoningEffort`（子代理工具里分别传 `provider`、`model`、`reasoning_effort`），都为空则跟随主会话。若子代理工具报 `LLM provider ... is not allowed for this Session`，说明这条路由不在当前会话的允许列表里；按插件设置页列出的可用路由重新选，或新开一个包含该路由的会话。不要因为另一条无关任务还在跑就停下来。
 4. 同一轮把能开工的任务都派完，直到 `dispatch` 返回 `waiting`（已到子代理上限）。然后结束本轮，不要自己实现。结束前在主会话写明这次调度结果：创建了哪些任务，每条任务依赖谁、依赖分支有没有并入，以及分到的槽位（仓库名-编号）和分支。没有依赖或没有并入也要写出来。
 5. 子代理必须把改动提交在任务分支上。完成后运行 `task-complete`。未提交改动不要当成完成。失败运行 `task-fail`。只有用户明确放弃时才运行 `task-abandon`。
 6. 依赖链上的任务必须合回同一条基线；`task-create` 会拒绝基线不一致的依赖。同一基线组里不同项目的分支可以不同。
@@ -29,20 +29,26 @@ node {{DEV_FLOW_CLI}} accept-start --workspace <根> --id <批次 id> --tasks <�
 node {{DEV_FLOW_CLI}} dispatch --workspace <根> --session <会话> --kind accept --id <批次 id>
 ```
 
-通过或不通过按单个开发任务记录。不要推送；需要清理已经结束的任务时用 `task-delete`，不要手动删分支。
+通过或不通过按单个开发任务记录。**主代理不得自行执行验收通过（`accept-pass`）或自行结束验收批次；验收通过必须等用户在面板上操作。** 不要推送；需要清理已经结束的任务时用 `task-delete`，不要手动删分支。
 
 ## 常用命令
 
 ```bash
 node {{DEV_FLOW_CLI}} schedule-start --workspace <根> --session <会话> --id <调度 id> --title <这次调度> [--base <基线分支> | --group <编号>]
-node {{DEV_FLOW_CLI}} task-create --workspace <根> --schedule <调度 id> --id <任务 id> --title <标题> --repos <仓库>
+node {{DEV_FLOW_CLI}} task-create --workspace <根> --session <会话> --schedule <调度 id> --id <任务 id> --title <标题> --repos <仓库>
 node {{DEV_FLOW_CLI}} base-list --workspace <根>
 node {{DEV_FLOW_CLI}} base-add --workspace <根> [--group <编号>] --repo <仓库> --branch <基线分支>
+node {{DEV_FLOW_CLI}} base-edit --workspace <根> --group <编号> [--repo <仓库> --branch <新分支>] [--label <组名>]
 node {{DEV_FLOW_CLI}} base-remove --workspace <根> --group <编号> --repo <仓库>
+node {{DEV_FLOW_CLI}} task-pause --workspace <根> --id <任务>
+node {{DEV_FLOW_CLI}} task-resume --workspace <根> --id <任务>
+node {{DEV_FLOW_CLI}} task-stop --workspace <根> --id <任务>
 node {{DEV_FLOW_CLI}} task-delete --workspace <根> --ids <任务>,<任务>
 node {{DEV_FLOW_CLI}} scan --workspace <根>
 node {{DEV_FLOW_CLI}} status --workspace <根>
 node {{DEV_FLOW_CLI}} session-set --workspace <根> --session <会话> --enabled true
 ```
 
-`task-delete` 只删已经结束的任务（`merged`、`abandoned`、`failed`、`rejected` 和不属于进行中验收批次的 `pending-acceptance`），会同时删掉 `df-task/<任务 id>` 分支并清理槽位、调度、代理和验收批次里的引用。子代理还在跑、任务仍在开发/等待/调度/待合入、或仍被其它未删除任务依赖时整批拒绝。分支删不掉时命令会返回 warning，任务记录仍然删除。
+`task-pause` 只对开发中的任务有效，会中断子代理但保留工作树和槽位；`task-resume` 恢复开发中，子代理需要重新 `dispatch`；`task-stop` 结束任务并释放槽位，任务分支保留，之后可用 `task-delete` 清理。面板上的暂停/继续/停止按钮也调用同样接口。
+
+`task-delete` 只删已经结束的任务（`merged`、`abandoned`、`stopped`、`failed`、`rejected` 和不属于进行中验收批次的 `pending-acceptance`），会同时删掉 `df-task/<任务 id>` 分支并清理槽位、调度、代理和验收批次里的引用。子代理还在跑、任务仍在开发/等待/调度/待合入、或仍被其它未删除任务依赖时整批拒绝。分支删不掉时命令会返回 warning，任务记录仍然删除。

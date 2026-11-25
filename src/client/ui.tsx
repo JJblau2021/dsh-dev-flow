@@ -53,7 +53,7 @@ export function Dot({ ui, state }: { ui: UiKit, state: string }) {
 }
 
 export function ActionButton({
-  ui, children, onClick, disabled, title, variant = 'outline', size = 'sm', type = 'button', className,
+  ui, children, onClick, disabled, title, variant = 'outline', size = 'sm', type = 'button', className, ariaLabel,
 }: {
   ui: UiKit
   children: React.ReactNode
@@ -64,9 +64,10 @@ export function ActionButton({
   size?: 'sm' | 'md'
   type?: 'button' | 'submit'
   className?: string
+  ariaLabel?: string
 }) {
   if (ui.Button) {
-    return <ui.Button type={type} className={className} variant={variant} size={size} disabled={disabled} title={title} onClick={onClick}>{children}</ui.Button>
+    return <ui.Button type={type} className={className} variant={variant} size={size} disabled={disabled} title={title} aria-label={ariaLabel} onClick={onClick}>{children}</ui.Button>
   }
-  return <button type={type} className={className} disabled={disabled} title={title} onClick={onClick}>{children}</button>
+  return <button type={type} className={className} disabled={disabled} title={title} aria-label={ariaLabel} onClick={onClick}>{children}</button>
 }
