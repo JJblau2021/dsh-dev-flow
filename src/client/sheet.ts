@@ -36,14 +36,30 @@ export const panelSheet = `
 
 /* 分区标题 */
 .df-section { margin: 4px 0 0; font-size: 11px; font-weight: 600; letter-spacing: 0.02em; color: var(--dsw-alias-label-tertiary); }
+/* 概览折叠面板：复用任务页 .df-view 的折叠头，仅覆写概览需要的布局 */
+.df-fold { display: flex; flex-direction: column; flex: none; min-width: 0; }
+.df-fold + .df-fold { border-top: 0.5px solid var(--dsw-alias-border-l2); }
+.df-fold.df-view { overflow: visible; }
+.df-fold.df-view[data-open='true'] { flex: none; }
+.df-fold.df-view[data-open='false'] { border-bottom: 0; }
+.df-fold.df-fold-fill.df-view[data-open='true'] { flex: 1 0 auto; }
+.df-fold.df-fold-fill.df-view[data-open='false'] { flex: none; }
+.df-fold.df-view > .df-view-head { position: relative; padding: 0; cursor: pointer; }
+.df-fold.df-view > .df-view-head:active { cursor: pointer; }
+.df-fold.df-view > .df-view-head .df-view-chev { position: absolute; left: -15px; top: 50%; margin-top: -7px; }
+.df-fold.df-view > .df-view-body { flex: none; max-height: none; overflow: visible; padding: 2px 0 10px; }
+.df-fold.df-view > .df-fold-body { display: flex; flex-direction: column; gap: 8px; }
+.df-fold.df-view > .df-fold-body > * + * { margin-top: 0; }
+.df-fold.df-view > .df-fold-body-fill { display: flex; flex-direction: column; flex: 1 1 auto; min-width: 0; min-height: 0; max-height: none; overflow: visible; padding: 0; }
+.df-fold-body-fill .df-task-panel { flex: 1 1 auto; min-height: 180px; margin: 0 -16px 0; border-top: 0; overflow-y: auto; }
 .df-subsection { margin: 2px 0 0; display: flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 600; color: var(--dsw-alias-label-secondary); }
 .df-subsection-count { font-weight: 500; color: var(--dsw-alias-label-tertiary); font-variant-numeric: tabular-nums; }
 
 /* 概览：整页滚动，项目筛选，三格指标 */
-.df-scroll { flex: 1 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain; display: flex; flex-direction: column; gap: 8px; margin: 0 -16px; padding: 0 16px; }
+.df-scroll { flex: 1 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain; display: flex; flex-direction: column; gap: 0; margin: 0 -16px; padding: 0 16px; }
 .df-scope { display: flex; align-items: center; flex-wrap: wrap; gap: 6px 10px; }
 .df-scope .df-filters { flex: 1 1 220px; min-width: 0; margin-left: -8px; }
-.df-metrics { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); column-gap: 12px; row-gap: 8px; padding: 2px 0 8px; border-bottom: 0.5px solid var(--dsw-alias-border-l2); }
+.df-metrics { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); column-gap: 12px; row-gap: 8px; padding: 2px 0; }
 .df-metric, .df-empty { border: 0; background: transparent; }
 .df-metric { padding: 1px 0; }
 .df-kicker { color: var(--dsw-alias-label-tertiary); font-size: 11px; line-height: 16px; }
@@ -146,7 +162,7 @@ export const panelSheet = `
 .df-tree-children > .df-tree { background: transparent; }
 .df-tree-children > .df-tree { border-bottom: 0; }
 .df-tree-children > .df-tree > .df-tree-head { padding-left: 14px; }
-.df-facts { display: flex; flex-direction: column; gap: 2px; padding: 1px 16px 8px 36px; }
+.df-facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); align-items: baseline; gap: 2px 24px; padding: 1px 16px 8px 36px; }
 .df-tree-children > .df-tree > .df-facts { padding-left: 34px; }
 .df-line { grid-template-columns: minmax(0, 1fr) auto; }
 .df-agent { grid-template-columns: auto minmax(0, 1fr) auto; }
@@ -154,12 +170,14 @@ export const panelSheet = `
 
 /* 任务行 */
 .df-tree { display: flex; flex-direction: column; gap: 2px; width: 100%; box-sizing: border-box; border-bottom: 0.5px solid var(--dsw-alias-border-l2); transition: background-color 120ms ease; }
-.df-fact { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 8px; align-items: baseline; }
-.df-fact-slot { color: var(--dsw-alias-label-tertiary); font-size: 11px; line-height: 17px; white-space: nowrap; }
+.df-fact { display: grid; grid-template-columns: max-content minmax(0, 1fr); align-items: baseline; gap: 8px; min-width: 0; }
+.df-fact-wide { grid-column: 1 / -1; }
+.df-fact-slot { color: var(--dsw-alias-label-tertiary); font-size: 11px; line-height: 17px; white-space: nowrap; min-width: 48px; }
 .df-fact-detail { color: var(--dsw-alias-label-secondary); font-size: 11px; line-height: 17px; overflow-wrap: anywhere; }
 
 /* 文件改动 */
-.df-files { margin: 2px 16px 8px 36px; border: 0.5px solid var(--dsw-alias-border-l3); border-radius: 8px; overflow: visible; background: var(--dsw-alias-bg-base); }
+.df-files { margin: 2px 16px 8px 16px; border: 0.5px solid var(--dsw-alias-border-l3); border-radius: 8px; overflow: visible; background: var(--dsw-alias-bg-base); }
+.df-tree-children > .df-tree > .df-tree-children > .df-files { margin-left: 14px; }
 .df-file-item { position: relative; border-top: 0.5px solid var(--dsw-alias-border-l2); }
 .df-file-item:first-child { border-top: 0; }
 .df-file-row { display: flex; align-items: center; gap: 8px; min-width: 0; padding: 6px 10px; cursor: pointer; }

@@ -550,6 +550,10 @@ var zh = {
   "section.acceptTasks": "\u9A8C\u6536\u4EFB\u52A1",
   "section.emptyDev": "\u6CA1\u6709\u5F00\u53D1\u4EFB\u52A1",
   "section.emptyAccept": "\u6CA1\u6709\u9A8C\u6536\u4EFB\u52A1",
+  "fact.slot": "\u69FD\u4F4D",
+  "fact.branch": "\u5206\u652F",
+  "fact.base": "\u57FA\u7EBF",
+  "fact.batch": "\u9A8C\u6536\u6279\u6B21",
   "fact.depends": "\u4F9D\u8D56",
   "fact.merged": "\u5DF2\u5E76\u5165",
   "fact.state": "\u72B6\u6001",
@@ -718,6 +722,10 @@ var en = {
   "section.acceptTasks": "Acceptance",
   "section.emptyDev": "No development tasks",
   "section.emptyAccept": "No acceptance tasks",
+  "fact.slot": "Slot",
+  "fact.branch": "Branch",
+  "fact.base": "Baseline",
+  "fact.batch": "Acceptance batch",
   "fact.depends": "Depends on",
   "fact.merged": "Merged",
   "fact.state": "State",
@@ -831,14 +839,30 @@ var panelSheet = `
 
 /* \u5206\u533A\u6807\u9898 */
 .df-section { margin: 4px 0 0; font-size: 11px; font-weight: 600; letter-spacing: 0.02em; color: var(--dsw-alias-label-tertiary); }
+/* \u6982\u89C8\u6298\u53E0\u9762\u677F\uFF1A\u590D\u7528\u4EFB\u52A1\u9875 .df-view \u7684\u6298\u53E0\u5934\uFF0C\u4EC5\u8986\u5199\u6982\u89C8\u9700\u8981\u7684\u5E03\u5C40 */
+.df-fold { display: flex; flex-direction: column; flex: none; min-width: 0; }
+.df-fold + .df-fold { border-top: 0.5px solid var(--dsw-alias-border-l2); }
+.df-fold.df-view { overflow: visible; }
+.df-fold.df-view[data-open='true'] { flex: none; }
+.df-fold.df-view[data-open='false'] { border-bottom: 0; }
+.df-fold.df-fold-fill.df-view[data-open='true'] { flex: 1 0 auto; }
+.df-fold.df-fold-fill.df-view[data-open='false'] { flex: none; }
+.df-fold.df-view > .df-view-head { position: relative; padding: 0; cursor: pointer; }
+.df-fold.df-view > .df-view-head:active { cursor: pointer; }
+.df-fold.df-view > .df-view-head .df-view-chev { position: absolute; left: -15px; top: 50%; margin-top: -7px; }
+.df-fold.df-view > .df-view-body { flex: none; max-height: none; overflow: visible; padding: 2px 0 10px; }
+.df-fold.df-view > .df-fold-body { display: flex; flex-direction: column; gap: 8px; }
+.df-fold.df-view > .df-fold-body > * + * { margin-top: 0; }
+.df-fold.df-view > .df-fold-body-fill { display: flex; flex-direction: column; flex: 1 1 auto; min-width: 0; min-height: 0; max-height: none; overflow: visible; padding: 0; }
+.df-fold-body-fill .df-task-panel { flex: 1 1 auto; min-height: 180px; margin: 0 -16px 0; border-top: 0; overflow-y: auto; }
 .df-subsection { margin: 2px 0 0; display: flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 600; color: var(--dsw-alias-label-secondary); }
 .df-subsection-count { font-weight: 500; color: var(--dsw-alias-label-tertiary); font-variant-numeric: tabular-nums; }
 
 /* \u6982\u89C8\uFF1A\u6574\u9875\u6EDA\u52A8\uFF0C\u9879\u76EE\u7B5B\u9009\uFF0C\u4E09\u683C\u6307\u6807 */
-.df-scroll { flex: 1 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain; display: flex; flex-direction: column; gap: 8px; margin: 0 -16px; padding: 0 16px; }
+.df-scroll { flex: 1 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain; display: flex; flex-direction: column; gap: 0; margin: 0 -16px; padding: 0 16px; }
 .df-scope { display: flex; align-items: center; flex-wrap: wrap; gap: 6px 10px; }
 .df-scope .df-filters { flex: 1 1 220px; min-width: 0; margin-left: -8px; }
-.df-metrics { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); column-gap: 12px; row-gap: 8px; padding: 2px 0 8px; border-bottom: 0.5px solid var(--dsw-alias-border-l2); }
+.df-metrics { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); column-gap: 12px; row-gap: 8px; padding: 2px 0; }
 .df-metric, .df-empty { border: 0; background: transparent; }
 .df-metric { padding: 1px 0; }
 .df-kicker { color: var(--dsw-alias-label-tertiary); font-size: 11px; line-height: 16px; }
@@ -941,7 +965,7 @@ var panelSheet = `
 .df-tree-children > .df-tree { background: transparent; }
 .df-tree-children > .df-tree { border-bottom: 0; }
 .df-tree-children > .df-tree > .df-tree-head { padding-left: 14px; }
-.df-facts { display: flex; flex-direction: column; gap: 2px; padding: 1px 16px 8px 36px; }
+.df-facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); align-items: baseline; gap: 2px 24px; padding: 1px 16px 8px 36px; }
 .df-tree-children > .df-tree > .df-facts { padding-left: 34px; }
 .df-line { grid-template-columns: minmax(0, 1fr) auto; }
 .df-agent { grid-template-columns: auto minmax(0, 1fr) auto; }
@@ -949,12 +973,14 @@ var panelSheet = `
 
 /* \u4EFB\u52A1\u884C */
 .df-tree { display: flex; flex-direction: column; gap: 2px; width: 100%; box-sizing: border-box; border-bottom: 0.5px solid var(--dsw-alias-border-l2); transition: background-color 120ms ease; }
-.df-fact { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 8px; align-items: baseline; }
-.df-fact-slot { color: var(--dsw-alias-label-tertiary); font-size: 11px; line-height: 17px; white-space: nowrap; }
+.df-fact { display: grid; grid-template-columns: max-content minmax(0, 1fr); align-items: baseline; gap: 8px; min-width: 0; }
+.df-fact-wide { grid-column: 1 / -1; }
+.df-fact-slot { color: var(--dsw-alias-label-tertiary); font-size: 11px; line-height: 17px; white-space: nowrap; min-width: 48px; }
 .df-fact-detail { color: var(--dsw-alias-label-secondary); font-size: 11px; line-height: 17px; overflow-wrap: anywhere; }
 
 /* \u6587\u4EF6\u6539\u52A8 */
-.df-files { margin: 2px 16px 8px 36px; border: 0.5px solid var(--dsw-alias-border-l3); border-radius: 8px; overflow: visible; background: var(--dsw-alias-bg-base); }
+.df-files { margin: 2px 16px 8px 16px; border: 0.5px solid var(--dsw-alias-border-l3); border-radius: 8px; overflow: visible; background: var(--dsw-alias-bg-base); }
+.df-tree-children > .df-tree > .df-tree-children > .df-files { margin-left: 14px; }
 .df-file-item { position: relative; border-top: 0.5px solid var(--dsw-alias-border-l2); }
 .df-file-item:first-child { border-top: 0; }
 .df-file-row { display: flex; align-items: center; gap: 8px; min-width: 0; padding: 6px 10px; cursor: pointer; }
@@ -1472,8 +1498,40 @@ function OverviewAcceptRow({ ui, t, task }) {
   const count = (task.taskIds ?? []).length;
   return /* @__PURE__ */ React.createElement("div", { className: "df-task-line", "data-tone": toneOf(task.status) }, /* @__PURE__ */ React.createElement("div", { className: "df-task-main" }, /* @__PURE__ */ React.createElement("span", { className: "df-name", title: `${task.title} \xB7 ${task.id}` }, task.title), /* @__PURE__ */ React.createElement("span", { className: "df-task-sub" }, task.repos.map((repo) => /* @__PURE__ */ React.createElement("span", { key: repo, className: "df-chip" }, repo)), count > 0 ? /* @__PURE__ */ React.createElement("span", { className: "df-meta" }, t("base.tasks").replace("{count}", String(count))) : null)), /* @__PURE__ */ React.createElement("div", { className: "df-task-side" }, created ? /* @__PURE__ */ React.createElement("span", { className: "df-meta" }, created) : null, /* @__PURE__ */ React.createElement(StatusTag, { ui, t, status: task.status })));
 }
+function CollapsiblePanel({
+  open,
+  onToggle,
+  title,
+  count,
+  children,
+  tools,
+  footer,
+  sash,
+  className,
+  bodyClassName,
+  style,
+  dataPane,
+  onHeadPointerDown
+}) {
+  return /* @__PURE__ */ React.createElement("section", { className: `df-view ${className ?? ""}`, "data-pane": dataPane, "data-open": open ? "true" : "false", style }, /* @__PURE__ */ React.createElement(
+    "button",
+    {
+      type: "button",
+      className: "df-view-head",
+      "aria-expanded": open,
+      onClick: onToggle,
+      onPointerDown: onHeadPointerDown
+    },
+    /* @__PURE__ */ React.createElement("span", { className: "df-view-chev", "aria-hidden": "true" }, /* @__PURE__ */ React.createElement(Chevron, null)),
+    title,
+    count === void 0 ? null : /* @__PURE__ */ React.createElement("span", { className: "df-view-count" }, count)
+  ), open ? /* @__PURE__ */ React.createElement(React.Fragment, null, tools, /* @__PURE__ */ React.createElement("div", { className: `df-view-body ${bodyClassName ?? ""}` }, children), footer) : null, sash);
+}
 function Overview({ ui, data, t }) {
   const [scope, setScope] = useState2("all");
+  const [closed, setClosed] = useState2({});
+  const open = (id) => closed[id] !== true;
+  const toggle = (id) => setClosed((prev) => ({ ...prev, [id]: !prev[id] }));
   const projects = data.projects ?? [];
   const selected = projects.some((project) => project.name === scope) ? scope : "all";
   const counts = overviewCounts(data, selected === "all" ? void 0 : selected);
@@ -1511,13 +1569,46 @@ function Overview({ ui, data, t }) {
   const inScope = (task) => selected === "all" || task.repos.includes(selected);
   const devRows = (data.tasks ?? []).filter((task) => task.kind !== "accept" && OVERVIEW_DEV_ORDER[task.status] !== void 0 && inScope(task)).sort((left, right) => (OVERVIEW_DEV_ORDER[left.status] ?? 9) - (OVERVIEW_DEV_ORDER[right.status] ?? 9) || newestFirst(left, right));
   const acceptRows = (data.tasks ?? []).filter((task) => task.kind === "accept" && OVERVIEW_ACCEPT_STATUSES.has(task.status) && inScope(task)).sort(newestFirst);
-  return /* @__PURE__ */ React.createElement("div", { className: "df-scroll" }, /* @__PURE__ */ React.createElement("h3", { className: "df-section" }, t("overview.metrics")), /* @__PURE__ */ React.createElement("div", { className: "df-scope" }, /* @__PURE__ */ React.createElement("div", { className: "df-filters" }, ui.Pill ? /* @__PURE__ */ React.createElement(ui.Pill, { active: selected === "all", onClick: () => setScope("all") }, t("filter.allProjects"), /* @__PURE__ */ React.createElement("span", { className: "df-filter-count" }, projects.length)) : /* @__PURE__ */ React.createElement("button", { type: "button", "aria-pressed": selected === "all", onClick: () => setScope("all") }, t("filter.allProjects"), /* @__PURE__ */ React.createElement("span", { className: "df-filter-count" }, projects.length)), projects.map((project) => ui.Pill ? /* @__PURE__ */ React.createElement(ui.Pill, { key: project.name, active: selected === project.name, onClick: () => setScope(project.name) }, project.name) : /* @__PURE__ */ React.createElement("button", { key: project.name, type: "button", "aria-pressed": selected === project.name, onClick: () => setScope(project.name) }, project.name)))), /* @__PURE__ */ React.createElement("div", { className: "df-metrics" }, cards.map((card) => /* @__PURE__ */ React.createElement("div", { key: card.key, className: "df-metric" }, /* @__PURE__ */ React.createElement("div", { className: "df-kicker" }, card.label), /* @__PURE__ */ React.createElement("div", { className: "df-metric-value" }, card.parts.map((part, index) => /* @__PURE__ */ React.createElement("span", { key: `${card.key}:${index}`, className: "df-metric-part" }, index > 0 ? /* @__PURE__ */ React.createElement("span", { className: "df-metric-sep", "aria-hidden": "true" }, "/") : null, /* @__PURE__ */ React.createElement("strong", { "data-tone": part.tone }, part.value)))), card.legend ? /* @__PURE__ */ React.createElement("span", { className: "df-metric-legend" }, card.legend) : null))), /* @__PURE__ */ React.createElement("h3", { className: "df-section" }, t("section.projects")), projects.length === 0 ? /* @__PURE__ */ React.createElement("p", { className: "df-empty-line" }, t("section.emptyProjects")) : /* @__PURE__ */ React.createElement("div", { className: "df-card" }, projects.map((project) => {
-    const stats = project.stats;
-    const dirty = stats?.baseSlots.dirty ?? 0;
-    const active = stats?.devTasks.developing ?? 0;
-    const pending = stats?.devTasks.pending ?? 0;
-    return /* @__PURE__ */ React.createElement("article", { key: project.name, className: "df-project", "data-scoped": selected === project.name ? "true" : "false", title: project.path }, /* @__PURE__ */ React.createElement("div", { className: "df-project-head" }, /* @__PURE__ */ React.createElement("span", { className: "df-name" }, project.name), project.branch ? /* @__PURE__ */ React.createElement("span", { className: "df-branch" }, project.branch) : null, /* @__PURE__ */ React.createElement("div", { className: "df-project-status" }, dirty > 0 ? /* @__PURE__ */ React.createElement(ProjectTag, { ui, tone: "danger", label: t("project.dirty"), count: dirty }) : null, active > 0 ? /* @__PURE__ */ React.createElement(ProjectTag, { ui, tone: "info", label: t("project.active"), count: active }) : null, pending > 0 ? /* @__PURE__ */ React.createElement(ProjectTag, { ui, tone: "warning", label: t("project.pending"), count: pending }) : null, dirty + active + pending === 0 ? /* @__PURE__ */ React.createElement("span", { className: "df-meta" }, t("project.idle")) : null)), project.description ? /* @__PURE__ */ React.createElement("p", { className: "df-project-desc" }, project.description) : null);
-  })), /* @__PURE__ */ React.createElement("section", { className: "df-task-panel" }, /* @__PURE__ */ React.createElement("h3", { className: "df-section" }, t("overview.tasks")), devRows.length === 0 && acceptRows.length === 0 ? /* @__PURE__ */ React.createElement("div", { className: "df-task-rest" }, t("overview.noTasks")) : /* @__PURE__ */ React.createElement(React.Fragment, null, devRows.length > 0 ? /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("h4", { className: "df-subsection" }, t("section.devTasks"), /* @__PURE__ */ React.createElement("span", { className: "df-subsection-count" }, devRows.length)), /* @__PURE__ */ React.createElement("div", { className: "df-card" }, devRows.map((task) => /* @__PURE__ */ React.createElement(OverviewTaskRow, { key: task.id, ui, t, task })))) : null, acceptRows.length > 0 ? /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("h4", { className: "df-subsection" }, t("section.acceptTasks"), /* @__PURE__ */ React.createElement("span", { className: "df-subsection-count" }, acceptRows.length)), /* @__PURE__ */ React.createElement("div", { className: "df-card" }, acceptRows.map((task) => /* @__PURE__ */ React.createElement(OverviewAcceptRow, { key: task.id, ui, t, task })))) : null, /* @__PURE__ */ React.createElement("div", { className: "df-task-rest" }, t("overview.allShown")))));
+  return /* @__PURE__ */ React.createElement("div", { className: "df-scroll" }, /* @__PURE__ */ React.createElement(
+    CollapsiblePanel,
+    {
+      className: "df-fold",
+      open: open("metrics"),
+      onToggle: () => toggle("metrics"),
+      title: t("overview.metrics"),
+      bodyClassName: "df-fold-body"
+    },
+    /* @__PURE__ */ React.createElement("div", { className: "df-scope" }, /* @__PURE__ */ React.createElement("div", { className: "df-filters" }, ui.Pill ? /* @__PURE__ */ React.createElement(ui.Pill, { active: selected === "all", onClick: () => setScope("all") }, t("filter.allProjects"), /* @__PURE__ */ React.createElement("span", { className: "df-filter-count" }, projects.length)) : /* @__PURE__ */ React.createElement("button", { type: "button", "aria-pressed": selected === "all", onClick: () => setScope("all") }, t("filter.allProjects"), /* @__PURE__ */ React.createElement("span", { className: "df-filter-count" }, projects.length)), projects.map((project) => ui.Pill ? /* @__PURE__ */ React.createElement(ui.Pill, { key: project.name, active: selected === project.name, onClick: () => setScope(project.name) }, project.name) : /* @__PURE__ */ React.createElement("button", { key: project.name, type: "button", "aria-pressed": selected === project.name, onClick: () => setScope(project.name) }, project.name)))),
+    /* @__PURE__ */ React.createElement("div", { className: "df-metrics" }, cards.map((card) => /* @__PURE__ */ React.createElement("div", { key: card.key, className: "df-metric" }, /* @__PURE__ */ React.createElement("div", { className: "df-kicker" }, card.label), /* @__PURE__ */ React.createElement("div", { className: "df-metric-value" }, card.parts.map((part, index) => /* @__PURE__ */ React.createElement("span", { key: `${card.key}:${index}`, className: "df-metric-part" }, index > 0 ? /* @__PURE__ */ React.createElement("span", { className: "df-metric-sep", "aria-hidden": "true" }, "/") : null, /* @__PURE__ */ React.createElement("strong", { "data-tone": part.tone }, part.value)))), card.legend ? /* @__PURE__ */ React.createElement("span", { className: "df-metric-legend" }, card.legend) : null)))
+  ), /* @__PURE__ */ React.createElement(
+    CollapsiblePanel,
+    {
+      className: "df-fold",
+      open: open("projects"),
+      onToggle: () => toggle("projects"),
+      title: t("section.projects"),
+      count: projects.length,
+      bodyClassName: "df-fold-body"
+    },
+    projects.length === 0 ? /* @__PURE__ */ React.createElement("p", { className: "df-empty-line" }, t("section.emptyProjects")) : /* @__PURE__ */ React.createElement("div", { className: "df-card" }, projects.map((project) => {
+      const stats = project.stats;
+      const dirty = stats?.baseSlots.dirty ?? 0;
+      const active = stats?.devTasks.developing ?? 0;
+      const pending = stats?.devTasks.pending ?? 0;
+      return /* @__PURE__ */ React.createElement("article", { key: project.name, className: "df-project", "data-scoped": selected === project.name ? "true" : "false", title: project.path }, /* @__PURE__ */ React.createElement("div", { className: "df-project-head" }, /* @__PURE__ */ React.createElement("span", { className: "df-name" }, project.name), project.branch ? /* @__PURE__ */ React.createElement("span", { className: "df-branch" }, project.branch) : null, /* @__PURE__ */ React.createElement("div", { className: "df-project-status" }, dirty > 0 ? /* @__PURE__ */ React.createElement(ProjectTag, { ui, tone: "danger", label: t("project.dirty"), count: dirty }) : null, active > 0 ? /* @__PURE__ */ React.createElement(ProjectTag, { ui, tone: "info", label: t("project.active"), count: active }) : null, pending > 0 ? /* @__PURE__ */ React.createElement(ProjectTag, { ui, tone: "warning", label: t("project.pending"), count: pending }) : null, dirty + active + pending === 0 ? /* @__PURE__ */ React.createElement("span", { className: "df-meta" }, t("project.idle")) : null)), project.description ? /* @__PURE__ */ React.createElement("p", { className: "df-project-desc" }, project.description) : null);
+    }))
+  ), /* @__PURE__ */ React.createElement(
+    CollapsiblePanel,
+    {
+      className: "df-fold df-fold-fill",
+      open: open("tasks"),
+      onToggle: () => toggle("tasks"),
+      title: t("overview.tasks"),
+      count: devRows.length + acceptRows.length,
+      bodyClassName: "df-fold-body-fill"
+    },
+    /* @__PURE__ */ React.createElement("section", { className: "df-task-panel" }, devRows.length === 0 && acceptRows.length === 0 ? /* @__PURE__ */ React.createElement("div", { className: "df-task-rest" }, t("overview.noTasks")) : /* @__PURE__ */ React.createElement(React.Fragment, null, devRows.length > 0 ? /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("h4", { className: "df-subsection" }, t("section.devTasks"), /* @__PURE__ */ React.createElement("span", { className: "df-subsection-count" }, devRows.length)), /* @__PURE__ */ React.createElement("div", { className: "df-card" }, devRows.map((task) => /* @__PURE__ */ React.createElement(OverviewTaskRow, { key: task.id, ui, t, task })))) : null, acceptRows.length > 0 ? /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("h4", { className: "df-subsection" }, t("section.acceptTasks"), /* @__PURE__ */ React.createElement("span", { className: "df-subsection-count" }, acceptRows.length)), /* @__PURE__ */ React.createElement("div", { className: "df-card" }, acceptRows.map((task) => /* @__PURE__ */ React.createElement(OverviewAcceptRow, { key: task.id, ui, t, task })))) : null, /* @__PURE__ */ React.createElement("div", { className: "df-task-rest" }, t("overview.allShown"))))
+  ));
 }
 function Tasks({
   ui,
@@ -1668,19 +1759,7 @@ function Tasks({
     const laterOpen = order.slice(order.indexOf(id) + 1).some((next) => open[next]);
     const title = id === "schedule" ? t("section.scheduleTasks") : id === "dev" ? t("section.devTasks") : t("section.acceptTasks");
     const count = id === "schedule" ? schedules.length : id === "dev" ? devAll.length : acceptRows.length;
-    return /* @__PURE__ */ React.createElement("section", { key: id, className: "df-view", "data-pane": id, "data-open": open[id] ? "true" : "false", style: paneStyle(id) }, /* @__PURE__ */ React.createElement(
-      "button",
-      {
-        type: "button",
-        className: "df-view-head",
-        "aria-expanded": open[id],
-        onClick: () => togglePane(id),
-        onPointerDown: (event) => pressHeader(id, event)
-      },
-      /* @__PURE__ */ React.createElement("span", { className: "df-view-chev", "aria-hidden": "true" }, /* @__PURE__ */ React.createElement(Chevron, null)),
-      title,
-      /* @__PURE__ */ React.createElement("span", { className: "df-view-count" }, count)
-    ), id === "schedule" && open.schedule ? /* @__PURE__ */ React.createElement("div", { className: "df-view-body" }, schedules.length === 0 ? /* @__PURE__ */ React.createElement("div", { className: "df-empty" }, /* @__PURE__ */ React.createElement("p", null, t("section.emptySchedule"))) : schedules.map((schedule) => /* @__PURE__ */ React.createElement(ScheduleItem, { key: schedule.id, ui, t, schedule, open: scheduleOpen[schedule.id] === true, onToggle: () => setScheduleOpen({ ...scheduleOpen, [schedule.id]: scheduleOpen[schedule.id] !== true }) }))) : null, id === "dev" && open.dev ? /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("div", { className: "df-pane-tools" }, /* @__PURE__ */ React.createElement("div", { className: "df-filters" }, filters.map(([value, label]) => {
+    const tools = id === "dev" ? /* @__PURE__ */ React.createElement("div", { className: "df-pane-tools" }, /* @__PURE__ */ React.createElement("div", { className: "df-filters" }, filters.map(([value, label]) => {
       const count2 = devAll.filter((task) => matchFilter(value, task)).length;
       const text = `${label} ${count2}`;
       return ui.Pill ? /* @__PURE__ */ React.createElement(ui.Pill, { key: value, active: filter === value, onClick: () => setFilter(value) }, text) : /* @__PURE__ */ React.createElement("button", { key: value, type: "button", "aria-pressed": filter === value, onClick: () => setFilter(value) }, text);
@@ -1708,31 +1787,51 @@ function Tasks({
       },
       /* @__PURE__ */ React.createElement(AcceptIcon, null),
       acceptSelected.length > 0 ? /* @__PURE__ */ React.createElement("span", { className: "df-icon-badge" }, acceptSelected.length) : null
-    ))), /* @__PURE__ */ React.createElement("div", { className: "df-view-body" }, /* @__PURE__ */ React.createElement("div", { className: "df-card" }, devRows.length === 0 ? /* @__PURE__ */ React.createElement("div", { className: "df-empty" }, /* @__PURE__ */ React.createElement("p", null, t("section.emptyDev"))) : devRows.map((task) => /* @__PURE__ */ React.createElement(DevTaskItem, { key: task.id, ui, t, task, picked, setPicked, sessionId, call, reload, show, selectionMode, onDeleteTask: removeOne, ...detailProps(task.id), onOpenDiff: (file, index) => openDiff?.(task.id, task.title, index) })))), selectionMode !== null ? /* @__PURE__ */ React.createElement("div", { className: "df-foot" }, selectionMode === "accept" ? /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement(ActionButton, { ui, className: "df-go", variant: "primary", disabled: busy || reason !== "" || acceptSelected.length === 0, title: reason, onClick: launch }, busy ? t("action.working") : `${t("action.accept")} (${acceptSelected.length})`), /* @__PURE__ */ React.createElement("p", { className: "df-hint" }, reason !== "" ? reason : `${t("hint.order")}\uFF1A${acceptSelected.map((task) => task.title).join(" \u2192 ")}`)) : /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement(ActionButton, { ui, className: "df-go", disabled: removing || deleteReason !== "" || deleteSelected.length === 0, title: deleteReason || deleteHint, onClick: removeSelected }, removing ? t("action.deleting") : `${t("action.delete")} (${deleteSelected.length})`), /* @__PURE__ */ React.createElement("p", { className: "df-hint" }, deleteReason !== "" ? deleteReason : deleteHint)), /* @__PURE__ */ React.createElement(ActionButton, { ui, variant: "ghost", className: "df-cancel", onClick: () => chooseMode(selectionMode) }, t("action.cancel"))) : null) : null, id === "accept" && open.accept ? /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("div", { className: "df-view-body" }, /* @__PURE__ */ React.createElement("div", { className: "df-card" }, acceptRows.length === 0 ? /* @__PURE__ */ React.createElement("div", { className: "df-empty" }, /* @__PURE__ */ React.createElement("p", null, t("section.emptyAccept"))) : acceptRows.map((batch) => {
-      const children = containedTasks(data, batch);
-      const open2 = children.length > 0 && (opened[batch.id] ?? batch.status === "accepting");
-      const deletable = batch.status !== "accepting";
-      return /* @__PURE__ */ React.createElement(
-        AcceptTaskItem,
-        {
-          key: batch.id,
-          ui,
-          t,
-          batch,
-          picked,
-          setPicked,
-          sessionId,
-          call,
-          reload,
-          show,
-          pickedBatches,
-          setPickedBatches,
-          open: open2,
-          onToggle: children.length > 0 ? () => setOpened({ ...opened, [batch.id]: !open2 }) : void 0,
-          children
-        }
-      );
-    }))), pickedBatches.length > 0 ? /* @__PURE__ */ React.createElement("div", { className: "df-foot" }, /* @__PURE__ */ React.createElement(ActionButton, { ui, className: "df-go", disabled: removing, onClick: () => removeBatches(call, sessionId, pickedBatches, setPickedBatches, setRemoving, reload, show) }, removing ? t("action.deleting") : t("action.delete")), /* @__PURE__ */ React.createElement("p", { className: "df-hint" }, `${pickedBatches.length} \u4E2A\u9A8C\u6536\u4EFB\u52A1\uFF0C\u5220\u9664\u65F6\u4E00\u5E76\u5220\u6389\u9A8C\u6536\u5206\u652F`)) : null) : null, open[id] && laterOpen ? /* @__PURE__ */ React.createElement("div", { className: "df-sash", role: "separator", "aria-orientation": "horizontal", "aria-label": "\u8C03\u6574\u9762\u677F\u9AD8\u5EA6", onPointerDown: (event) => resizePane(id, event) }) : null);
+    ))) : void 0;
+    const footer = id === "dev" && selectionMode !== null ? /* @__PURE__ */ React.createElement("div", { className: "df-foot" }, selectionMode === "accept" ? /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement(ActionButton, { ui, className: "df-go", variant: "primary", disabled: busy || reason !== "" || acceptSelected.length === 0, title: reason, onClick: launch }, busy ? t("action.working") : `${t("action.accept")} (${acceptSelected.length})`), /* @__PURE__ */ React.createElement("p", { className: "df-hint" }, reason !== "" ? reason : `${t("hint.order")}\uFF1A${acceptSelected.map((task) => task.title).join(" \u2192 ")}`)) : /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement(ActionButton, { ui, className: "df-go", disabled: removing || deleteReason !== "" || deleteSelected.length === 0, title: deleteReason || deleteHint, onClick: removeSelected }, removing ? t("action.deleting") : `${t("action.delete")} (${deleteSelected.length})`), /* @__PURE__ */ React.createElement("p", { className: "df-hint" }, deleteReason !== "" ? deleteReason : deleteHint)), /* @__PURE__ */ React.createElement(ActionButton, { ui, variant: "ghost", className: "df-cancel", onClick: () => chooseMode(selectionMode) }, t("action.cancel"))) : id === "accept" && pickedBatches.length > 0 ? /* @__PURE__ */ React.createElement("div", { className: "df-foot" }, /* @__PURE__ */ React.createElement(ActionButton, { ui, className: "df-go", disabled: removing, onClick: () => removeBatches(call, sessionId, pickedBatches, setPickedBatches, setRemoving, reload, show) }, removing ? t("action.deleting") : t("action.delete")), /* @__PURE__ */ React.createElement("p", { className: "df-hint" }, `${pickedBatches.length} \u4E2A\u9A8C\u6536\u4EFB\u52A1\uFF0C\u5220\u9664\u65F6\u4E00\u5E76\u5220\u6389\u9A8C\u6536\u5206\u652F`)) : void 0;
+    return /* @__PURE__ */ React.createElement(
+      CollapsiblePanel,
+      {
+        key: id,
+        open: open[id],
+        onToggle: () => togglePane(id),
+        onHeadPointerDown: (event) => pressHeader(id, event),
+        title,
+        count,
+        dataPane: id,
+        style: paneStyle(id),
+        tools,
+        footer,
+        sash: open[id] && laterOpen ? /* @__PURE__ */ React.createElement("div", { className: "df-sash", role: "separator", "aria-orientation": "horizontal", "aria-label": "\u8C03\u6574\u9762\u677F\u9AD8\u5EA6", onPointerDown: (event) => resizePane(id, event) }) : null
+      },
+      id === "schedule" ? schedules.length === 0 ? /* @__PURE__ */ React.createElement("div", { className: "df-empty" }, /* @__PURE__ */ React.createElement("p", null, t("section.emptySchedule"))) : schedules.map((schedule) => /* @__PURE__ */ React.createElement(ScheduleItem, { key: schedule.id, ui, t, schedule, open: scheduleOpen[schedule.id] === true, onToggle: () => setScheduleOpen({ ...scheduleOpen, [schedule.id]: scheduleOpen[schedule.id] !== true }) })) : null,
+      id === "dev" ? /* @__PURE__ */ React.createElement("div", { className: "df-card" }, devRows.length === 0 ? /* @__PURE__ */ React.createElement("div", { className: "df-empty" }, /* @__PURE__ */ React.createElement("p", null, t("section.emptyDev"))) : devRows.map((task) => /* @__PURE__ */ React.createElement(DevTaskItem, { key: task.id, ui, t, task, picked, setPicked, sessionId, call, reload, show, selectionMode, onDeleteTask: removeOne, ...detailProps(task.id), onOpenDiff: (file, index) => openDiff?.(task.id, task.title, index) }))) : null,
+      id === "accept" ? /* @__PURE__ */ React.createElement("div", { className: "df-card" }, acceptRows.length === 0 ? /* @__PURE__ */ React.createElement("div", { className: "df-empty" }, /* @__PURE__ */ React.createElement("p", null, t("section.emptyAccept"))) : acceptRows.map((batch) => {
+        const children = containedTasks(data, batch);
+        const open2 = children.length > 0 && (opened[batch.id] ?? batch.status === "accepting");
+        const deletable = batch.status !== "accepting";
+        return /* @__PURE__ */ React.createElement(
+          AcceptTaskItem,
+          {
+            key: batch.id,
+            ui,
+            t,
+            batch,
+            picked,
+            setPicked,
+            sessionId,
+            call,
+            reload,
+            show,
+            pickedBatches,
+            setPickedBatches,
+            open: open2,
+            onToggle: children.length > 0 ? () => setOpened({ ...opened, [batch.id]: !open2 }) : void 0,
+            children
+          }
+        );
+      })) : null
+    );
   }));
 }
 var PANE_KEY = "dsh-dev-flow.task-panes";
@@ -1808,7 +1907,7 @@ function TreeItem({
   } }, expandable ? /* @__PURE__ */ React.createElement("button", { type: "button", className: "df-chev", "data-expanded": expanded ? "true" : "false", "aria-expanded": expanded, onClick: (event) => {
     event.stopPropagation();
     onToggle?.();
-  } }, /* @__PURE__ */ React.createElement(Chevron, null)) : /* @__PURE__ */ React.createElement("span", { className: "df-chev-space", "aria-hidden": "true" }), leading, /* @__PURE__ */ React.createElement("span", { className: "df-tree-content" }, /* @__PURE__ */ React.createElement("span", { className: "df-tree-title" }, title), chips.length > 0 ? /* @__PURE__ */ React.createElement("span", { className: "df-chips df-task-chips" }, chips.map((chip) => /* @__PURE__ */ React.createElement("span", { key: chip, className: "df-chip" }, chip))) : null), /* @__PURE__ */ React.createElement("span", { className: "df-actions" }, time ? /* @__PURE__ */ React.createElement("span", { className: "df-tree-time" }, time) : null, actions)), expanded && facts && facts.length > 0 ? /* @__PURE__ */ React.createElement("div", { className: "df-facts" }, facts.map((fact, index) => /* @__PURE__ */ React.createElement("div", { key: `${index}-${fact.slot}-${fact.detail}`, className: "df-fact" }, /* @__PURE__ */ React.createElement("span", { className: "df-fact-slot" }, fact.slot), fact.detail ? /* @__PURE__ */ React.createElement("span", { className: "df-fact-detail" }, fact.detail) : null))) : null, expanded && children ? /* @__PURE__ */ React.createElement("div", { className: "df-tree-children" }, children) : null);
+  } }, /* @__PURE__ */ React.createElement(Chevron, null)) : /* @__PURE__ */ React.createElement("span", { className: "df-chev-space", "aria-hidden": "true" }), leading, /* @__PURE__ */ React.createElement("span", { className: "df-tree-content" }, /* @__PURE__ */ React.createElement("span", { className: "df-tree-title" }, title), chips.length > 0 ? /* @__PURE__ */ React.createElement("span", { className: "df-chips df-task-chips" }, chips.map((chip) => /* @__PURE__ */ React.createElement("span", { key: chip, className: "df-chip" }, chip))) : null), /* @__PURE__ */ React.createElement("span", { className: "df-actions" }, time ? /* @__PURE__ */ React.createElement("span", { className: "df-tree-time" }, time) : null, actions)), expanded && facts && facts.length > 0 ? /* @__PURE__ */ React.createElement("div", { className: "df-facts" }, facts.map((fact, index) => /* @__PURE__ */ React.createElement("div", { key: `${index}-${fact.slot}-${fact.detail}`, className: fact.wide ? "df-fact df-fact-wide" : "df-fact" }, /* @__PURE__ */ React.createElement("span", { className: "df-fact-slot" }, fact.slot), fact.detail ? /* @__PURE__ */ React.createElement("span", { className: "df-fact-detail" }, fact.detail) : null))) : null, expanded && children ? /* @__PURE__ */ React.createElement("div", { className: "df-tree-children" }, children) : null);
 }
 function ScheduleItem({ ui, t, schedule, open, onToggle, depth = 0 }) {
   const tasks = [...schedule.tasks ?? []].sort((left, right) => String(right.createdAt ?? "").localeCompare(String(left.createdAt ?? "")));
@@ -2482,18 +2581,25 @@ function taskBranchChips(task) {
   return Object.values(task.slots ?? {}).map((slot) => slot.branch).filter((branch) => typeof branch === "string" && branch !== "");
 }
 function taskFacts(task, t) {
-  const zh2 = t("page.tasks") === "\u4EFB\u52A1";
-  const batchLabel = zh2 ? "\u6279\u6B21" : "batch";
   const rows = [];
   for (const [repo, slot] of Object.entries(task.slots ?? {})) {
-    const label = task.kind === "dev" && slot.number ? `${repo}-${slot.number}` : repo;
-    if (slot.branch || task.kind === "dev" && slot.number) rows.push({ slot: label, detail: slot.branch ?? "" });
+    const slotLabel = task.kind === "dev" && slot.number ? `${repo}-${slot.number}` : repo;
+    rows.push({ slot: t("fact.slot"), detail: slotLabel });
+    if (slot.branch) rows.push({ slot: t("fact.branch"), detail: slot.branch });
   }
-  if (task.batchId && task.kind === "dev") rows.push({ slot: batchLabel, detail: task.batchId });
+  if (task.kind === "dev") {
+    const base = [
+      typeof task.baseGroup === "string" && task.baseGroup !== "" ? `#${task.baseGroup}` : "",
+      typeof task.base === "string" ? task.base : ""
+    ].filter(Boolean).join(" \xB7 ");
+    if (base) rows.push({ slot: t("fact.base"), detail: base });
+    if (task.batchId) rows.push({ slot: t("fact.batch"), detail: task.batchId });
+  }
   if (task.status === "paused" && task.pausedAt) rows.push({ slot: t("fact.paused"), detail: createdText(task.pausedAt) ?? "" });
   if (task.status === "stopped" && task.stoppedAt) rows.push({ slot: t("fact.stopped"), detail: createdText(task.stoppedAt) ?? "" });
-  if (task.warnings?.length) rows.push({ slot: t("status.pending-merge"), detail: task.warnings.join("\uFF0C") });
+  if (task.warnings?.length) rows.push({ slot: t("fact.warning"), detail: task.warnings.join("\uFF0C"), wide: true });
   rows.push(...usageRows(task.usage, t));
+  if (rows.length % 2 === 1) rows[rows.length - 1].wide = true;
   return rows;
 }
 function usageRows(usage, t) {
@@ -2505,7 +2611,7 @@ function usageRows(usage, t) {
   ];
   const cache = (usage.cacheReadTokens ?? 0) + (usage.cacheWriteTokens ?? 0);
   if (cache > 0) parts.push(`${t("usage.cache")} ${formatCount(cache)}`);
-  return [{ slot: t("fact.usage"), detail: parts.join(" \xB7 ") }];
+  return [{ slot: t("fact.usage"), detail: parts.join(" \xB7 "), wide: true }];
 }
 function formatTokens(total) {
   if (total >= 1e4) return `${Math.round(total / 1e3)}k`;

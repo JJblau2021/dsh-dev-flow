@@ -230,8 +230,54 @@ function OverviewAcceptRow({ ui, t, task }: { ui: UiKit, t: Translate, task: Tas
   )
 }
 
+/** 概览和任务页共用的折叠面板：标题栏负责展开/收起，内容区由调用方决定。 */
+function CollapsiblePanel({
+  open, onToggle, title, count, children, tools, footer, sash, className, bodyClassName, style, dataPane, onHeadPointerDown,
+}: {
+  open: boolean
+  onToggle: () => void
+  title: React.ReactNode
+  count?: number
+  children?: React.ReactNode
+  tools?: React.ReactNode
+  footer?: React.ReactNode
+  sash?: React.ReactNode
+  className?: string
+  bodyClassName?: string
+  style?: React.CSSProperties
+  dataPane?: string
+  onHeadPointerDown?: (event: React.PointerEvent<HTMLButtonElement>) => void
+}) {
+  return (
+    <section className={`df-view ${className ?? ''}`} data-pane={dataPane} data-open={open ? 'true' : 'false'} style={style}>
+      <button
+        type="button"
+        className="df-view-head"
+        aria-expanded={open}
+        onClick={onToggle}
+        onPointerDown={onHeadPointerDown}
+      >
+        <span className="df-view-chev" aria-hidden="true"><Chevron /></span>
+        {title}
+        {count === undefined ? null : <span className="df-view-count">{count}</span>}
+      </button>
+      {open ? (
+        <>
+          {tools}
+          <div className={`df-view-body ${bodyClassName ?? ''}`}>{children}</div>
+          {footer}
+        </>
+      ) : null}
+      {sash}
+    </section>
+  )
+}
+
 function Overview({ ui, data, t }: { ui: UiKit, data: Snapshot, t: Translate }) {
   const [scope, setScope] = useState('all')
+  const [closed, setClosed] = useState<Record<string, boolean>>({})
+  const open = (id: string) => closed[id] !== true
+  const toggle = (id: string) => setClosed((prev) => ({ ...prev, [id]: !prev[id] }))
   const projects = data.projects ?? []
   const selected = projects.some((project) => project.name === scope) ? scope : 'all'
   const counts = overviewCounts(data, selected === 'all' ? undefined : selected)
@@ -275,95 +321,118 @@ function Overview({ ui, data, t }: { ui: UiKit, data: Snapshot, t: Translate }) 
     .sort(newestFirst)
   return (
     <div className="df-scroll">
-      <h3 className="df-section">{t('overview.metrics')}</h3>
-      <div className="df-scope">
-        <div className="df-filters">
-          {ui.Pill
-            ? (
-              <ui.Pill active={selected === 'all'} onClick={() => setScope('all')}>
-                {t('filter.allProjects')}
-                <span className="df-filter-count">{projects.length}</span>
-              </ui.Pill>
-            )
-            : (
-              <button type="button" aria-pressed={selected === 'all'} onClick={() => setScope('all')}>
-                {t('filter.allProjects')}
-                <span className="df-filter-count">{projects.length}</span>
-              </button>
-            )}
-          {projects.map((project) => (ui.Pill
-            ? <ui.Pill key={project.name} active={selected === project.name} onClick={() => setScope(project.name)}>{project.name}</ui.Pill>
-            : <button key={project.name} type="button" aria-pressed={selected === project.name} onClick={() => setScope(project.name)}>{project.name}</button>))}
-        </div>
-      </div>
-      <div className="df-metrics">
-        {cards.map((card) => (
-          <div key={card.key} className="df-metric">
-            <div className="df-kicker">{card.label}</div>
-            <div className="df-metric-value">
-              {card.parts.map((part, index) => (
-                <span key={`${card.key}:${index}`} className="df-metric-part">
-                  {index > 0 ? <span className="df-metric-sep" aria-hidden="true">/</span> : null}
-                  <strong data-tone={part.tone}>{part.value}</strong>
-                </span>
-              ))}
-            </div>
-            {card.legend ? <span className="df-metric-legend">{card.legend}</span> : null}
+      <CollapsiblePanel
+        className="df-fold"
+        open={open('metrics')}
+        onToggle={() => toggle('metrics')}
+        title={t('overview.metrics')}
+        bodyClassName="df-fold-body"
+      >
+        <div className="df-scope">
+          <div className="df-filters">
+            {ui.Pill
+              ? (
+                <ui.Pill active={selected === 'all'} onClick={() => setScope('all')}>
+                  {t('filter.allProjects')}
+                  <span className="df-filter-count">{projects.length}</span>
+                </ui.Pill>
+              )
+              : (
+                <button type="button" aria-pressed={selected === 'all'} onClick={() => setScope('all')}>
+                  {t('filter.allProjects')}
+                  <span className="df-filter-count">{projects.length}</span>
+                </button>
+              )}
+            {projects.map((project) => (ui.Pill
+              ? <ui.Pill key={project.name} active={selected === project.name} onClick={() => setScope(project.name)}>{project.name}</ui.Pill>
+              : <button key={project.name} type="button" aria-pressed={selected === project.name} onClick={() => setScope(project.name)}>{project.name}</button>))}
           </div>
-        ))}
-      </div>
-      <h3 className="df-section">{t('section.projects')}</h3>
-      {projects.length === 0 ? <p className="df-empty-line">{t('section.emptyProjects')}</p> : (
-        <div className="df-card">
-          {projects.map((project) => {
-            const stats = project.stats
-            const dirty = stats?.baseSlots.dirty ?? 0
-            const active = stats?.devTasks.developing ?? 0
-            const pending = stats?.devTasks.pending ?? 0
-            return (
-              <article key={project.name} className="df-project" data-scoped={selected === project.name ? 'true' : 'false'} title={project.path}>
-                <div className="df-project-head">
-                  <span className="df-name">{project.name}</span>
-                  {project.branch ? <span className="df-branch">{project.branch}</span> : null}
-                  <div className="df-project-status">
-                    {dirty > 0 ? <ProjectTag ui={ui} tone="danger" label={t('project.dirty')} count={dirty} /> : null}
-                    {active > 0 ? <ProjectTag ui={ui} tone="info" label={t('project.active')} count={active} /> : null}
-                    {pending > 0 ? <ProjectTag ui={ui} tone="warning" label={t('project.pending')} count={pending} /> : null}
-                    {dirty + active + pending === 0 ? <span className="df-meta">{t('project.idle')}</span> : null}
-                  </div>
-                </div>
-                {project.description ? <p className="df-project-desc">{project.description}</p> : null}
-              </article>
-            )
-          })}
         </div>
-      )}
-      <section className="df-task-panel">
-        <h3 className="df-section">{t('overview.tasks')}</h3>
-        {devRows.length === 0 && acceptRows.length === 0 ? (
-          <div className="df-task-rest">{t('overview.noTasks')}</div>
-        ) : (
-          <>
-            {devRows.length > 0 ? (
-              <>
-                <h4 className="df-subsection">{t('section.devTasks')}<span className="df-subsection-count">{devRows.length}</span></h4>
-                <div className="df-card">
-                  {devRows.map((task) => <OverviewTaskRow key={task.id} ui={ui} t={t} task={task} />)}
-                </div>
-              </>
-            ) : null}
-            {acceptRows.length > 0 ? (
-              <>
-                <h4 className="df-subsection">{t('section.acceptTasks')}<span className="df-subsection-count">{acceptRows.length}</span></h4>
-                <div className="df-card">
-                  {acceptRows.map((task) => <OverviewAcceptRow key={task.id} ui={ui} t={t} task={task} />)}
-                </div>
-              </>
-            ) : null}
-            <div className="df-task-rest">{t('overview.allShown')}</div>
-          </>
+        <div className="df-metrics">
+          {cards.map((card) => (
+            <div key={card.key} className="df-metric">
+              <div className="df-kicker">{card.label}</div>
+              <div className="df-metric-value">
+                {card.parts.map((part, index) => (
+                  <span key={`${card.key}:${index}`} className="df-metric-part">
+                    {index > 0 ? <span className="df-metric-sep" aria-hidden="true">/</span> : null}
+                    <strong data-tone={part.tone}>{part.value}</strong>
+                  </span>
+                ))}
+              </div>
+              {card.legend ? <span className="df-metric-legend">{card.legend}</span> : null}
+            </div>
+          ))}
+        </div>
+      </CollapsiblePanel>
+      <CollapsiblePanel
+        className="df-fold"
+        open={open('projects')}
+        onToggle={() => toggle('projects')}
+        title={t('section.projects')}
+        count={projects.length}
+        bodyClassName="df-fold-body"
+      >
+        {projects.length === 0 ? <p className="df-empty-line">{t('section.emptyProjects')}</p> : (
+          <div className="df-card">
+            {projects.map((project) => {
+              const stats = project.stats
+              const dirty = stats?.baseSlots.dirty ?? 0
+              const active = stats?.devTasks.developing ?? 0
+              const pending = stats?.devTasks.pending ?? 0
+              return (
+                <article key={project.name} className="df-project" data-scoped={selected === project.name ? 'true' : 'false'} title={project.path}>
+                  <div className="df-project-head">
+                    <span className="df-name">{project.name}</span>
+                    {project.branch ? <span className="df-branch">{project.branch}</span> : null}
+                    <div className="df-project-status">
+                      {dirty > 0 ? <ProjectTag ui={ui} tone="danger" label={t('project.dirty')} count={dirty} /> : null}
+                      {active > 0 ? <ProjectTag ui={ui} tone="info" label={t('project.active')} count={active} /> : null}
+                      {pending > 0 ? <ProjectTag ui={ui} tone="warning" label={t('project.pending')} count={pending} /> : null}
+                      {dirty + active + pending === 0 ? <span className="df-meta">{t('project.idle')}</span> : null}
+                    </div>
+                  </div>
+                  {project.description ? <p className="df-project-desc">{project.description}</p> : null}
+                </article>
+              )
+            })}
+          </div>
         )}
-      </section>
+      </CollapsiblePanel>
+      <CollapsiblePanel
+        className="df-fold df-fold-fill"
+        open={open('tasks')}
+        onToggle={() => toggle('tasks')}
+        title={t('overview.tasks')}
+        count={devRows.length + acceptRows.length}
+        bodyClassName="df-fold-body-fill"
+      >
+        <section className="df-task-panel">
+          {devRows.length === 0 && acceptRows.length === 0 ? (
+            <div className="df-task-rest">{t('overview.noTasks')}</div>
+          ) : (
+            <>
+              {devRows.length > 0 ? (
+                <>
+                  <h4 className="df-subsection">{t('section.devTasks')}<span className="df-subsection-count">{devRows.length}</span></h4>
+                  <div className="df-card">
+                    {devRows.map((task) => <OverviewTaskRow key={task.id} ui={ui} t={t} task={task} />)}
+                  </div>
+                </>
+              ) : null}
+              {acceptRows.length > 0 ? (
+                <>
+                  <h4 className="df-subsection">{t('section.acceptTasks')}<span className="df-subsection-count">{acceptRows.length}</span></h4>
+                  <div className="df-card">
+                    {acceptRows.map((task) => <OverviewAcceptRow key={task.id} ui={ui} t={t} task={task} />)}
+                  </div>
+                </>
+              ) : null}
+              <div className="df-task-rest">{t('overview.allShown')}</div>
+            </>
+          )}
+        </section>
+      </CollapsiblePanel>
     </div>
   )
 }
@@ -522,130 +591,123 @@ function Tasks({
         const laterOpen = order.slice(order.indexOf(id) + 1).some((next) => open[next])
         const title = id === 'schedule' ? t('section.scheduleTasks') : id === 'dev' ? t('section.devTasks') : t('section.acceptTasks')
         const count = id === 'schedule' ? schedules.length : id === 'dev' ? devAll.length : acceptRows.length
-        return (
-      <section key={id} className="df-view" data-pane={id} data-open={open[id] ? 'true' : 'false'} style={paneStyle(id)}>
-        <button
-          type="button"
-          className="df-view-head"
-          aria-expanded={open[id]}
-          onClick={() => togglePane(id)}
-          onPointerDown={(event) => pressHeader(id, event)}
-        >
-          <span className="df-view-chev" aria-hidden="true"><Chevron /></span>
-          {title}
-          <span className="df-view-count">{count}</span>
-        </button>
-        {id === 'schedule' && open.schedule ? (
-          <div className="df-view-body">
-            {schedules.length === 0 ? <div className="df-empty"><p>{t('section.emptySchedule')}</p></div> : schedules.map((schedule) => (
-              <ScheduleItem key={schedule.id} ui={ui} t={t} schedule={schedule} open={scheduleOpen[schedule.id] === true} onToggle={() => setScheduleOpen({ ...scheduleOpen, [schedule.id]: scheduleOpen[schedule.id] !== true })} />
-            ))}
+        const tools = id === 'dev' ? (
+          <div className="df-pane-tools">
+            <div className="df-filters">
+              {filters.map(([value, label]) => {
+                const count = devAll.filter((task) => matchFilter(value, task)).length
+                const text = `${label} ${count}`
+                return ui.Pill
+                  ? <ui.Pill key={value} active={filter === value} onClick={() => setFilter(value)}>{text}</ui.Pill>
+                  : <button key={value} type="button" aria-pressed={filter === value} onClick={() => setFilter(value)}>{text}</button>
+              })}
+            </div>
+            <div className="df-pane-actions">
+              <ActionButton
+                ui={ui}
+                variant="ghost"
+                className={`df-icon-btn${selectionMode === 'delete' ? ' df-icon-btn-active' : ''}`}
+                title={t('action.delete')}
+                ariaLabel={t('action.delete')}
+                onClick={() => chooseMode('delete')}
+              >
+                <TrashIcon />
+                {deleteSelected.length > 0 ? <span className="df-icon-badge">{deleteSelected.length}</span> : null}
+              </ActionButton>
+              <ActionButton
+                ui={ui}
+                variant="ghost"
+                className={`df-icon-btn${selectionMode === 'accept' ? ' df-icon-btn-active' : ''}`}
+                title={t('action.accept')}
+                ariaLabel={t('action.accept')}
+                onClick={() => chooseMode('accept')}
+              >
+                <AcceptIcon />
+                {acceptSelected.length > 0 ? <span className="df-icon-badge">{acceptSelected.length}</span> : null}
+              </ActionButton>
+            </div>
           </div>
-        ) : null}
-        {id === 'dev' && open.dev ? <>
-      <div className="df-pane-tools">
-        <div className="df-filters">
-          {filters.map(([value, label]) => {
-            const count = devAll.filter((task) => matchFilter(value, task)).length
-            const text = `${label} ${count}`
-            return ui.Pill
-              ? <ui.Pill key={value} active={filter === value} onClick={() => setFilter(value)}>{text}</ui.Pill>
-              : <button key={value} type="button" aria-pressed={filter === value} onClick={() => setFilter(value)}>{text}</button>
-          })}
-        </div>
-        <div className="df-pane-actions">
-          <ActionButton
-            ui={ui}
-            variant="ghost"
-            className={`df-icon-btn${selectionMode === 'delete' ? ' df-icon-btn-active' : ''}`}
-            title={t('action.delete')}
-            ariaLabel={t('action.delete')}
-            onClick={() => chooseMode('delete')}
+        ) : undefined
+        const footer = id === 'dev' && selectionMode !== null ? (
+          <div className="df-foot">
+            {selectionMode === 'accept' ? (
+              <>
+                <ActionButton ui={ui} className="df-go" variant="primary" disabled={busy || reason !== '' || acceptSelected.length === 0} title={reason} onClick={launch}>
+                  {busy ? t('action.working') : `${t('action.accept')} (${acceptSelected.length})`}
+                </ActionButton>
+                <p className="df-hint">{reason !== '' ? reason : `${t('hint.order')}：${acceptSelected.map((task) => task.title).join(' → ')}`}</p>
+              </>
+            ) : (
+              <>
+                <ActionButton ui={ui} className="df-go" disabled={removing || deleteReason !== '' || deleteSelected.length === 0} title={deleteReason || deleteHint} onClick={removeSelected}>
+                  {removing ? t('action.deleting') : `${t('action.delete')} (${deleteSelected.length})`}
+                </ActionButton>
+                <p className="df-hint">{deleteReason !== '' ? deleteReason : deleteHint}</p>
+              </>
+            )}
+            <ActionButton ui={ui} variant="ghost" className="df-cancel" onClick={() => chooseMode(selectionMode)}>{t('action.cancel')}</ActionButton>
+          </div>
+        ) : id === 'accept' && pickedBatches.length > 0 ? (
+          <div className="df-foot">
+            <ActionButton ui={ui} className="df-go" disabled={removing} onClick={() => removeBatches(call, sessionId, pickedBatches, setPickedBatches, setRemoving, reload, show)}>
+              {removing ? t('action.deleting') : t('action.delete')}
+            </ActionButton>
+            <p className="df-hint">{`${pickedBatches.length} 个验收任务，删除时一并删掉验收分支`}</p>
+          </div>
+        ) : undefined
+        return (
+          <CollapsiblePanel
+            key={id}
+            open={open[id]}
+            onToggle={() => togglePane(id)}
+            onHeadPointerDown={(event) => pressHeader(id, event)}
+            title={title}
+            count={count}
+            dataPane={id}
+            style={paneStyle(id)}
+            tools={tools}
+            footer={footer}
+            sash={open[id] && laterOpen ? <div className="df-sash" role="separator" aria-orientation="horizontal" aria-label="调整面板高度" onPointerDown={(event) => resizePane(id, event)} /> : null}
           >
-            <TrashIcon />
-            {deleteSelected.length > 0 ? <span className="df-icon-badge">{deleteSelected.length}</span> : null}
-          </ActionButton>
-          <ActionButton
-            ui={ui}
-            variant="ghost"
-            className={`df-icon-btn${selectionMode === 'accept' ? ' df-icon-btn-active' : ''}`}
-            title={t('action.accept')}
-            ariaLabel={t('action.accept')}
-            onClick={() => chooseMode('accept')}
-          >
-            <AcceptIcon />
-            {acceptSelected.length > 0 ? <span className="df-icon-badge">{acceptSelected.length}</span> : null}
-          </ActionButton>
-        </div>
-      </div>
-      <div className="df-view-body">
-      <div className="df-card">
-        {devRows.length === 0 ? <div className="df-empty"><p>{t('section.emptyDev')}</p></div> : devRows.map((task) => (
-          <DevTaskItem key={task.id} ui={ui} t={t} task={task} picked={picked} setPicked={setPicked} sessionId={sessionId} call={call} reload={reload} show={show} selectionMode={selectionMode} onDeleteTask={removeOne} {...detailProps(task.id)} onOpenDiff={(file, index) => openDiff?.(task.id, task.title, index)} />
-        ))}
-      </div>
-      </div>
-      {selectionMode !== null ? (
-        <div className="df-foot">
-          {selectionMode === 'accept' ? (
-            <>
-              <ActionButton ui={ui} className="df-go" variant="primary" disabled={busy || reason !== '' || acceptSelected.length === 0} title={reason} onClick={launch}>
-                {busy ? t('action.working') : `${t('action.accept')} (${acceptSelected.length})`}
-              </ActionButton>
-              <p className="df-hint">{reason !== '' ? reason : `${t('hint.order')}：${acceptSelected.map((task) => task.title).join(' → ')}`}</p>
-            </>
-          ) : (
-            <>
-              <ActionButton ui={ui} className="df-go" disabled={removing || deleteReason !== '' || deleteSelected.length === 0} title={deleteReason || deleteHint} onClick={removeSelected}>
-                {removing ? t('action.deleting') : `${t('action.delete')} (${deleteSelected.length})`}
-              </ActionButton>
-              <p className="df-hint">{deleteReason !== '' ? deleteReason : deleteHint}</p>
-            </>
-          )}
-          <ActionButton ui={ui} variant="ghost" className="df-cancel" onClick={() => chooseMode(selectionMode)}>{t('action.cancel')}</ActionButton>
-        </div>
-      ) : null}
-        </> : null}
-        {id === 'accept' && open.accept ? <>
-      <div className="df-view-body">
-      <div className="df-card">
-        {acceptRows.length === 0 ? <div className="df-empty"><p>{t('section.emptyAccept')}</p></div> : acceptRows.map((batch) => {
-          const children = containedTasks(data, batch)
-          const open = children.length > 0 && (opened[batch.id] ?? batch.status === 'accepting')
-          const deletable = batch.status !== 'accepting'
-          return (
-            <AcceptTaskItem
-              key={batch.id}
-              ui={ui}
-              t={t}
-              batch={batch}
-              picked={picked}
-              setPicked={setPicked}
-              sessionId={sessionId}
-              call={call}
-              reload={reload}
-              show={show}
-              pickedBatches={pickedBatches}
-              setPickedBatches={setPickedBatches}
-              open={open}
-              onToggle={children.length > 0 ? () => setOpened({ ...opened, [batch.id]: !open }) : undefined}
-              children={children}
-            />
-          )
-        })}
-      </div>
-      </div>
-      {pickedBatches.length > 0 ? (
-        <div className="df-foot">
-          <ActionButton ui={ui} className="df-go" disabled={removing} onClick={() => removeBatches(call, sessionId, pickedBatches, setPickedBatches, setRemoving, reload, show)}>
-            {removing ? t('action.deleting') : t('action.delete')}
-          </ActionButton>
-          <p className="df-hint">{`${pickedBatches.length} 个验收任务，删除时一并删掉验收分支`}</p>
-        </div>
-      ) : null}
-        </> : null}
-      {open[id] && laterOpen ? <div className="df-sash" role="separator" aria-orientation="horizontal" aria-label="调整面板高度" onPointerDown={(event) => resizePane(id, event)} /> : null}
-      </section>
+            {id === 'schedule' ? (schedules.length === 0 ? <div className="df-empty"><p>{t('section.emptySchedule')}</p></div> : schedules.map((schedule) => (
+              <ScheduleItem key={schedule.id} ui={ui} t={t} schedule={schedule} open={scheduleOpen[schedule.id] === true} onToggle={() => setScheduleOpen({ ...scheduleOpen, [schedule.id]: scheduleOpen[schedule.id] !== true })} />
+            ))) : null}
+            {id === 'dev' ? (
+              <div className="df-card">
+                {devRows.length === 0 ? <div className="df-empty"><p>{t('section.emptyDev')}</p></div> : devRows.map((task) => (
+                  <DevTaskItem key={task.id} ui={ui} t={t} task={task} picked={picked} setPicked={setPicked} sessionId={sessionId} call={call} reload={reload} show={show} selectionMode={selectionMode} onDeleteTask={removeOne} {...detailProps(task.id)} onOpenDiff={(file, index) => openDiff?.(task.id, task.title, index)} />
+                ))}
+              </div>
+            ) : null}
+            {id === 'accept' ? (
+              <div className="df-card">
+                {acceptRows.length === 0 ? <div className="df-empty"><p>{t('section.emptyAccept')}</p></div> : acceptRows.map((batch) => {
+                  const children = containedTasks(data, batch)
+                  const open = children.length > 0 && (opened[batch.id] ?? batch.status === 'accepting')
+                  const deletable = batch.status !== 'accepting'
+                  return (
+                    <AcceptTaskItem
+                      key={batch.id}
+                      ui={ui}
+                      t={t}
+                      batch={batch}
+                      picked={picked}
+                      setPicked={setPicked}
+                      sessionId={sessionId}
+                      call={call}
+                      reload={reload}
+                      show={show}
+                      pickedBatches={pickedBatches}
+                      setPickedBatches={setPickedBatches}
+                      open={open}
+                      onToggle={children.length > 0 ? () => setOpened({ ...opened, [batch.id]: !open }) : undefined}
+                      children={children}
+                    />
+                  )
+                })}
+              </div>
+            ) : null}
+          </CollapsiblePanel>
         )
       })}
     </div>
@@ -724,7 +786,7 @@ function TreeItem({
   chips: string[]
   leading?: React.ReactNode
   actions?: React.ReactNode
-  facts?: { slot: string, detail: string }[]
+  facts?: { slot: string, detail: string, wide?: boolean }[]
   expanded?: boolean
   expandable?: boolean
   onToggle?: () => void
@@ -764,7 +826,7 @@ function TreeItem({
       {expanded && facts && facts.length > 0 ? (
         <div className="df-facts">
           {facts.map((fact, index) => (
-            <div key={`${index}-${fact.slot}-${fact.detail}`} className="df-fact">
+            <div key={`${index}-${fact.slot}-${fact.detail}`} className={fact.wide ? 'df-fact df-fact-wide' : 'df-fact'}>
               <span className="df-fact-slot">{fact.slot}</span>
               {fact.detail ? <span className="df-fact-detail">{fact.detail}</span> : null}
             </div>
@@ -1756,18 +1818,25 @@ function taskBranchChips(task: TaskRow) {
 }
 
 function taskFacts(task: TaskRow, t: Translate) {
-  const zh = t('page.tasks') === '任务'
-  const batchLabel = zh ? '批次' : 'batch'
-  const rows: { slot: string, detail: string }[] = []
+  const rows: { slot: string, detail: string, wide?: boolean }[] = []
   for (const [repo, slot] of Object.entries(task.slots ?? {})) {
-    const label = task.kind === 'dev' && slot.number ? `${repo}-${slot.number}` : repo
-    if (slot.branch || (task.kind === 'dev' && slot.number)) rows.push({ slot: label, detail: slot.branch ?? '' })
+    const slotLabel = task.kind === 'dev' && slot.number ? `${repo}-${slot.number}` : repo
+    rows.push({ slot: t('fact.slot'), detail: slotLabel })
+    if (slot.branch) rows.push({ slot: t('fact.branch'), detail: slot.branch })
   }
-  if (task.batchId && task.kind === 'dev') rows.push({ slot: batchLabel, detail: task.batchId })
+  if (task.kind === 'dev') {
+    const base = [
+      typeof task.baseGroup === 'string' && task.baseGroup !== '' ? `#${task.baseGroup}` : '',
+      typeof task.base === 'string' ? task.base : '',
+    ].filter(Boolean).join(' · ')
+    if (base) rows.push({ slot: t('fact.base'), detail: base })
+    if (task.batchId) rows.push({ slot: t('fact.batch'), detail: task.batchId })
+  }
   if (task.status === 'paused' && task.pausedAt) rows.push({ slot: t('fact.paused'), detail: createdText(task.pausedAt) ?? '' })
   if (task.status === 'stopped' && task.stoppedAt) rows.push({ slot: t('fact.stopped'), detail: createdText(task.stoppedAt) ?? '' })
-  if (task.warnings?.length) rows.push({ slot: t('status.pending-merge'), detail: task.warnings.join('，') })
+  if (task.warnings?.length) rows.push({ slot: t('fact.warning'), detail: task.warnings.join('，'), wide: true })
   rows.push(...usageRows(task.usage, t))
+  if (rows.length % 2 === 1) rows[rows.length - 1].wide = true
   return rows
 }
 
@@ -1781,7 +1850,7 @@ function usageRows(usage: TokenUsage | null | undefined, t: Translate) {
   ]
   const cache = (usage.cacheReadTokens ?? 0) + (usage.cacheWriteTokens ?? 0)
   if (cache > 0) parts.push(`${t('usage.cache')} ${formatCount(cache)}`)
-  return [{ slot: t('fact.usage'), detail: parts.join(' · ') }]
+  return [{ slot: t('fact.usage'), detail: parts.join(' · '), wide: true }]
 }
 
 function formatTokens(total: number) {
