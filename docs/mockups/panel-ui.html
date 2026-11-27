@@ -1,0 +1,606 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="utf-8">
+<title>DSH Dev Flow · 工作流面板 UI 重构示意 v8</title>
+<style>
+  :root{
+    --bg:#ffffff; --bg-module:#f5f6f7;
+    --border-l3:rgba(0,0,0,.14);
+    --label-primary:#0f1115; --label-secondary:#565b61; --label-tertiary:#6b7078; --label-caption:#9ba1a8;
+    --hover:rgba(38,49,72,.06); --hover-solid:#e7eaee; --sel:#e7eaee;
+    --brand:#0f1115;
+    --dot-ok:#15803d; --dot-warn:#b45309; --dot-err:#d1242f; --dot-idle:#8a9099;
+    --blue:#4176e6; --blue-soft:rgba(65,118,230,.15);
+    --txt-ok:#15803d; --txt-warn:#b45309; --txt-err:#d1242f;
+    --radius-sm:8px; --radius-md:12px;
+    --mono:"SF Mono",ui-monospace,Menlo,monospace;
+    --sheet:#f7f8f9;
+  }
+  [data-theme="dark"]{
+    --bg:#151517; --bg-module:#353638;
+    --border-l3:rgba(255,255,255,.18);
+    --label-primary:#f9fafb; --label-secondary:#cfd3d6; --label-tertiary:#9ba1a8; --label-caption:#7a8087;
+    --hover:rgba(255,255,255,.07); --hover-solid:#3a3c40; --sel:#3a3c40;
+    --brand:#f9fafb;
+    --dot-ok:#5fd68b; --dot-warn:#f59e0b; --dot-err:#f25a5a; --dot-idle:#8a9099;
+    --blue:#7aaaff; --blue-soft:rgba(122,170,255,.18);
+    --txt-ok:#5fd68b; --txt-warn:#f59e0b; --txt-err:#f25a5a;
+    --sheet:#0d0d0e;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{
+    background:var(--sheet); color:var(--label-primary);
+    font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Helvetica Neue",Arial,sans-serif;
+    -webkit-font-smoothing:antialiased; padding:36px 44px 60px;
+  }
+  .sheet{max-width:1352px;margin:0 auto}
+  .head{display:flex;align-items:flex-start;gap:16px;margin-bottom:6px}
+  .head h1{font-size:18px;line-height:26px;font-weight:500;margin:0}
+  .head .sub{font-size:12px;line-height:20px;color:var(--label-secondary);margin:2px 0 0;max-width:920px}
+  .toggle{margin-left:auto;display:flex;gap:2px;background:var(--hover);padding:2px;border-radius:var(--radius-sm)}
+  .toggle button{border:0;background:transparent;height:24px;padding:0 10px;border-radius:6px;font-size:12px;color:var(--label-secondary);cursor:pointer;font-family:inherit}
+  .toggle button.on{background:var(--bg);color:var(--label-primary);box-shadow:0 0 0 .5px var(--border-l3)}
+  .legend{margin:14px 0 22px;padding:10px 14px;border-radius:var(--radius-sm);background:var(--hover);font-size:12px;line-height:18px;color:var(--label-secondary)}
+  .grid{display:grid;grid-template-columns:repeat(3,400px);gap:28px 34px;align-items:start}
+  .cell{min-width:0}
+  .cap{display:flex;align-items:baseline;gap:6px;margin:0 0 10px;font-size:12px;line-height:18px;color:var(--label-tertiary)}
+  .cap b{font-size:13px;font-weight:500;color:var(--label-primary)}
+
+  .pane{width:400px;background:var(--bg);border-radius:14px;overflow:hidden;display:flex;flex-direction:column}
+  .strip{height:38px;flex:none;display:flex;align-items:center;gap:6px;padding:10px 6px 0 14px}
+  .strip .t{font-size:13px;line-height:20px;font-weight:500}
+  .strip .acts{margin-left:auto;display:flex;gap:2px}
+  .nav{height:38px;flex:none;display:flex;align-items:center;gap:2px;padding:0 6px 0 12px}
+  .nav .tab{height:26px;display:flex;align-items:center;padding:0 9px;border-radius:var(--radius-sm);font-size:13px;line-height:20px;color:var(--label-tertiary);white-space:nowrap}
+  .nav .tab.on{color:var(--label-primary);font-weight:500}
+  .nav .fresh{margin-left:auto}
+  .body{padding:0 0 14px;min-width:0}
+
+  .ico{width:28px;height:28px;flex:none;display:inline-flex;align-items:center;justify-content:center;border-radius:var(--radius-sm);color:var(--label-secondary)}
+  .ico.xs{width:22px;height:22px}
+  .ico svg{width:16px;height:16px}
+  .stamp{margin-left:auto;font-size:12px;line-height:18px;color:var(--label-tertiary);white-space:nowrap}
+  .ico.fresh{margin-left:8px;color:var(--label-tertiary)}
+
+  /* ── 列表：图标 + 名称 + 自定义区域 ───────────────────────── */
+  .lbl{height:24px;display:flex;align-items:center;gap:6px;padding:0;
+       font-size:13px;line-height:24px;font-weight:400;color:var(--label-tertiary);transition:color .1s ease}
+  .lbl .n{font-variant-numeric:tabular-nums}
+  .lbl .act{margin-left:auto;font-size:12px;line-height:18px;color:var(--label-secondary)}
+
+  .item{display:flex;align-items:center;gap:10px;height:38px;padding:0 10px 0 16px;
+        border-radius:var(--radius-sm);cursor:pointer;position:relative}
+  .item.on{background:var(--sel)}
+  .item:hover{background:var(--hover)}
+  .item .ic{width:20px;height:20px;flex:none;display:flex;align-items:center;justify-content:center}
+  .item.task .nm{font-weight:400}
+  .item .nm{flex:1;min-width:0;overflow:hidden;font-size:13px;line-height:20px;font-weight:500;text-overflow:ellipsis;white-space:nowrap}
+  .item.ov:hover .nm,.item.ov.demo .nm{-webkit-mask-image:linear-gradient(to right,transparent 0,#000 16px);mask-image:linear-gradient(to right,transparent 0,#000 16px)}
+  .item .nm>span{display:inline-block;white-space:nowrap;
+                 transition:transform .55s cubic-bezier(.4,0,.2,1)}
+  .item:hover .nm>span,.item.demo .nm>span{transform:translateX(var(--shift,0px))}
+  .item .ca{flex:none;display:flex;align-items:center;justify-content:flex-end;position:relative;height:100%}
+  .item .ca .meta{font-size:12px;line-height:18px;color:var(--label-tertiary);white-space:nowrap;
+                  font-variant-numeric:tabular-nums;transition:opacity .1s}
+  .item .ca .acts{display:flex;gap:2px;opacity:0;transition:opacity .1s}
+  /* 有操作的行：宽度按操作键算，值时叠在操作位上方 */
+  .item .ca:has(.acts){min-width:64px}
+  .item .ca:has(.acts) .meta{position:absolute;right:0;top:50%;transform:translateY(-50%)}
+  .item:hover .ca .meta,.item.demo .ca .meta{opacity:0}
+  .item:hover .ca .acts,.item.demo .ca .acts{opacity:1}
+  .item.demo{background:var(--hover)}
+  .item .nm .sub{margin-left:8px;font-family:var(--mono);font-size:11px;line-height:20px;font-weight:400;color:var(--label-tertiary);font-style:normal}
+  .item.has-dep .ic{position:relative}
+  .item.has-dep .chev{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+                      opacity:0;color:var(--label-secondary);transition:opacity .12s ease}
+  .item.has-dep .chev svg{width:12px;height:12px;transition:transform .15s ease}
+  .item.has-dep:hover .ic>i,.item.has-dep:hover .ic>.spin{opacity:0}
+  .item.has-dep:hover .chev{opacity:1}
+  .item.has-dep.expanded .chev{opacity:1}
+  .item.has-dep.expanded .ic>i,.item.has-dep.expanded .ic>.spin{opacity:0}
+  .item.has-dep.expanded .chev svg{transform:rotate(90deg)}
+  .subs{padding:0 0 2px}
+  .srow{display:flex;align-items:center;gap:8px;height:30px;padding:0 10px 0 44px;border-radius:6px}
+  .srow:hover{background:var(--hover)}
+  .srow .sdot{width:6px;height:6px;border-radius:50%;background:var(--dot-idle);flex:none;margin-left:7px}
+  .srow .sdot.ok{background:var(--dot-ok)}
+  .srow .sdot.warn{background:var(--dot-warn)}
+  .srow .sname{font-size:12px;line-height:18px;color:var(--label-primary);flex:none}
+  .srow .ssub{font-family:var(--mono);font-size:11px;line-height:16px;color:var(--label-tertiary);font-style:normal;flex:none;margin-left:2px}
+  .srow .sstat{margin-left:auto;font-size:12px;line-height:18px;color:var(--label-tertiary)}
+  .srow .sstat.err{color:var(--txt-err)}
+  .ic .lf,.ic .cv{display:flex;align-items:center;justify-content:center;width:20px;height:20px;color:var(--label-secondary)}
+  .ic .lf svg{width:16px;height:16px}
+  .ic .cv svg{width:14px;height:14px}
+  .item.quiet .nm{font-weight:400}
+  .item.quiet .nm>span{color:var(--label-tertiary)}
+
+
+  .i24{width:24px;height:24px;flex:none;display:inline-flex;align-items:center;justify-content:center;
+       border-radius:6px;color:var(--label-tertiary);cursor:pointer}
+  .i24:hover{background:var(--hover-solid);color:var(--label-primary)}
+  .i24 svg{width:14px;height:14px}
+
+  .mix{display:inline-flex;align-items:baseline;gap:14px;white-space:nowrap}
+  .mix .p{display:inline-flex;align-items:baseline;gap:5px}
+  .mix .k{font-size:11px;line-height:16px;color:var(--label-tertiary)}
+  .mix b{font-size:13px;line-height:18px;font-weight:500;color:var(--label-primary);font-variant-numeric:tabular-nums}
+  .mix b.bad{color:var(--txt-err)}
+
+  /* ---- 子面板：可折叠 + 可拖拽高度 ---- */
+  .body.split{display:flex;flex-direction:column;flex:1;min-height:0;overflow:hidden;padding:0}
+  .sp{display:flex;flex-direction:column;min-height:64px;flex:0 0 auto;overflow:hidden}
+  .sp>.sh{height:24px;flex:none;display:flex;align-items:center;gap:8px;padding:0 6px 0 16px;position:relative;cursor:pointer}
+  .sp>.sh>.lbl{padding:0;margin:0;height:24px}
+  .sp>.sh>.grp{padding:0;margin:0;flex:1;min-width:0;height:24px;background:transparent}
+  .sp>.sh>.grp+.spchev{margin-left:0}
+  .sp>.sh>.spchev{margin-left:auto}
+  .spchev{width:20px;height:20px;flex:none;display:flex;align-items:center;justify-content:center;
+          color:var(--label-tertiary);cursor:pointer;transition:color .1s ease}
+  .sp>.sh:hover .spchev{color:var(--label-secondary)}
+  .sp>.sh:hover .lbl{color:var(--label-secondary)}
+  .sp>.sh:hover .grp .nm2{color:var(--label-primary)}
+  .spchev svg{width:14px;height:14px;transition:transform .15s ease}
+  .sp>.sb{flex:1;min-height:0;overflow:auto;padding:0 0 8px;scrollbar-width:thin}
+  .sp.collapsed{flex:0 0 24px !important;min-height:24px}
+  .sp.collapsed>.sb{display:none}
+  .sp.collapsed .spchev svg{transform:rotate(-90deg)}
+  .sp>.sb::-webkit-scrollbar{width:8px}
+  .sp>.sb::-webkit-scrollbar-thumb{background:var(--border-l2);border-radius:4px}
+  .hz{height:7px;flex:none;display:flex;align-items:center;cursor:row-resize;padding:0 10px;touch-action:none}
+  .hz::after{content:"";width:100%;height:1px;border-radius:1px;background:transparent;transition:background .12s ease}
+  .hz:hover::after,.hz.drag::after{background:var(--border-l3)}
+  .sp.dragging{user-select:none}
+  .st{display:inline-flex;align-items:center;gap:6px}
+  .lamp{width:6px;height:6px;border-radius:50%;flex:none;background:var(--dot-idle)}
+  .lamp.ok{background:var(--dot-ok)} .lamp.warn{background:var(--dot-warn)} .lamp.err{background:var(--dot-err)}
+  .lamp.run{width:7px;height:7px;background:var(--blue);box-shadow:0 0 0 2px var(--blue-soft);position:relative;
+            animation:breathe 1.9s ease-in-out infinite}
+  .lamp.run::after{content:"";position:absolute;inset:-3px;border-radius:50%;background:var(--blue);
+                   animation:halo 1.9s ease-in-out infinite}
+  @media (prefers-reduced-motion:reduce){.lamp.run,.lamp.run::after{animation:none}.lamp.run{opacity:1}.lamp.run::after{opacity:.16}}
+  .dot{width:6px;height:6px;border-radius:50%;background:var(--dot-idle)}
+  .spin{position:relative;width:8px;height:8px;border-radius:50%;background:var(--blue);flex:none;box-shadow:0 0 0 2.5px var(--blue-soft);
+        animation:breathe 1.9s ease-in-out infinite}
+  .spin::after{content:"";position:absolute;inset:-4px;border-radius:50%;background:var(--blue);
+               animation:halo 1.9s ease-in-out infinite}
+  @keyframes breathe{0%,100%{opacity:.55}50%{opacity:1}}
+  @keyframes halo{0%,100%{opacity:.14;transform:scale(.82)}50%{opacity:.30;transform:scale(1.12)}}
+  @media (prefers-reduced-motion:reduce){.spin,.spin::after{animation:none}.spin{opacity:1}.spin::after{opacity:.15}}
+  .dot.ok{background:var(--dot-ok)} .dot.warn{background:var(--dot-warn)} .dot.err{background:var(--dot-err)}
+  .sw{width:8px;height:8px;border-radius:50%;flex:none}
+  .sw.ok{background:var(--dot-ok)} .sw.warn{background:var(--dot-warn)} .sw.err{background:var(--dot-err)} .sw.idle{background:var(--dot-idle)}
+
+  .g{width:20px;height:20px;flex:none;display:flex;align-items:center;justify-content:center;color:var(--label-secondary)}
+  .g svg{width:16px;height:16px}
+  .tile{width:20px;height:20px;border-radius:6px;background:var(--hover-solid);color:var(--label-secondary);
+        display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:500;flex:none}
+  .tile.ag{border-radius:50%}
+  .num{font-family:var(--mono);font-size:10px;line-height:20px;color:var(--label-tertiary)}
+  .mono{font-family:var(--mono);font-size:11px}
+
+  /* 组块（仓库 / 基线组）：不是列表项 */
+  .grp{display:flex;align-items:center;gap:8px;height:24px;padding:0;margin-top:0}
+  .grp .nm2{font-size:13px;line-height:24px;font-weight:400;flex:none;color:var(--label-secondary);transition:color .1s ease}
+  .grp .gmeta{margin-left:auto;display:flex;align-items:baseline;gap:10px;
+              font-size:11px;line-height:16px;color:var(--label-tertiary);}
+  .grp .gmeta .mono{font-size:11px;color:var(--label-secondary)}
+
+  /* 指标 */
+  .kpi{padding:14px 16px 12px}
+  .grid6{display:grid;grid-template-columns:repeat(3,1fr);gap:12px 8px}
+  .stat{display:flex;flex-direction:column;gap:1px}
+  .stat b{font-size:22px;line-height:28px;font-weight:500;font-variant-numeric:tabular-nums}
+  .stat b em{font-style:normal;font-size:15px;line-height:20px;font-weight:400;color:var(--label-tertiary)}
+  .stat i{font-style:normal;font-size:12px;line-height:18px;color:var(--label-tertiary)}
+  .stamp{margin-top:10px;font-size:11px;line-height:16px;color:var(--label-caption)}
+
+  .sched{display:flex;align-items:center;gap:8px;height:32px;padding:0 16px;font-size:12px;line-height:18px;color:var(--label-secondary)}
+  .sched .lb{font-size:11px;line-height:16px;color:var(--label-tertiary)}
+
+  /* 停靠区 */
+  .din{padding:0 16px 8px}
+  .lbl.dh{gap:8px;padding-right:6px}
+  .lbl.dh .k{font-size:12px;color:var(--label-tertiary)}
+  .lbl.dh .t{font-size:13px;color:var(--label-primary)}
+  .lbl.dh .s{font-size:12px;color:var(--label-tertiary)}
+  .lbl.dh .acts{margin-left:auto;display:flex;gap:2px}
+  .dock{flex:none;border-top:.5px solid var(--border-l3);padding:0 0 10px;background:var(--bg)}
+  .dh{display:flex;align-items:center;gap:8px;height:34px;padding:0 8px 0 16px}
+  .dh .k{font-size:11px;line-height:16px;color:var(--label-tertiary)}
+  .dh .t{font-size:13px;line-height:20px;font-weight:500}
+  .dh .s{font-size:12px;line-height:18px;color:var(--label-tertiary)}
+  .dh .acts{margin-left:auto;display:flex;gap:2px}
+  .kv{display:grid;grid-template-columns:38px 1fr;gap:0 8px;padding:2px 16px 0}
+  .kv dt{font-size:12px;line-height:24px;color:var(--label-tertiary);margin:0}
+  .kv dd{margin:0;font-size:12px;line-height:24px;color:var(--label-primary);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .kv dd.mono{font-family:var(--mono);font-size:11px;line-height:24px}
+  .fl{padding:8px 16px 0}
+  .fl .fh{font-size:12px;line-height:18px;color:var(--label-tertiary);margin-bottom:2px}
+  .fr2{display:flex;align-items:baseline;gap:8px;height:24px;font-size:12px;line-height:18px;color:var(--label-secondary)}
+  .fr2 .p{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-family:var(--mono);font-size:11px}
+  .fr2 .a{width:38px;text-align:right;font-variant-numeric:tabular-nums}
+  .fr2 .d{width:38px;text-align:right;font-variant-numeric:tabular-nums;color:var(--txt-err)}
+  .ok{color:var(--txt-ok)} .warn{color:var(--txt-warn)} .err{color:var(--txt-err)}
+
+  /* 基线编辑表单 */
+  .form{padding:0 16px}
+  .fr{display:grid;grid-template-columns:38px 1fr;align-items:center;gap:8px;min-height:34px}
+  .fr .lb{font-size:12px;line-height:18px;color:var(--label-tertiary)}
+  .in{height:32px;display:flex;align-items:center;padding:0 10px;border-radius:var(--radius-md);
+      background:var(--bg-module);font-size:12px;line-height:18px}
+  .chk{display:flex;align-items:center;gap:8px;height:30px;font-size:12px;line-height:18px}
+  .bx{width:14px;height:14px;border-radius:4px;background:var(--hover-solid);flex:none}
+  .bx.on{background:var(--label-primary)}
+  .psel{width:132px;height:28px;border-radius:var(--radius-sm);background:var(--hover-solid);
+        display:flex;align-items:center;padding:0 8px;font-family:var(--mono);font-size:11px;color:var(--label-primary)}
+  .psel.err{color:var(--txt-err);box-shadow:inset 0 0 0 1px var(--txt-err)}
+  .psel.off{background:transparent;color:var(--label-caption)}
+  .errline{display:flex;align-items:center;gap:6px;padding:6px 16px 0;font-size:12px;line-height:18px;color:var(--txt-err)}
+  .ffoot{display:flex;justify-content:flex-end;gap:6px;padding:8px 16px 0}
+  .btn{height:28px;padding:0 12px;border-radius:var(--radius-sm);border:0;font-size:12px;line-height:18px;font-family:inherit;cursor:pointer}
+  .btn.primary{background:var(--brand);color:var(--bg)}
+  .btn.ghost{background:transparent;color:var(--label-secondary)}
+
+  .confirm{display:flex;align-items:center;gap:10px;height:44px;padding:0 16px;font-size:12px;line-height:18px;color:var(--label-tertiary)}
+  .confirm .sp{margin-left:auto}
+
+  .vocab{margin-top:26px;padding:16px 18px;border-radius:14px;background:var(--bg);
+          display:grid;grid-template-columns:1fr 1fr;gap:18px 28px}
+  .vc{font-size:11px;line-height:16px;color:var(--label-tertiary)}
+  .vc b{display:block;font-size:12px;line-height:18px;font-weight:500;color:var(--label-primary);margin-bottom:6px}
+  .vc .sample{height:38px;border-radius:8px;background:var(--hover);display:flex;align-items:center;gap:10px;padding:0 10px 0 16px}
+</style>
+</head>
+<body>
+<div class="sheet">
+  <div class="head">
+    <div>
+      <h1>DSH Dev Flow · 工作流面板 UI 重构示意 v8</h1>
+      <p class="sub">弃用表格。每个对象是一行：图标 + 名称 + 自定义区域。名称超长时悬停会从左往右滚动到末尾；自定义区域平时显示一个值，悬停换成操作。</p>
+    </div>
+    <div class="toggle"><button class="on" data-t="light">浅色</button><button data-t="dark">深色</button></div>
+  </div>
+  <div class="legend">行 38 · 图标 20 · 名称 13/400 · 自定义区域 12 · 组块 24 · 分区头部 24（13/400 三级墨色、hover 升二级）· 拖分隔条改高度、点标题折叠 · 悬停：名称滚到末尾（左缘淡出）+ 右侧值换成操作键 · 第一行是悬停态示意</div>
+
+  <div class="grid">
+
+    <!-- ============ 概览 ============ -->
+    <div class="cell">
+      <p class="cap"><b>概览</b><span>未完成在上，项目在下</span></p>
+      <div class="pane" style="height:648px">
+        <div class="strip">
+          <svg class="ico xs" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1"><path d="M2.5 6.5 8 2l5.5 4.5V13a.5.5 0 0 1-.5.5H3a.5.5 0 0 1-.5-.5Z"/></svg>
+          <span class="t">工作流</span>
+          <span class="acts"><span class="i24"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1"><path d="M3 6.5h10M3 9.5h10"/></svg></span></span>
+        </div>
+        <div class="nav">
+          <span class="tab on">概览</span><span class="tab">任务</span><span class="tab">槽位</span><span class="tab">基线</span><span class="tab">代理</span>
+          <span class="stamp">12:04</span><span class="ico fresh"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1"><path d="M13 8a5 5 0 1 1-1.6-3.7M13 2.5V5h-2.5"/></svg></span>
+        </div>
+        <div class="body">
+          <div class="kpi">
+            <div class="grid6">
+              <div class="stat"><b>2<em>/5</em></b><i>子代理</i></div>
+              <div class="stat"><b>5</b><i>活跃任务</i></div>
+              <div class="stat"><b>1</b><i>待验收</i></div>
+              <div class="stat"><b>3</b><i>项目</i></div>
+              <div class="stat"><b>4</b><i>活跃槽位</i></div>
+              <div class="stat"><b>1</b><i>基线改动</i></div>
+            </div>
+          </div>
+
+          <div class="lbl"><span>未完成</span><span class="n">5</span></div>
+          <div class="item demo task"><span class="ic"><span class="lf"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"><path d="M5.1 3.4h4.1l3.1 3.1v6.1a1.2 1.2 0 0 1-1.2 1.2H5.1a1.2 1.2 0 0 1-1.2-1.2V4.6a1.2 1.2 0 0 1 1.2-1.2Z"/></svg></span></span><span class="nm"><span>修复断网重试场景下支付回调的幂等性丢失并补测试<i class="sub">kernel</i></span></span><span class="ca"><span class="meta"><span class="st"><i class="lamp err"></i>失败</span></span><span class="acts"><span class="i24"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1"><path d="M6 3h7v7M13 3 4 12"/></svg></span><span class="i24"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1"><path d="M4 5.5h8M4.5 5.5v6.2a.8.8 0 0 0 .8.8h5.4a.8.8 0 0 0 .8-.8V5.5M6.5 5.5V4a.8.8 0 0 1 .8-.8h1.4a.8.8 0 0 1 .8.8v1.5"/></svg></span></span></span></div>
+          <div class="item task"><span class="ic"><span class="lf"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"><path d="M5.1 3.4h4.1l3.1 3.1v6.1a1.2 1.2 0 0 1-1.2 1.2H5.1a1.2 1.2 0 0 1-1.2-1.2V4.6a1.2 1.2 0 0 1 1.2-1.2Z"/></svg></span></span><span class="nm"><span>登录态接口<i class="sub">kernel</i></span></span><span class="ca"><span class="meta"><span class="st"><i class="lamp ok"></i>待验收</span></span><span class="acts"><span class="i24"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1"><path d="M6 3h7v7M13 3 4 12"/></svg></span></span></span></div>
+          <div class="item task"><span class="ic"><span class="lf"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"><path d="M5.1 3.4h4.1l3.1 3.1v6.1a1.2 1.2 0 0 1-1.2 1.2H5.1a1.2 1.2 0 0 1-1.2-1.2V4.6a1.2 1.2 0 0 1 1.2-1.2Z"/></svg></span></span><span class="nm"><span>基线合并策略<i class="sub">kernel</i></span></span><span class="ca"><span class="meta"><span class="st"><i class="lamp warn"></i>待合入</span></span><span class="acts"><span class="i24"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1"><path d="M6 3h7v7M13 3 4 12"/></svg></span></span></span></div>
+          <div class="item task"><span class="ic"><span class="lf"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"><path d="M5.1 3.4h4.1l3.1 3.1v6.1a1.2 1.2 0 0 1-1.2 1.2H5.1a1.2 1.2 0 0 1-1.2-1.2V4.6a1.2 1.2 0 0 1 1.2-1.2Z"/></svg></span></span><span class="nm"><span>面板三段重构<i class="sub">web</i></span></span><span class="ca"><span class="meta"><span class="st"><i class="lamp run"></i>开发中</span></span><span class="acts"><span class="i24"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1"><path d="M6 3h7v7M13 3 4 12"/></svg></span></span></span></div>
+          <div class="item task"><span class="ic"><span class="lf"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"><path d="M5.1 3.4h4.1l3.1 3.1v6.1a1.2 1.2 0 0 1-1.2 1.2H5.1a1.2 1.2 0 0 1-1.2-1.2V4.6a1.2 1.2 0 0 1 1.2-1.2Z"/></svg></span></span><span class="nm"><span>槽位清理<i class="sub">dsh-dev-flow</i></span></span><span class="ca"><span class="meta"><span class="st"><i class="lamp idle"></i>等待</span></span><span class="acts"><span class="i24"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1"><path d="M6 3h7v7M13 3 4 12"/></svg></span></span></span></div>
+
+          <div class="lbl"><span>项目</span><span class="n">3</span></div>
+          <div class="item"><span class="ic"><span class="g"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1"><circle cx="4.6" cy="3.6" r="1.55"/><circle cx="11.4" cy="12.4" r="1.55"/><path d="M4.6 5.15v4.15a2.6 2.6 0 0 0 2.6 2.6h2.6"/></svg></span></span><span class="nm"><span>dsh-dev-flow</span></span><span class="ca"><span class="meta"><span class="mix"><span class="p"><span class="k">等待</span><b>1</b></span></span></span><span class="acts"><span class="i24"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1"><path d="M6 3h7v7M13 3 4 12"/></svg></span></span></span></div>
+          <div class="item"><span class="ic"><span class="g"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1"><circle cx="4.6" cy="3.6" r="1.55"/><circle cx="11.4" cy="12.4" r="1.55"/><path d="M4.6 5.15v4.15a2.6 2.6 0 0 0 2.6 2.6h2.6"/></svg></span></span><span class="nm"><span>kernel</span></span><span class="ca"><span class="meta"><span class="mix"><span class="p"><span class="k">验收</span><b>1</b></span><span class="p"><span class="k">合入</span><b>1</b></span><span class="p"><span class="k">失败</span><b class="bad">1</b></span></span></span><span class="acts"><span class="i24"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1"><path d="M6 3h7v7M13 3 4 12"/></svg></span></span></span></div>
+          <div class="item"><span class="ic"><span class="g"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1"><circle cx="4.6" cy="3.6" r="1.55"/><circle cx="11.4" cy="12.4" r="1.55"/><path d="M4.6 5.15v4.15a2.6 2.6 0 0 0 2.6 2.6h2.6"/></svg></span></span><span class="nm"><span>web</span></span><span class="ca"><span class="meta"><span class="mix"><span class="p"><span class="k">开发</span><b>1</b></span></span></span><span class="acts"><span class="i24"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1"><path d="M6 3h7v7M13 3 4 12"/></svg></span></span></span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ 任务 ============ -->
+    <div class="cell">
+      <p class="cap"><b>任务</b><span>三个子面板：开发 / 验收 / 详情</span></p>
+      <div class="pane" style="height:892px">
+        <div class="strip">
+          <svg class="ico xs" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1"><path d="M2.5 6.5 8 2l5.5 4.5V13a.5.5 0 0 1-.5.5H3a.5.5 0 0 1-.5-.5Z"/></svg>
+          <span class="t">工作流</span>
+          <span class="acts"><span class="i24"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1"><path d="M3 6.5h10M3 9.5h10"/></svg></span></span>
+        </div>
+        <div class="nav">
+          <span class="tab">概览</span><span class="tab on">任务</span><span class="tab">槽位</span><span class="tab">基线</span><span class="tab">代理</span>
+          <span class="stamp">12:04</span><span class="ico fresh"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1"><path d="M13 8a5 5 0 1 1-1.6-3.7M13 2.5V5h-2.5"/></svg></span>
+        </div>
+        <div class="body" style="flex:1;overflow:hidden">
+          <div class="sched"><i class="dot ok"></i><span>每 30 秒巡检</span><span class="lb">并发 2/3</span></div>
+
+          <div class="lbl"><span>开发</span><span class="n">5</span></div>
+          <div class="item task"><span class="ic"><span class="lf"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"><path d="M5.1 3.4h4.1l3.1 3.1v6.1a1.2 1.2 0 0 1-1.2 1.2H5.1a1.2 1.2 0 0 1-1.2-1.2V4.6a1.2 1.2 0 0 1 1.2-1.2Z"/></svg></span></span><span class="nm"><span>登录态接口<i class="sub">kernel/01</i></span></span><span class="ca"><span class="meta"><span class="st"><i class="lamp run"></i>开发中</span></span><span class="acts"><span class="i24"><svg viewBox="0 0 16 16" fill="currentColor"><rect x="5" y="3.5" width="2.2" height="9" rx=".6"/><rect x="8.8" y="3.5" width="2.2" height="9" rx=".6"/></svg></span><span class="i24"><svg viewBox="0 0 16 16" fill="currentColor"><rect x="4.5" y="4.5" width="7" height="7" rx="1.2"/></svg></span><span class="i24"><svg viewBox="0 0 16 16" fill="currentColor"><circle cx="3.6" cy="8" r="1.1"/><circle cx="8" cy="8" r="1.1"/><circle cx="12.4" cy="8" r="1.1"/></svg></span></span></span></div>
+          <div class="item task"><span class="ic"><span class="lf"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"><path d="M5.1 3.4h4.1l3.1 3.1v6.1a1.2 1.2 0 0 1-1.2 1.2H5.1a1.2 1.2 0 0 1-1.2-1.2V4.6a1.2 1.2 0 0 1 1.2-1.2Z"/></svg></span></span><span class="nm"><span>支付回调重试<i class="sub">kernel/05</i></span></span><span class="ca"><span class="meta err"><span class="st"><i class="lamp err"></i>失败</span></span><span class="acts"><span class="i24"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1"><path d="M3 8a5 5 0 1 1 1.6 3.7M3 13.5V11h2.5"/></svg></span><span class="i24"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1"><path d="M4 5.5h8M4.5 5.5v6.2a.8.8 0 0 0 .8.8h5.4a.8.8 0 0 0 .8-.8V5.5M6.5 5.5V4a.8.8 0 0 1 .8-.8h1.4a.8.8 0 0 1 .8.8v1.5"/></svg></span><span class="i24"><svg viewBox="0 0 16 16" fill="currentColor"><circle cx="3.6" cy="8" r="1.1"/><circle cx="8" cy="8" r="1.1"/><circle cx="12.4" cy="8" r="1.1"/></svg></span></span></span></div>
+          <div class="item on task"><span class="ic"><span class="lf"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"><path d="M5.1 3.4h4.1l3.1 3.1v6.1a1.2 1.2 0 0 1-1.2 1.2H5.1a1.2 1.2 0 0 1-1.2-1.2V4.6a1.2 1.2 0 0 1 1.2-1.2Z"/></svg></span></span><span class="nm"><span>面板三段重构<i class="sub">web/03</i></span></span><span class="ca"><span class="meta"><span class="st"><i class="lamp run"></i>开发中</span></span><span class="acts"><span class="i24"><svg viewBox="0 0 16 16" fill="currentColor"><rect x="5" y="3.5" width="2.2" height="9" rx=".6"/><rect x="8.8" y="3.5" width="2.2" height="9" rx=".6"/></svg></span><span class="i24"><svg viewBox="0 0 16 16" fill="currentColor"><rect x="4.5" y="4.5" width="7" height="7" rx="1.2"/></svg></span><span class="i24"><svg viewBox="0 0 16 16" fill="currentColor"><circle cx="3.6" cy="8" r="1.1"/><circle cx="8" cy="8" r="1.1"/><circle cx="12.4" cy="8" r="1.1"/></svg></span></span></span></div>
+          <div class="item task"><span class="ic"><span class="lf"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"><path d="M5.1 3.4h4.1l3.1 3.1v6.1a1.2 1.2 0 0 1-1.2 1.2H5.1a1.2 1.2 0 0 1-1.2-1.2V4.6a1.2 1.2 0 0 1 1.2-1.2Z"/></svg></span></span><span class="nm"><span>基线合并策略<i class="sub">kernel/04</i></span></span><span class="ca"><span class="meta"><span class="st"><i class="lamp warn"></i>待合入</span></span><span class="acts"><span class="i24"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1"><path d="M8 3v10M4 9l4 4 4-4"/></svg></span><span class="i24"><svg viewBox="0 0 16 16" fill="currentColor"><circle cx="3.6" cy="8" r="1.1"/><circle cx="8" cy="8" r="1.1"/><circle cx="12.4" cy="8" r="1.1"/></svg></span></span></span></div>
+          <div class="item task"><span class="ic"><span class="cv"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M4.2 6.2 8 10l3.8-3.8"/></svg></span></span><span class="nm"><span>槽位清理<i class="sub">df-flow/02</i></span></span><span class="ca"><span class="meta"><span class="st"><i class="lamp idle"></i>等待</span></span><span class="acts"><span class="i24"><svg viewBox="0 0 16 16" fill="currentColor"><rect x="5.5" y="3.5" width="2" height="9" rx=".6"/><path d="M9.5 4.5v7l6-3.5z"/></svg></span><span class="i24"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1"><path d="M4 5.5h8M4.5 5.5v6.2a.8.8 0 0 0 .8.8h5.4a.8.8 0 0 0 .8-.8V5.5M6.5 5.5V4a.8.8 0 0 1 .8-.8h1.4a.8.8 0 0 1 .8.8v1.5"/></svg></span><span class="i24"><svg viewBox="0 0 16 16" fill="currentColor"><circle cx="3.6" cy="8" r="1.1"/><circle cx="8" cy="8" r="1.1"/><circle cx="12.4" cy="8" r="1.1"/></svg></span></span></span></div>
+          <div class="subs">
+            <div class="srow"><span class="sname">登录态接口</span><i class="ssub">kernel/01</i><span class="sstat"><span class="st"><i class="lamp run"></i>开发中</span></span></div>
+            <div class="srow"><span class="sname">基线合并策略</span><i class="ssub">kernel/04</i><span class="sstat"><span class="st"><i class="lamp warn"></i>待合入</span></span></div>
+          </div>
+
+          <div class="lbl"><span>验收</span><span class="n">2</span></div>
+          <div class="item"><span class="ic"><span class="cv"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M4.2 6.2 8 10l3.8-3.8"/></svg></span></span><span class="nm"><span class="mono">batch-m3k2</span></span><span class="ca"><span class="meta">1/2</span><span class="acts"><span class="i24"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1"><path d="M6 3h7v7M13 3 4 12"/></svg></span><span class="i24"><svg viewBox="0 0 16 16" fill="currentColor"><circle cx="3.6" cy="8" r="1.1"/><circle cx="8" cy="8" r="1.1"/><circle cx="12.4" cy="8" r="1.1"/></svg></span></span></span></div>
+          <div class="subs">
+            <div class="srow"><span class="sname">登录态接口</span><i class="ssub">kernel/01</i><span class="sstat"><span class="st"><i class="lamp ok"></i>已通过</span></span></div>
+            <div class="srow"><span class="sname">支付回调重试</span><i class="ssub">kernel/05</i><span class="sstat err"><span class="st"><i class="lamp err"></i>未通过</span></span></div>
+          </div>
+          <div class="item"><span class="ic"><span class="cv"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M6.2 4.2 10 8l-3.8 3.8"/></svg></span></span><span class="nm"><span class="mono">batch-m3j7</span></span><span class="ca"><span class="meta ok">2/2</span><span class="acts"><span class="i24"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1"><path d="M6 3h7v7M13 3 4 12"/></svg></span><span class="i24"><svg viewBox="0 0 16 16" fill="currentColor"><circle cx="3.6" cy="8" r="1.1"/><circle cx="8" cy="8" r="1.1"/><circle cx="12.4" cy="8" r="1.1"/></svg></span></span></span></div>
+          <div class="lbl dh"><span class="k">详情</span><span class="t">面板三段重构</span><span class="s">编辑中</span>
+            <span class="acts"><span class="i24"><svg viewBox="0 0 16 16" fill="currentColor"><rect x="5" y="3.5" width="2.2" height="9" rx=".6"/><rect x="8.8" y="3.5" width="2.2" height="9" rx=".6"/></svg></span><span class="i24"><svg viewBox="0 0 16 16" fill="currentColor"><circle cx="3.6" cy="8" r="1.1"/><circle cx="8" cy="8" r="1.1"/><circle cx="12.4" cy="8" r="1.1"/></svg></span></span></div>
+<div class="din">
+          <dl class="kv" style="margin:0">
+            <dt>槽位</dt><dd class="mono">03/web-task-03</dd>
+            <dt>分支</dt><dd class="mono">df-task/panel-sections</dd>
+            <dt>基线</dt><dd>01 主基线</dd>
+            <dt>用量</dt><dd>61.4k　入 42.1k　出 19.3k</dd>
+          </dl>
+          <div class="fl">
+            <div class="fh">改动 3 个文件</div>
+            <div class="fr2"><span class="p">src/client/pages.tsx</span><span class="a ok">+12</span><span class="d">−3</span></div>
+            <div class="fr2"><span class="p">src/client/task-pane.tsx</span><span class="a ok">+8</span><span class="d">−41</span></div>
+            <div class="fr2"><span class="p">src/client/sheet.ts</span><span class="a ok">+0</span><span class="d">−120</span></div>
+          </div>
+</div>
+      </div>
+      </div>
+    </div>
+
+    <!-- ============ 槽位 ============ -->
+    <div class="cell">
+      <p class="cap"><b>槽位</b><span>仓库是组块，槽位是列表项</span></p>
+      <div class="pane" style="height:508px">
+        <div class="strip">
+          <svg class="ico xs" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1"><path d="M2.5 6.5 8 2l5.5 4.5V13a.5.5 0 0 1-.5.5H3a.5.5 0 0 1-.5-.5Z"/></svg>
+          <span class="t">工作流</span>
+          <span class="acts"><span class="i24"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1"><path d="M3 6.5h10M3 9.5h10"/></svg></span></span>
+        </div>
+        <div class="nav">
+          <span class="tab">概览</span><span class="tab">任务</span><span class="tab on">槽位</span><span class="tab">基线</span><span class="tab">代理</span>
+          <span class="stamp">12:04</span><span class="ico fresh"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1"><path d="M13 8a5 5 0 1 1-1.6-3.7M13 2.5V5h-2.5"/></svg></span>
+        </div>
+        <div class="body">
+          <div class="grp"><span class="g"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1"><circle cx="4.6" cy="3.6" r="1.55"/><circle cx="11.4" cy="12.4" r="1.55"/><path d="M4.6 5.15v4.15a2.6 2.6 0 0 0 2.6 2.6h2.6"/></svg></span><span class="nm2">dsh-dev-flow</span><span class="gmeta"><span class="mono">main</span><span>干净</span></span></div>
+          <div class="item"><span class="ic"><span class="num">02</span></span><span class="nm"><span>槽位清理<i class="sub">df-task/slot-cleanup</i></span></span><span class="ca"><span class="meta"><span class="st"><i class="lamp run"></i>开发中</span></span><span class="acts"><span class="i24"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1"><path d="M6 3h7v7M13 3 4 12"/></svg></span></span></span></div>
+          <div class="item quiet"><span class="ic"><i class="dot"></i></span><span class="nm"><span>空闲 3 个槽位</span></span><span class="ca"><span class="meta"><span class="st"><i class="lamp idle"></i>空闲</span></span></span></div>
+
+          <div class="grp"><span class="g"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1"><circle cx="4.6" cy="3.6" r="1.55"/><circle cx="11.4" cy="12.4" r="1.55"/><path d="M4.6 5.15v4.15a2.6 2.6 0 0 0 2.6 2.6h2.6"/></svg></span><span class="nm2">kernel</span><span class="gmeta"><span class="mono">df-task/login-state-api</span><span class="warn">3 处改动</span></span></div>
+          <div class="item"><span class="ic"><span class="num">01</span></span><span class="nm"><span>登录态接口<i class="sub">df-task/login-state-api</i></span></span><span class="ca"><span class="meta"><span class="st"><i class="lamp run"></i>开发中</span></span><span class="acts"><span class="i24"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1"><path d="M6 3h7v7M13 3 4 12"/></svg></span></span></span></div>
+          <div class="item"><span class="ic"><span class="num">01</span></span><span class="nm"><span>验收 batch-m3j7<i class="sub">df-check/m3j7</i></span></span><span class="ca"><span class="meta ok"><span class="st"><i class="lamp ok"></i>已通过</span></span><span class="acts"><span class="i24"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1"><path d="M6 3h7v7M13 3 4 12"/></svg></span></span></span></div>
+
+          <div class="grp"><span class="g"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1"><circle cx="4.6" cy="3.6" r="1.55"/><circle cx="11.4" cy="12.4" r="1.55"/><path d="M4.6 5.15v4.15a2.6 2.6 0 0 0 2.6 2.6h2.6"/></svg></span><span class="nm2">web</span><span class="gmeta"><span class="mono">main</span><span>干净</span></span></div>
+          <div class="item on"><span class="ic"><span class="num">03</span></span><span class="nm"><span>面板三段重构<i class="sub">df-task/panel-sections</i></span></span><span class="ca"><span class="meta"><span class="st"><i class="lamp run"></i>开发中</span></span><span class="acts"><span class="i24"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1"><path d="M6 3h7v7M13 3 4 12"/></svg></span></span></span></div>
+          <div class="item"><span class="ic"></span><span class="nm"><span>验收未建立</span></span><span class="ca"><span class="meta"><span class="st"><i class="lamp idle"></i>未建立</span></span></span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ 基线 ============ -->
+    <div class="cell">
+      <p class="cap"><b>基线</b><span>子面板：每条基线一组 + 编辑</span></p>
+      <div class="pane" style="height:664px">
+        <div class="strip">
+          <svg class="ico xs" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1"><path d="M2.5 6.5 8 2l5.5 4.5V13a.5.5 0 0 1-.5.5H3a.5.5 0 0 1-.5-.5Z"/></svg>
+          <span class="t">工作流</span>
+          <span class="acts"><span class="i24"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1"><path d="M3 6.5h10M3 9.5h10"/></svg></span></span>
+        </div>
+        <div class="nav">
+          <span class="tab">概览</span><span class="tab">任务</span><span class="tab">槽位</span><span class="tab on">基线</span><span class="tab">代理</span>
+          <span class="stamp">12:04</span><span class="ico fresh"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1"><path d="M13 8a5 5 0 1 1-1.6-3.7M13 2.5V5h-2.5"/></svg></span>
+        </div>
+        <div class="body" style="flex:1;overflow:hidden">
+          <div class="grp"><span class="tile">01</span><span class="nm2">主基线</span><span class="gmeta"><span>3 个项目</span><span class="i24"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1"><path d="m10.5 3.5 2 2L6 12l-2.6.6L4 10z"/></svg></span></span></div>
+          <div class="item"><span class="ic"><span class="g"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1"><circle cx="4.6" cy="3.6" r="1.55"/><circle cx="11.4" cy="12.4" r="1.55"/><path d="M4.6 5.15v4.15a2.6 2.6 0 0 0 2.6 2.6h2.6"/></svg></span></span><span class="nm"><span>dsh-dev-flow<i class="sub">main</i></span></span><span class="ca"><span class="meta">根目录检出</span><span class="acts"><span class="i24"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1"><path d="m10.5 3.5 2 2L6 12l-2.6.6L4 10z"/></svg></span><span class="i24"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1"><path d="M4 5.5h8M4.5 5.5v6.2a.8.8 0 0 0 .8.8h5.4a.8.8 0 0 0 .8-.8V5.5M6.5 5.5V4a.8.8 0 0 1 .8-.8h1.4a.8.8 0 0 1 .8.8v1.5"/></svg></span></span></span></div>
+          <div class="item"><span class="ic"><span class="g"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1"><circle cx="4.6" cy="3.6" r="1.55"/><circle cx="11.4" cy="12.4" r="1.55"/><path d="M4.6 5.15v4.15a2.6 2.6 0 0 0 2.6 2.6h2.6"/></svg></span></span><span class="nm"><span>kernel<i class="sub">main</i></span></span><span class="ca"><span class="meta">基线槽位</span><span class="acts"><span class="i24"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1"><path d="m10.5 3.5 2 2L6 12l-2.6.6L4 10z"/></svg></span><span class="i24"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1"><path d="M4 5.5h8M4.5 5.5v6.2a.8.8 0 0 0 .8.8h5.4a.8.8 0 0 0 .8-.8V5.5M6.5 5.5V4a.8.8 0 0 1 .8-.8h1.4a.8.8 0 0 1 .8.8v1.5"/></svg></span></span></span></div>
+          <div class="item"><span class="ic"><span class="g"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1"><circle cx="4.6" cy="3.6" r="1.55"/><circle cx="11.4" cy="12.4" r="1.55"/><path d="M4.6 5.15v4.15a2.6 2.6 0 0 0 2.6 2.6h2.6"/></svg></span></span><span class="nm"><span>web<i class="sub">release/2026-11</i></span></span><span class="ca"><span class="meta warn"><span class="st"><i class="lamp warn"></i>被占用</span></span><span class="acts"><span class="i24"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1"><path d="m10.5 3.5 2 2L6 12l-2.6.6L4 10z"/></svg></span></span></span></div>
+
+          <div class="grp"><span class="tile">02</span><span class="nm2">线上热修</span><span class="gmeta"><span>1 个项目</span></span></div>
+          <div class="item on"><span class="ic"><span class="g"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1"><circle cx="4.6" cy="3.6" r="1.55"/><circle cx="11.4" cy="12.4" r="1.55"/><path d="M4.6 5.15v4.15a2.6 2.6 0 0 0 2.6 2.6h2.6"/></svg></span></span><span class="nm"><span>kernel<i class="sub">hotfix/pay</i></span></span><span class="ca"><span class="meta err"><span class="st"><i class="lamp err"></i>槽位缺失</span></span><span class="acts"><span class="i24"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1"><path d="m10.5 3.5 2 2L6 12l-2.6.6L4 10z"/></svg></span></span></span></div>
+          <div class="lbl dh"><span class="k">编辑</span><span class="t">线上热修</span><span class="s">02</span>
+            </div>
+<div class="din">
+          <div class="form">
+            <div class="fr"><span class="lb">名称</span><span class="in">线上热修</span></div>
+            <div class="chk"><span class="bx on"></span><span style="flex:1">dsh-dev-flow</span><span class="psel err">hotfix/pay</span></div>
+            <div class="chk"><span class="bx on"></span><span style="flex:1">kernel</span><span class="psel">main</span></div>
+            <div class="chk"><span class="bx"></span><span style="flex:1;color:var(--label-tertiary)">web</span><span class="psel off">未选中</span></div>
+          </div>
+          <div class="errline"><svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1"><circle cx="8" cy="8" r="5.6"/><path d="M8 5v4M8 11h.01"/></svg><span>保存失败：分支 hotfix/pay 已不存在</span></div>
+          <div class="ffoot"><button class="btn ghost">取消</button><button class="btn primary">保存</button></div>
+</div>
+      </div>
+      </div>
+    </div>
+
+    <!-- ============ 代理 ============ -->
+    <div class="cell">
+      <p class="cap"><b>代理</b><span>三项数字 + 三段列表</span></p>
+      <div class="pane" style="height:524px">
+        <div class="strip">
+          <svg class="ico xs" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1"><path d="M2.5 6.5 8 2l5.5 4.5V13a.5.5 0 0 1-.5.5H3a.5.5 0 0 1-.5-.5Z"/></svg>
+          <span class="t">工作流</span>
+          <span class="acts"><span class="i24"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1"><path d="M3 6.5h10M3 9.5h10"/></svg></span></span>
+        </div>
+        <div class="nav">
+          <span class="tab">概览</span><span class="tab">任务</span><span class="tab">槽位</span><span class="tab">基线</span><span class="tab on">代理</span>
+          <span class="stamp">12:04</span><span class="ico fresh"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1"><path d="M13 8a5 5 0 1 1-1.6-3.7M13 2.5V5h-2.5"/></svg></span>
+        </div>
+        <div class="body">
+          <div class="kpi" style="padding-top:12px">
+            <div class="grid6" style="grid-template-columns:repeat(3,1fr)">
+              <div class="stat"><b>2<em>/5</em></b><i>运行中</i></div>
+              <div class="stat"><b>1</b><i>验收中</i></div>
+              <div class="stat"><b>2</b><i>空闲</i></div>
+            </div>
+          </div>
+
+          <div class="lbl"><span>主会话</span></div>
+          <div class="item"><span class="ic"><span class="g"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1"><path d="M13 7.4c0 2.4-2.2 4.3-5 4.3-.7 0-1.4-.1-2-.3L3 12.6l.7-2.3A4.1 4.1 0 0 1 3 7.4C3 5 5.2 3.1 8 3.1s5 1.9 5 4.3Z"/></svg></span></span><span class="nm"><span>只做调度，每 30 秒巡检</span></span><span class="ca"><span class="meta"><span class="st"><i class="lamp idle"></i>不计入</span></span></span></div>
+
+          <div class="lbl"><span>子代理</span><span class="n">2 个在跑</span></div>
+          <div class="item"><span class="ic"><span class="g"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1"><path d="M8 2.2l1.5 3.9 3.9 1.5-3.9 1.5L8 13l-1.5-3.9L2.6 7.6l3.9-1.5z"/></svg></span></span><span class="nm"><span>agent-1　开发<i class="sub">web/03</i></span></span><span class="ca"><span class="meta">61.4k</span><span class="acts"><span class="i24"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1"><path d="M6 3h7v7M13 3 4 12"/></svg></span></span></span></div>
+          <div class="item"><span class="ic"><span class="g"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1"><path d="M8 2.2l1.5 3.9 3.9 1.5-3.9 1.5L8 13l-1.5-3.9L2.6 7.6l3.9-1.5z"/></svg></span></span><span class="nm"><span>agent-2　验收</span></span><span class="ca"><span class="meta">18 分钟</span><span class="acts"><span class="i24"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1"><path d="M6 3h7v7M13 3 4 12"/></svg></span></span></span></div>
+          <div class="item"><span class="ic"><span class="g" style="color:var(--label-caption)"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1"><path d="M8 2.2l1.5 3.9 3.9 1.5-3.9 1.5L8 13l-1.5-3.9L2.6 7.6l3.9-1.5z"/></svg></span></span><span class="nm"><span style="color:var(--label-tertiary)">agent-3　上一任务 登录态接口</span></span><span class="ca"><span class="meta">—</span></span></div>
+          <div class="item"><span class="ic"><span class="g" style="color:var(--label-caption)"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1"><path d="M8 2.2l1.5 3.9 3.9 1.5-3.9 1.5L8 13l-1.5-3.9L2.6 7.6l3.9-1.5z"/></svg></span></span><span class="nm"><span style="color:var(--label-tertiary)">agent-4　上一任务 槽位清理</span></span><span class="ca"><span class="meta">—</span></span></div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="vocab">
+    <div class="vc"><b>行（38px）</b>
+      <div class="sample"><span class="ic"><i class="dot ok"></i></span><span class="nm"><span>面板三段重构</span></span><span class="ca"><span class="meta"><span class="st"><i class="lamp run"></i>开发中</span></span></span></div>
+    </div>
+    <div class="vc"><b>组块（34px）：仓库、基线组</b>
+      <div class="sample" style="background:transparent;height:34px;padding-left:16px"><span class="g"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1"><circle cx="4.6" cy="3.6" r="1.55"/><circle cx="11.4" cy="12.4" r="1.55"/><path d="M4.6 5.15v4.15a2.6 2.6 0 0 0 2.6 2.6h2.6"/></svg></span><span class="nm2">kernel</span><span class="gmeta" style="margin-left:auto"><span class="mono">df-task/login-state-api</span><span class="warn">3 处改动</span></span></div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // 主题：?theme=dark 与右上角切换按钮
+  var want = (new URLSearchParams(location.search).get('theme') || 'light');
+  document.documentElement.dataset.theme = want;
+  document.querySelectorAll('.toggle button').forEach(function(x){ x.classList.toggle('on', x.dataset.t === want); });
+  document.querySelectorAll('.toggle button').forEach(function(b){
+    b.addEventListener('click', function(){
+      document.documentElement.dataset.theme = b.dataset.t;
+      document.querySelectorAll('.toggle button').forEach(function(x){ x.classList.toggle('on', x === b); });
+    });
+  });
+  // 名称滚动量：只在真的溢出时才设置位移
+  function fit(){
+    document.querySelectorAll('.item').forEach(function(it){
+      var nm = it.querySelector('.nm');
+      var sp = nm && nm.firstElementChild;
+      if(!nm || !sp) return;
+      var over = sp.scrollWidth - nm.clientWidth;
+      it.classList.toggle('ov', over > 0);
+      it.style.setProperty('--shift', over > 0 ? (-over - 4) + 'px' : '0px');
+    });
+  }
+  window.addEventListener('load', fit);
+  window.addEventListener('resize', fit);
+  setTimeout(fit, 80);
+
+  // ---- 子面板：把每页的段包成可折叠、可拖高的分区 ----
+  (function(){
+    var MIN_BODY = 56, HEAD = 24;
+    function icon(){
+      return '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M4.2 6.2 8 10l3.8-3.8"/></svg>';
+    }
+    document.querySelectorAll('.body').forEach(function(body){
+      if (body.classList.contains('dock') || body.querySelector('.kpi') === null && !body.querySelector('.lbl,.grp')) return;
+      var kids = [].slice.call(body.children), pinned = [], groups = [], cur = null;
+      kids.forEach(function(el){
+        var isHead = el.classList.contains('lbl') || el.classList.contains('grp');
+        if (isHead) { cur = {head: el, items: []}; groups.push(cur); return; }
+        if (cur) cur.items.push(el); else pinned.push(el);
+      });
+      if (!groups.length) return;
+      body.classList.add('split');
+      body.innerHTML = '';
+      pinned.forEach(function(el){ body.appendChild(el); });
+      groups.forEach(function(g, i){
+        if (i) {
+          var hz = document.createElement('div'); hz.className = 'hz'; body.appendChild(hz); wireDrag(hz);
+        }
+        var sec = document.createElement('section'); sec.className = 'sp';
+        var sh = document.createElement('div'); sh.className = 'sh';
+        sh.appendChild(g.head);
+        var chev = document.createElement('span'); chev.className = 'spchev'; chev.innerHTML = icon();
+        chev.setAttribute('role','button'); chev.setAttribute('aria-label','折叠或展开');
+        sh.appendChild(chev);
+        var sb = document.createElement('div'); sb.className = 'sb';
+        g.items.forEach(function(el){ sb.appendChild(el); });
+        sec.appendChild(sh); sec.appendChild(sb); body.appendChild(sec);
+        chev.addEventListener('click', function(e){ e.stopPropagation(); toggle(sec); });
+        sh.addEventListener('click', function(e){ if (e.target.closest('.i24')) return; toggle(sec); });
+      });
+      requestAnimationFrame(function(){
+        [].slice.call(body.querySelectorAll(':scope > .sp')).forEach(function(sec){
+          var t = sec.querySelector('.sh .lbl > span');
+          if (t && t.textContent === '主会话') { sec.classList.add('collapsed'); sec.dataset.base = 68; }
+        });
+        distribute(body);
+      });
+    });
+    function distribute(body){
+      var secs = [].slice.call(body.querySelectorAll(':scope > .sp'));
+      if (!secs.length) return;
+      var used = 0;
+      [].slice.call(body.children).forEach(function(c){ if (!c.classList.contains('sp')) used += c.offsetHeight; });
+      var hzs = body.querySelectorAll(':scope > .hz').length;
+      var avail = body.clientHeight - used - hzs * 7;
+      if (avail <= 0) return;
+      var ROW = 38, MIN = HEAD + MIN_BODY;
+      var cont = secs.map(function(s){
+        if (s.classList.contains('collapsed')) return HEAD;
+        return Math.max(MIN, Math.round((s.querySelector('.sb').scrollHeight + HEAD) / ROW) * ROW);
+      });
+      var total = cont.reduce(function(a,b){ return a+b; }, 0);
+      var left = avail, remaining = secs.length;
+      secs.forEach(function(s, i){
+        var h;
+        if (i === secs.length - 1) h = Math.max(MIN, left);
+        else if (total <= avail) h = cont[i];
+        else h = Math.max(MIN, Math.round(avail * cont[i] / total / ROW) * ROW);
+        h = Math.min(h, Math.max(MIN, left - (remaining - 1) * MIN));
+        left -= h; remaining--;
+        s.style.flexBasis = h + 'px';
+        s.dataset.base = h;
+      });
+    }
+    function toggle(sec){
+      if (sec.classList.contains('collapsed')) {
+        sec.classList.remove('collapsed');
+        sec.style.flexBasis = (sec.dataset.base || 200) + 'px';
+      } else {
+        sec.dataset.base = Math.round(sec.getBoundingClientRect().height);
+        sec.classList.add('collapsed');
+      }
+    }
+    function wireDrag(hz){
+      hz.addEventListener('pointerdown', function(e){
+        var prev = hz.previousElementSibling, next = hz.nextElementSibling;
+        if (!prev || !next || !prev.classList.contains('sp') || !next.classList.contains('sp')) return;
+        if (prev.classList.contains('collapsed') || next.classList.contains('collapsed')) return;
+        e.preventDefault();
+        var y0 = e.clientY, hp = prev.getBoundingClientRect().height, hn = next.getBoundingClientRect().height;
+        hz.classList.add('drag'); prev.classList.add('dragging');
+        hz.setPointerCapture(e.pointerId);
+        function move(ev){
+          var dy = ev.clientY - y0;
+          var nhp = Math.max(HEAD + MIN_BODY, hp + dy), nhn = Math.max(HEAD + MIN_BODY, hn - dy);
+          if (nhp + nhn > hp + hn) { nhp = hp + hn - (HEAD + MIN_BODY); nhn = HEAD + MIN_BODY; }
+          prev.style.flexBasis = nhp + 'px'; next.style.flexBasis = nhn + 'px';
+          prev.dataset.base = Math.round(nhp); next.dataset.base = Math.round(nhn);
+        }
+        function up(){ hz.classList.remove('drag'); prev.classList.remove('dragging');
+                       hz.removeEventListener('pointermove', move); hz.removeEventListener('pointerup', up); }
+        hz.addEventListener('pointermove', move); hz.addEventListener('pointerup', up);
+      });
+    }
+    window.addEventListener('resize', function(){
+      document.querySelectorAll('.body.split').forEach(distribute);
+    });
+  })();
+</script>
+</body>
+</html>
