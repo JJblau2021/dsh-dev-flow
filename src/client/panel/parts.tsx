@@ -1,5 +1,6 @@
 import type React from 'react'
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { readPaneLayout, writePaneLayout } from './store'
 import css from './ui.module.css'
 
 /* ── 状态灯 + 状态词 ───────────────────────────────────────────────── */
@@ -123,6 +124,18 @@ export function SplitGroup({ panes, footer, expandKey, expandSignal }: {
   const [collapsed, setCollapsed] = useState<boolean[]>(() => panes.map((pane) => pane.collapsed === true))
   const [order, setOrder] = useState<number[]>(() => panes.map((_, index) => index))
   const bodies = useRef<(HTMLDivElement | null)[]>([])
+  const panels = useRef<(HTMLElement | null)[]>([])
+  const expanded = useRef<Record<number, number>>({})
+  const avail = useRef(0)
+  const [, setResizing] = useState(-1)
+  const keys = panes.map((pane) => pane.key).join('|')
+  const groupKey = `group:${keys}`
+  const orderRef = useRef(order)
+  const sizesRef = useRef(sizes)
+  const collapsedRef = useRef(collapsed)
+  orderRef.current = order
+  sizesRef.current = sizes
+  collapsedRef.current = collapsed
 
   // 分区数量变化（比如选中任务后多出「详情」）时，补齐折叠/高度状态，新分区默认展开。
   useEffect(() => {
@@ -133,17 +146,47 @@ export function SplitGroup({ panes, footer, expandKey, expandSignal }: {
     setLayoutTick((value) => value + 1)
   }, [panes.length])
 
-  const panels = useRef<(HTMLElement | null)[]>([])
-  const expanded = useRef<Record<number, number>>({})
-  const avail = useRef(0)
-  const [, setResizing] = useState(-1)
-  const keys = panes.map((pane) => pane.key).join('|')
-  const orderRef = useRef(order)
-  const sizesRef = useRef(sizes)
-  const collapsedRef = useRef(collapsed)
-  orderRef.current = order
-  sizesRef.current = sizes
-  collapsedRef.current = collapsed
+  // 恢复上次的顺序 / 高度比例 / 折叠状态；只恢复一次，之后以用户操作为准。
+  const restored = useRef<string | null>(null)
+  const pendingSizes = useRef<Record<string, number> | null>(null)
+  useEffect(() => {
+    if (restored.current === groupKey) return
+    restored.current = groupKey
+    const saved = readPaneLayout(groupKey)
+    if (!saved) return
+    const byKey = new Map(panes.map((pane, index) => [pane.key, index]))
+    const nextOrder: number[] = []
+    for (const key of saved.order) {
+      const index = byKey.get(key)
+      if (index !== undefined && !nextOrder.includes(index)) nextOrder.push(index)
+    }
+    for (let index = 0; index < panes.length; index += 1) {
+      if (!nextOrder.includes(index)) nextOrder.push(index)
+    }
+    setOrder(nextOrder)
+    setCollapsed(panes.map((pane) => saved.collapsed[pane.key] ?? pane.collapsed === true))
+    pendingSizes.current = saved.sizes
+    setLayoutTick((value) => value + 1)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [groupKey])
+
+  const persist = () => {
+    const layout = {
+      order: orderRef.current.map((index) => panes[index].key),
+      sizes: {} as Record<string, number>,
+      collapsed: {} as Record<string, boolean>,
+    }
+    const total = avail.current
+    panes.forEach((pane, index) => {
+      const shut = collapsedRef.current[index] === true
+      layout.collapsed[pane.key] = shut
+      if (!shut && total > 0 && sizesRef.current[index]) {
+        layout.sizes[pane.key] = Math.round((sizesRef.current[index] / total) * 1000) / 1000
+      }
+    })
+    writePaneLayout(groupKey, layout)
+  }
+
 
   useLayoutEffect(() => {
     const host = panels.current[order[0]]?.parentElement
@@ -157,6 +200,32 @@ export function SplitGroup({ panes, footer, expandKey, expandSignal }: {
         const raw = HEAD + inner
         return Math.max(HEAD + 20, raw > HEAD + 76 ? Math.ceil(raw / 38) * 38 : raw)
       })
+      // 有持久化比例就按比例铺，并夹到可用高度内；否则按内容量。
+      const saved = pendingSizes.current
+      if (saved) {
+        pendingSizes.current = null
+        const next = panes.map((pane, index) => {
+          if (collapsed[index]) return HEAD
+          const ratio = saved[pane.key]
+          if (typeof ratio !== 'number' || ratio <= 0) return content[index]
+          return Math.max(HEAD + 20, Math.round(ratio * avail.current))
+        })
+        let excess = next.reduce((sum, value) => sum + value, 0) - avail.current
+        while (excess > 0.5) {
+          let widest = -1
+          let room = 0
+          for (let index = 0; index < next.length; index += 1) {
+            const spare = next[index] - (HEAD + 20)
+            if (!collapsed[index] && spare > room) { room = spare; widest = index }
+          }
+          if (widest < 0 || room <= 0) break
+          const cut = Math.min(room, excess)
+          next[widest] -= cut
+          excess -= cut
+        }
+        setSizes(next)
+        return
+      }
       const total = content.reduce((sum, value) => sum + value, 0)
       const openOrder = order.filter((index) => collapsed[index] !== true)
       const tailIndex = openOrder[openOrder.length - 1]
@@ -237,6 +306,7 @@ export function SplitGroup({ panes, footer, expandKey, expandSignal }: {
       return next
     })
     setCollapsed((prev) => prev.map((value, at) => (at === index ? !value : value)))
+    requestAnimationFrame(persist)
   }
 
   // 外部要求展开某块（点任务打开详情）：只有它当前是收起时才动，已经展开就什么都不做。
@@ -270,6 +340,7 @@ export function SplitGroup({ panes, footer, expandKey, expandSignal }: {
     }
     const onUp = () => {
       setResizing(-1)
+      requestAnimationFrame(persist)
       window.removeEventListener('pointermove', onMove)
       window.removeEventListener('pointerup', onUp)
       window.removeEventListener('pointercancel', onUp)
@@ -318,6 +389,8 @@ export function SplitGroup({ panes, footer, expandKey, expandSignal }: {
       if (!moved) {
         toggle(index)
         button.blur()
+      } else {
+        requestAnimationFrame(persist)
       }
     }
     window.addEventListener('pointermove', onMove)
@@ -400,6 +473,27 @@ export class Boundary extends React.Component<{ children?: React.ReactNode }, { 
     }
     return this.props.children
   }
+}
+
+/**
+ * 提醒条：详情里的警告之类「不是字段、但必须看见」的信息。
+ * 浅底 + 0.5px 描边 + 左侧状态色图标，每条一行。
+ */
+export function Alert({ items, tone = 'warn' }: { items: string[], tone?: 'warn' | 'err' }) {
+  if (items.length === 0) return null
+  const color = tone === 'err'
+    ? 'var(--dsw-alias-state-error-primary)'
+    : 'var(--dsw-alias-state-warn-primary)'
+  return (
+    <div className={css.alert} role="status" style={{ color }}>
+      <span className={css.alertIcon}>{IconWarning()}</span>
+      <span className={css.alertBody}>
+        {items.map((item, index) => (
+          <span key={`${index}:${item}`} className={css.alertLine}>{item}</span>
+        ))}
+      </span>
+    </div>
+  )
 }
 
 /** 缺省占位：一个细线图标 + 一句说明，整体居中。 */
@@ -525,6 +619,30 @@ export function IconTray() {
     <Svg size={28}>
       <path d="M3.2 9.2h2.6l1.2 2h4l1.2-2h2.6" />
       <path d="M3.2 9.2 5 4.9A1.4 1.4 0 0 1 6.3 4h5.4a1.4 1.4 0 0 1 1.3.9l1.8 4.3v4.2a1.4 1.4 0 0 1-1.4 1.4H4.6a1.4 1.4 0 0 1-1.4-1.4Z" />
+    </Svg>
+  )
+}
+
+/** 警告：Lucide `triangle-alert`。 */
+export function IconWarning() {
+  return (
+    <Svg size={16} viewBox="0 0 24 24" strokeWidth={1.5}>
+      <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3" />
+      <path d="M12 9v4" />
+      <path d="M12 17h.01" />
+    </Svg>
+  )
+}
+
+/** 调度：Lucide `list-checks`（队列 + 已派发）。 */
+export function IconSchedule() {
+  return (
+    <Svg size={18} viewBox="0 0 24 24" strokeWidth={1.5}>
+      <path d="m3 17 2 2 4-4" />
+      <path d="m3 7 2 2 4-4" />
+      <path d="M13 6h8" />
+      <path d="M13 12h8" />
+      <path d="M13 18h8" />
     </Svg>
   )
 }

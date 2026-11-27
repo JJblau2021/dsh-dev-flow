@@ -17,10 +17,10 @@
 .head {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 2px;
   flex: none;
   height: 38px;
-  padding: 0 6px 0 16px;
+  padding: 0 8px 0 16px;
   border-bottom: 0.5px solid var(--dsw-alias-border-l3);
 }
 
@@ -28,14 +28,34 @@
 .tabOn {
   appearance: none;
   border: 0;
-  padding: 0 8px;
-  height: 28px;
+  flex: none;
+  padding: 0 10px;
+  height: 26px;
   border-radius: var(--dsw-radius-sm, 6px);
   background: transparent;
   color: var(--dsw-alias-label-secondary);
-  font: inherit;
+  font-family: inherit;
+  font-size: 13px;
+  line-height: 20px;
   cursor: pointer;
   white-space: nowrap;
+  transition: color 0.1s ease, background 0.1s ease;
+}
+
+/* 第一个 tab 的内边距抵消掉，让文字与页头左内边距（16px）严格对齐 */
+.tab:first-of-type,
+.tabOn:first-of-type {
+  margin-left: -10px;
+}
+
+.tab:hover {
+  color: var(--dsw-alias-label-primary);
+}
+
+.tab:focus-visible,
+.tabOn:focus-visible {
+  outline: 1px solid var(--dsw-alias-border-l2);
+  outline-offset: 1px;
 }
 
 .tabOn {
@@ -52,9 +72,10 @@
 
 .stamp {
   margin-left: auto;
-  padding: 0 4px;
+  padding: 0 8px 0 12px;
   color: var(--dsw-alias-label-tertiary);
   font-size: 12px;
+  line-height: 16px;
   font-variant-numeric: tabular-nums;
 }
 
@@ -64,8 +85,8 @@
   align-items: center;
   justify-content: center;
   flex: none;
-  width: 28px;
-  height: 28px;
+  width: 26px;
+  height: 26px;
   border: 0;
   border-radius: var(--dsw-radius-sm, 6px);
   background: transparent;
@@ -563,9 +584,20 @@
 
 .detailHead {
   display: flex;
-  align-items: baseline;
-  gap: 10px;
+  align-items: center;
+  gap: 8px;
   padding: 4px 0 8px;
+}
+
+/* 详情标题前的类型图标：与列表行同款，尺寸对齐 13px 文字 */
+.detailHeadIcon {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  color: var(--dsw-alias-label-secondary);
 }
 
 .detailHeadTitle {
@@ -618,11 +650,49 @@
   margin-top: 10px;
 }
 
-.detailTitle {
-  margin: 0 0 4px;
-  font-size: 12px;
-  line-height: 18px;
-  color: var(--dsw-alias-label-tertiary);
+.alert {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin: 2px 0 10px;
+  padding: 9px 10px;
+  /* 左侧 2px 状态色竖条 + 一圈发丝描边：不靠底色也能一眼看见 */
+  border: 0.5px solid var(--dsw-alias-border-l2);
+  border-left: 2px solid currentColor;
+  border-radius: var(--dsw-radius-sm, 6px);
+  background: var(--dsw-alias-bg-layer-2);
+}
+
+.alertIcon {
+  flex: none;
+  display: flex;
+  padding-top: 2px;
+}
+
+.alertBody {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.alertLine {
+  font-size: 13px;
+  line-height: 20px;
+  color: var(--dsw-alias-label-primary);
+  word-break: break-word;
+}
+
+.detailList {
+  display: flex;
+  flex-direction: column;
+  margin: 2px 0 6px;
+}
+
+/* 详情里的任务行和列表页完全同一套：抵消 .detail 的 16px 内边距，
+   让 38px 的 Item 与列表页的行一样贴着面板左右边界。 */
+.detailList > * {
+  margin: 0 -16px;
 }
 
 .fileRow {
@@ -664,15 +734,4 @@
   color: var(--dsw-alias-state-error-primary);
   text-align: center;
   word-break: break-word;
-}
-
-.fileRowAction {
-  cursor: pointer;
-  border-radius: var(--dsw-radius-sm, 6px);
-}
-
-@media (hover: hover) {
-  .fileRowAction:hover {
-    background: var(--dsw-alias-interactive-bg-hover);
-  }
 }

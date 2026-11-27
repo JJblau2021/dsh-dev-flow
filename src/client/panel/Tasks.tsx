@@ -1,7 +1,7 @@
 import type React from 'react'
 import { useEffect, useState } from 'react'
 import type { Call, ScheduleRow, Snapshot, TaskDiff, TaskDiffFile, TaskRow, Translate, TokenUsage } from '../types'
-import { Empty, IconAcceptTask, IconDevTask, Item, SplitGroup, Status } from './parts'
+import { Alert, Empty, IconAcceptTask, IconDevTask, IconSchedule, Item, SplitGroup, Status } from './parts'
 import type { PaneDef } from './parts'
 import { openTaskOrder, statusText, toneOf } from './status'
 import css from './ui.module.css'
@@ -252,7 +252,6 @@ function kv(label: string, value: React.ReactNode) {
 function fileList(files: TaskDiffFile[], t: Translate) {
   return (
     <div className={css.fileList}>
-      <p className={css.detailTitle}>{`${t('fact.changeFiles')} ${files.length}`}</p>
       {files.map((file) => (
         <div key={`${file.repo}:${file.path}`} className={css.fileRow}>
           <span className={css.filePath}>{file.binary ? `${file.path}（binary）` : file.path}</span>
@@ -276,61 +275,59 @@ function DetailPane({ task, diff, t, contained, onPick }: {
   const base = entries.length > 0
     ? entries.map(([repo, branch]) => `${repo} ${branch}`).join('　')
     : (task.base ?? '—')
-  const batchIds = task.taskIds ?? []
   const isBatch = task.kind === 'accept'
   const deps = task.dependsOn ?? []
   return (
     <div className={css.detail}>
       <div className={css.detailHead}>
+        <span className={css.detailHeadIcon}>{isBatch ? <IconAcceptTask /> : <IconDevTask />}</span>
         <span className={css.detailHeadTitle} title={task.title}>{task.title}</span>
         <Status tone={toneOf(task.status)} label={statusText(t, task.status)} />
       </div>
+      {task.warnings && task.warnings.length > 0 ? <Alert items={task.warnings} /> : null}
       <div className={css.kvGrid}>
         {kv(t('fact.slot'), slotText(task) || '—')}
         {kv(t('fact.branch'), Object.values(task.slots ?? {})[0]?.branch || '—')}
         {kv(t('fact.base'), base)}
         {kv(t('fact.usage'), usageText(task.usage) || '—')}
-        {isBatch ? kv(t('fact.batch'), `${batchIds.length}`) : null}
         {task.pausedAt ? kv(t('fact.paused'), task.pausedAt) : null}
         {task.stoppedAt ? kv(t('fact.stopped'), task.stoppedAt) : null}
+        {isBatch && contained && contained.length > 0 ? kv(t('section.devTasks'), String(contained.length)) : null}
+        {!isBatch && deps.length > 0 ? kv(t('fact.depends'), String(deps.length)) : null}
+        {files.length > 0 ? kv(t('fact.changeFiles'), String(files.length)) : null}
       </div>
       {isBatch && contained && contained.length > 0
         ? (
-          <div className={css.fileList}>
-            <p className={css.detailTitle}>{`${t('section.devTasks')} ${contained.length}`}</p>
+          <div className={css.detailList}>
             {contained.map((child) => (
-              <div
+              <DevRow
                 key={child.id}
-                className={`${css.fileRow} ${onPick ? css.fileRowAction : ''}`}
-                onClick={onPick ? () => onPick(child) : undefined}
-              >
-                <span className={css.filePath}>{child.title}</span>
-                <Status tone={toneOf(child.status)} label={statusText(t, child.status)} />
-              </div>
+                task={child}
+                t={t}
+                selected={false}
+                onSelect={() => onPick?.(child)}
+              />
             ))}
           </div>
         )
         : null}
       {!isBatch && deps.length > 0
         ? (
-          <div className={css.fileList}>
-            <p className={css.detailTitle}>{`${t('fact.depends')} ${deps.length}`}</p>
+          <div className={css.detailList}>
             {deps.map((dep) => (
-              <div
+              <Item
                 key={dep.id}
-                className={`${css.fileRow} ${onPick ? css.fileRowAction : ''}`}
+                icon={<IconDevTask />}
+                title={dep.title}
+                titleAttr={dep.title}
+                suffix={dep.merged ? t('fact.merged') : t('fact.notMerged')}
+                trail={<Status tone={toneOf(dep.status)} label={statusText(t, dep.status)} />}
                 onClick={onPick ? () => onPick(dep as unknown as TaskRow) : undefined}
-              >
-                <span className={css.filePath}>
-                  {`${dep.title}　${dep.merged ? t('fact.merged') : t('fact.notMerged')}`}
-                </span>
-                <Status tone={toneOf(dep.status)} label={statusText(t, dep.status)} />
-              </div>
+              />
             ))}
           </div>
         )
         : null}
-      {task.warnings && task.warnings.length > 0 ? kv(t('fact.warning'), task.warnings.join('；')) : null}
       {files.length > 0 ? fileList(files, t) : null}
     </div>
   )
@@ -344,13 +341,14 @@ function ScheduleDetail({ schedule, t }: { schedule: ScheduleRow, t: Translate }
   return (
     <div className={css.detail}>
       <div className={css.detailHead}>
+        <span className={css.detailHeadIcon}><IconSchedule /></span>
         <span className={css.detailHeadTitle} title={schedule.title}>{schedule.title}</span>
         <Status tone={toneOf(schedule.status)} label={statusText(t, schedule.status)} />
       </div>
       <div className={css.kvGrid}>
         {kv(t('fact.base'), schedule.base ?? schedule.baseGroup ?? '—')}
         {kv(t('fact.slot'), slots.join('　') || (target ? [target.repo, target.number].filter(Boolean).join('/') : '—'))}
-        {kv(t('fact.batch'), `${schedule.taskIds.length}`)}
+        {kv(t('fact.taskCount'), `${schedule.taskIds.length}`)}
         {kv(t('fact.usage'), usageText(schedule.usage) || '—')}
       </div>
     </div>
