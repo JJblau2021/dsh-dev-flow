@@ -1,13 +1,16 @@
 import type React from 'react'
 import { useEffect, useRef, useState } from 'react'
 import type { Call, ProjectRow, Snapshot, TaskRow, Translate } from '../types'
+import type { UiKit } from '../ui'
 import { normalizeSnapshot } from '../snapshot'
-import { Boundary, Empty, IconAcceptTask, IconDevTask, IconRefresh, IconRepo, Item, Pairs, SplitGroup, Status } from './parts'
+import { TaskItem } from './TaskItem'
+import { Boundary, Empty, IconAcceptTask, IconAction, IconDevTask, IconRefresh, IconRepo, Item, Pairs, SplitGroup, Status } from './parts'
 import { Tasks } from './Tasks'
 import { Slots } from './Slots'
 import { Bases } from './Bases'
 import { Agents } from './Agents'
 import { isOpenTask, openTaskOrder, statusText, toneOf } from './status'
+import { branchText, TaskCard } from './cards'
 import css from './ui.module.css'
 
 type PageId = 'overview' | 'tasks' | 'slots' | 'bases' | 'agents'
@@ -23,7 +26,7 @@ function stamp(date: Date): string {
   return `${pad(date.getHours())}:${pad(date.getMinutes())}`
 }
 
-export function Panel({ sessionId, call, t }: { sessionId?: string, call: Call, t: Translate, ui?: unknown, openDiff?: unknown }) {
+export function Panel({ sessionId, call, t, ui }: { sessionId?: string, call: Call, t: Translate, ui?: UiKit, openDiff?: unknown }) {
   const [page, setPage] = useState<PageId>('overview')
   // 从概览点任务跳过来时携带的意图（id + 递增 tick），任务页消费它来选中并展开详情。
   const [focus, setFocus] = useState<{ id: string, tick: number } | null>(null)
@@ -62,9 +65,12 @@ export function Panel({ sessionId, call, t }: { sessionId?: string, call: Call, 
     })
     .catch((reason: unknown) => { if (alive.current) setError(textOf(reason)) })
 
+  const reload = () => load()
+
   useEffect(() => { void load() }, [sessionId])
 
   return (
+    <Boundary>
     <div className={css.pane} ref={root}>
       <div className={css.head}>
         {PAGES.map((id) => (
@@ -79,15 +85,7 @@ export function Panel({ sessionId, call, t }: { sessionId?: string, call: Call, 
           </button>
         ))}
         <span className={css.stamp}>{stamp(at)}</span>
-        <button
-          type="button"
-          className={css.iconButton}
-          title={t('action.refresh')}
-          aria-label={t('action.refresh')}
-          onClick={() => { void load() }}
-        >
-          <IconRefresh />
-        </button>
+        <IconAction ui={ui} label={t('action.refresh')} icon={<IconRefresh />} onClick={() => { void load() }} />
       </div>
       {error === '' ? null : <p className={css.note} role="status">{error}</p>}
       {data === null
@@ -95,19 +93,20 @@ export function Panel({ sessionId, call, t }: { sessionId?: string, call: Call, 
         : data.initialized === false
           ? <Empty text={t('empty.init')} />
           : (
-            <Boundary>
+            <>
               {page === 'overview'
                 ? <Overview data={data} t={t} onOpenTask={(task) => { setFocus({ id: task.id, tick: Date.now() }); setPage('tasks') }} />
                 : page === 'tasks'
-                  ? <Tasks data={data} t={t} call={call} sessionId={sessionId} focus={focus} />
+                  ? <Tasks data={data} t={t} call={call} sessionId={sessionId} focus={focus} reload={reload} ui={ui} />
                   : page === 'slots'
                     ? <Slots data={data} t={t} />
                     : page === 'bases'
                       ? <Bases data={data} t={t} />
                       : <Agents data={data} t={t} />}
-            </Boundary>
+            </>
           )}
     </div>
+    </Boundary>
   )
 }
 
@@ -157,7 +156,7 @@ function Overview({ data, t, onOpenTask }: { data: Snapshot, t: Translate, onOpe
             content: tasks.length === 0
               ? <Empty text={t('overview.noTasks')} />
               : tasks.map((task) => (
-                <TaskItem key={task.id} task={task} t={t} onOpen={() => onOpenTask(task)} />
+                <TaskItem key={task.id} task={task} t={t} variant="plain" onSelect={() => onOpenTask(task)} />
               )),
           },
           {
@@ -173,20 +172,6 @@ function Overview({ data, t, onOpenTask }: { data: Snapshot, t: Translate, onOpe
         ]}
       />
     </div>
-  )
-}
-
-function TaskItem({ task, t, onOpen }: { task: TaskRow, t: Translate, onOpen: () => void }) {
-  return (
-    <Item
-      icon={task.kind === 'accept' ? <IconAcceptTask /> : <IconDevTask />}
-      title={task.title}
-      suffix={task.repos[0]}
-      trail={<Status tone={toneOf(task.status)} label={statusText(t, task.status)} />}
-      titleAttr={`${task.title} · ${t('action.detail')}`}
-      onClick={onOpen}
-      dataId={task.id}
-    />
   )
 }
 

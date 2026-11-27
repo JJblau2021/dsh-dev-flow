@@ -8,7 +8,8 @@ const TONES: Record<string, Tone> = {
   accepting: 'run',
   scheduling: 'run',
   dispatched: 'ok',
-  'pending-acceptance': 'ok',
+  /* 待验收是「等你处理」，还没通过：用警告色提示需要人介入 */
+  'pending-acceptance': 'warn',
   accepted: 'ok',
   merged: 'ok',
   'pending-merge': 'warn',

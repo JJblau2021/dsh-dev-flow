@@ -1,5 +1,6 @@
-import type React from 'react'
-import { useEffect, useLayoutEffect, useRef, useState } from 'react'
+import * as React from 'react'
+import type { UiKit } from '../ui'
+import { cloneElement, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { readPaneLayout, writePaneLayout } from './store'
 import css from './ui.module.css'
 
@@ -30,8 +31,15 @@ export function Lamp({ tone }: { tone: Tone }) {
 
 /* ── 列表项 ───────────────────────────────────────────────────────── */
 
+/* 气泡已经开着时，移到下一行立刻换气泡，不再重新等 600ms */
+let cardHiddenAt = 0
+let activeClose: (() => void) | null = null
+const CARD_DELAY = 600
+const CARD_WIDTH = 280
+const CARD_GRACE = 240
+
 export function Item({
-  icon, title, suffix, trail, sub, onClick, selected, titleAttr, dataId,
+  icon, title, suffix, trail, sub, onClick, selected, titleAttr, dataId, card,
 }: {
   icon?: React.ReactNode
   title: React.ReactNode
@@ -43,24 +51,112 @@ export function Item({
   titleAttr?: string
   /** 供上层做事件代理，避免依赖每行的 React onClick。 */
   dataId?: string
+  /** 悬停气泡内容（标题/分支/状态/槽位/用量）。 */
+  card?: React.ReactNode
 }) {
   const className = [css.item, sub ? css.itemSub : '', selected ? css.itemOn : ''].filter(Boolean).join(' ')
+  const scrollRef = useRef<HTMLSpanElement>(null)
+  const scrollTimer = useRef<number | null>(null)
+  /* 标题 + 分支是一个整体：平时整体溢出省略，悬停时整段平移到末尾，两侧用渐变遮罩淡出 */
+  const startScroll = () => {
+    const element = scrollRef.current
+    if (element === null) return
+    const max = element.scrollWidth - element.clientWidth
+    if (max <= 2) return
+    const seconds = Math.min(8, Math.max(1.4, max / 48))
+    element.style.setProperty('--scroll-duration', `${seconds}s`)
+    element.style.setProperty('--scroll-shift', `-${max}px`)
+    element.dataset.scroll = 'on'
+    if (scrollTimer.current !== null) window.clearTimeout(scrollTimer.current)
+    // 滚到底后撤掉右缘遮罩：右侧已经没有未读内容了
+    scrollTimer.current = window.setTimeout(() => {
+      if (scrollRef.current !== null) scrollRef.current.dataset.scroll = 'done'
+    }, seconds * 1000 + 40)
+  }
+  const resetScroll = () => {
+    const element = scrollRef.current
+    if (scrollTimer.current !== null) { window.clearTimeout(scrollTimer.current); scrollTimer.current = null }
+    if (element === null) return
+    element.dataset.scroll = 'off'
+    element.style.setProperty('--scroll-shift', '0px')
+  }
   const body = (
     <>
       {icon === undefined ? null : <span className={css.icon}>{icon}</span>}
-      <span className={css.name}>
-        <span className={css.nameText} title={titleAttr}>{title}</span>
-        {suffix === undefined ? null : <span className={css.suffix}>{suffix}</span>}
+      <span className={css.name} ref={scrollRef} title={titleAttr}>
+        <span className={css.nameRun}>
+          {title}
+          {suffix === undefined ? null : <span className={css.suffix}>{suffix}</span>}
+        </span>
       </span>
       {trail === undefined ? null : <span className={css.trail}>{trail}</span>}
     </>
   )
   const dataAttr = dataId === undefined ? {} : { 'data-task-id': dataId }
-  if (!onClick) return <div className={className} {...dataAttr}>{body}</div>
+  const rowRef = useRef<HTMLDivElement>(null)
+  const cardTimer = useRef<number | null>(null)
+  const [cardAt, setCardAt] = useState<{ left: number, top: number } | null>(null)
+  const showCard = () => {
+    if (card === undefined) return
+    if (cardTimer.current !== null) window.clearTimeout(cardTimer.current)
+    const warm = activeClose !== null || Date.now() - cardHiddenAt < CARD_GRACE
+    cardTimer.current = window.setTimeout(() => {
+      const rect = rowRef.current?.getBoundingClientRect()
+      if (rect === undefined) return
+      /* 同一个时刻只留一颗气泡：换行时把上一行那颗关掉 */
+      if (activeClose !== null && activeClose !== hideCard) activeClose()
+      /* 气泡放在任务行的左边，行内有空间就贴着行，否则退回右侧 */
+      const gap = 10
+      const left = rect.left - CARD_WIDTH - gap
+      setCardAt({
+        left: left >= 8 ? left : rect.right + gap,
+        top: Math.max(8, Math.min(rect.top - 4, window.innerHeight - 240)),
+      })
+      activeClose = hideCard
+    }, warm ? 0 : CARD_DELAY)
+  }
+  const hideTimer = useRef<number | null>(null)
+  const cancelHide = () => {
+    if (hideTimer.current !== null) { window.clearTimeout(hideTimer.current); hideTimer.current = null }
+  }
+  const hideCard = () => {
+    cancelHide()
+    if (cardTimer.current !== null) { window.clearTimeout(cardTimer.current); cardTimer.current = null }
+    cardHiddenAt = Date.now()
+    if (activeClose === hideCard) activeClose = null
+    setCardAt(null)
+  }
+  /* 行与气泡之间有 10px 间隙：离开行先给 200ms 宽限，移进气泡就取消 */
+  const scheduleHide = () => {
+    cancelHide()
+    hideTimer.current = window.setTimeout(hideCard, 200)
+  }
+  const cardNode = card !== undefined && cardAt !== null
+    ? (
+      <div
+        className={css.hoverCard}
+        style={{ left: cardAt.left, top: cardAt.top, width: CARD_WIDTH }}
+        onClick={(event) => { event.stopPropagation() }}
+        onPointerEnter={cancelHide}
+        onPointerLeave={scheduleHide}
+      >
+        {card}
+      </div>
+    )
+    : null
+  const scrollProps = {
+    onPointerEnter: () => { startScroll(); showCard() },
+    onPointerLeave: () => { resetScroll(); scheduleHide() },
+    onFocus: startScroll,
+    onBlur: resetScroll,
+  }
+  if (!onClick) return <div className={className} ref={rowRef} {...dataAttr} {...scrollProps}>{body}{cardNode}</div>
   return (
     <div
       className={className}
+      ref={rowRef}
       {...dataAttr}
+      {...scrollProps}
       role="button"
       tabIndex={0}
       onClick={onClick}
@@ -72,7 +168,41 @@ export function Item({
       }}
     >
       {body}
+      {cardNode}
     </div>
+  )
+}
+
+/** 带气泡的图标按钮：面板里所有 iconButton 都走这里，保证 26px 盒、气泡延迟与无障碍一致。 */
+export function IconAction({
+  ui, label, icon, onClick, disabled, tone, size = 26,
+}: {
+  ui?: UiKit
+  label: string
+  icon: React.ReactNode
+  onClick?: (event: React.MouseEvent<HTMLButtonElement>) => void
+  disabled?: boolean
+  tone?: 'primary' | 'danger'
+  size?: 26
+}) {
+  const className = [
+    css.iconButton,
+    tone === 'primary' ? css.iconPrimary : '',
+    tone === 'danger' ? css.iconDanger : '',
+  ].filter(Boolean).join(' ')
+  return (
+    <Tip ui={ui} label={label}>
+      <button
+        type="button"
+        className={className}
+        style={{ width: size, height: size }}
+        disabled={disabled}
+        aria-label={label}
+        onClick={onClick}
+      >
+        {icon}
+      </button>
+    </Tip>
   )
 }
 
@@ -623,6 +753,135 @@ export function IconTray() {
   )
 }
 
+/** 勾选：Lucide `check`。 */
+export function IconCheck({ size = 16 }: { size?: number }) {
+  return <Svg size={size} viewBox="0 0 24 24" strokeWidth={1.5}><path d="M20 6 9 17l-5-5" /></Svg>
+}
+
+/** 发起验收：Lucide `badge-check`。 */
+export function IconBadgeCheck() {
+  return (
+    <Svg viewBox="0 0 24 24" strokeWidth={1.5}>
+      <path d="M3.85 8.62a4 4 0 0 1 4.78-4.77 4 4 0 0 1 6.74 0 4 4 0 0 1 4.78 4.78 4 4 0 0 1 0 6.74 4 4 0 0 1-4.77 4.78 4 4 0 0 1-6.75 0 4 4 0 0 1-4.78-4.77 4 4 0 0 1 0-6.76Z" />
+      <path d="m16 9-5.5 5.5L8 12" />
+    </Svg>
+  )
+}
+
+/** 删除：Lucide `trash-2`。 */
+export function IconTrash() {
+  return (
+    <Svg viewBox="0 0 24 24" strokeWidth={1.5}>
+      <path d="M10 11v6" />
+      <path d="M14 11v6" />
+      <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" />
+      <path d="M3 6h18" />
+      <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+    </Svg>
+  )
+}
+
+/** 图标键的气泡：宿主用 `<Tooltip label side="bottom">` 包按钮，这里保持一致。 */
+export function Tip({ ui, label, children }: {
+  ui?: UiKit
+  label: string
+  children: React.ReactElement
+}) {
+  if (ui?.Tooltip === undefined) return cloneElement(children, { title: label })
+  const Component = ui.Tooltip
+  return <Component label={label} side="bottom" delayMs={400}>{children}</Component>
+}
+
+/** 暂停：Lucide `circle-pause`。 */
+export function IconPause() {
+  return (
+    <Svg viewBox="0 0 24 24" strokeWidth={1.5}>
+      <circle cx="12" cy="12" r="10" />
+      <path d="M10 15V9" />
+      <path d="M14 15V9" />
+    </Svg>
+  )
+}
+
+/** 继续：Lucide `circle-play`。 */
+export function IconPlay() {
+  return (
+    <Svg viewBox="0 0 24 24" strokeWidth={1.5}>
+      <circle cx="12" cy="12" r="10" />
+      <path d="m10 8 6 4-6 4Z" />
+    </Svg>
+  )
+}
+
+/** 停止：Lucide `square`。 */
+export function IconStop() {
+  return (
+    <Svg viewBox="0 0 24 24" strokeWidth={1.5}>
+      <rect x="4" y="4" width="16" height="16" rx="2" />
+    </Svg>
+  )
+}
+
+/** 禁用删除：Lucide `trash-off`。 */
+export function IconTrashOff() {
+  return (
+    <Svg viewBox="0 0 24 24" strokeWidth={1.5}>
+      <path d="M10 11v6" />
+      <path d="M14 17v-3" />
+      <path d="M16 6V4a2 2 0 0 0-2-2h-4a2 2 0 0 0-1.576.768" />
+      <path d="M19 6v7.344" />
+      <path d="m2 2 20 20" />
+      <path d="M21 6h-9.344" />
+      <path d="M3 6h3" />
+      <path d="M5 6v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-1" />
+    </Svg>
+  )
+}
+
+/** 通过：Lucide `circle-check`。 */
+export function IconCircleCheck() {
+  return (
+    <Svg viewBox="0 0 24 24" strokeWidth={1.5}>
+      <circle cx="12" cy="12" r="10" />
+      <path d="m16 9-5.5 5.5L8 12" />
+    </Svg>
+  )
+}
+
+/** 不通过：Lucide `circle-x`。 */
+export function IconCircleX() {
+  return (
+    <Svg viewBox="0 0 24 24" strokeWidth={1.5}>
+      <circle cx="12" cy="12" r="10" />
+      <path d="m15 9-6 6" />
+      <path d="m9 9 6 6" />
+    </Svg>
+  )
+}
+
+/** 取消选择：Lucide `x`。 */
+export function IconCancel() {
+  return (
+    <Svg viewBox="0 0 24 24" strokeWidth={1.5}>
+      <path d="M18 6 6 18" />
+      <path d="m6 6 12 12" />
+    </Svg>
+  )
+}
+
+/** 全选：Lucide `list-checks`。 */
+export function IconSelectAll() {
+  return (
+    <Svg viewBox="0 0 24 24" strokeWidth={1.5}>
+      <path d="m3 17 2 2 4-4" />
+      <path d="m3 7 2 2 4-4" />
+      <path d="M13 6h8" />
+      <path d="M13 12h8" />
+      <path d="M13 18h8" />
+    </Svg>
+  )
+}
+
 /** 警告：Lucide `triangle-alert`。 */
 export function IconWarning() {
   return (
@@ -635,14 +894,12 @@ export function IconWarning() {
 }
 
 /** 调度：Lucide `list-checks`（队列 + 已派发）。 */
+/** 调度：Lucide `layers-2`。 */
 export function IconSchedule() {
   return (
     <Svg size={18} viewBox="0 0 24 24" strokeWidth={1.5}>
-      <path d="m3 17 2 2 4-4" />
-      <path d="m3 7 2 2 4-4" />
-      <path d="M13 6h8" />
-      <path d="M13 12h8" />
-      <path d="M13 18h8" />
+      <path d="M13 13.74a2 2 0 0 1-2 0L2.5 8.87a1 1 0 0 1 0-1.74L11 2.26a2 2 0 0 1 2 0l8.5 4.87a1 1 0 0 1 0 1.74z" />
+      <path d="m20 14.285 1.5.845a1 1 0 0 1 0 1.74L13 21.74a2 2 0 0 1-2 0l-8.5-4.87a1 1 0 0 1 0-1.74l1.5-.845" />
     </Svg>
   )
 }

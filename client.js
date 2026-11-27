@@ -9,9 +9,11 @@ window.__ModuleLoader__.load({
     const module = { exports: {} };
     const exports = module.exports;
     "use strict";
+var __create = Object.create;
 var __defProp = Object.defineProperty;
 var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
 var __getOwnPropNames = Object.getOwnPropertyNames;
+var __getProtoOf = Object.getPrototypeOf;
 var __hasOwnProp = Object.prototype.hasOwnProperty;
 var __export = (target, all2) => {
   for (var name in all2)
@@ -25,6 +27,14 @@ var __copyProps = (to, from, except, desc) => {
   }
   return to;
 };
+var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__getProtoOf(mod)) : {}, __copyProps(
+  // If the importer is in node compatibility mode or this is not an ESM
+  // file that has been converted to a CommonJS file using a Babel-
+  // compatible transform (i.e. "__esModule" has not been set), then set
+  // "default" to the CommonJS "module.exports" for node compatibility.
+  isNodeMode || !mod || !mod.__esModule ? __defProp(target, "default", { value: mod, enumerable: true }) : target,
+  mod
+));
 var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
 
 // src/client/index.tsx
@@ -449,8 +459,8 @@ function DiffTab({
 }
 function Tooltip({ ui, label, children }) {
   if (ui.Tooltip === void 0) return /* @__PURE__ */ React.createElement(React.Fragment, null, children);
-  const Tip = ui.Tooltip;
-  return /* @__PURE__ */ React.createElement(Tip, { label, side: "bottom", delayMs: 500 }, children);
+  const Tip2 = ui.Tooltip;
+  return /* @__PURE__ */ React.createElement(Tip2, { label, side: "bottom", delayMs: 500 }, children);
 }
 
 // src/client/locale.ts
@@ -470,11 +480,17 @@ var zh = {
   "filter.dev": "\u5F00\u53D1\u4E2D",
   "filter.earlier": "\u66F4\u65E9",
   "action.accept": "\u53D1\u8D77\u9A8C\u6536",
+  "accept.passed": "\u5DF2\u901A\u8FC7",
   "action.working": "\u6B63\u5728\u53D1\u8D77",
   "toast.started": "\u5DF2\u53D1\u8D77\u9A8C\u6536",
   "action.pass": "\u901A\u8FC7",
   "action.merge": "\u5408\u5165",
   "action.delete": "\u5220\u9664",
+  "action.batchDelete": "\u6279\u91CF\u5220\u9664",
+  "action.selectAll": "\u5168\u9009",
+  "note.selected": "\u5DF2\u9009",
+  "note.notDeletable": "\u4EFB\u52A1\u8FD8\u5728\u88AB\u4F9D\u8D56\u6216\u88AB\u5360\u7528\uFF0C\u4E0D\u80FD\u5220\u9664",
+  "note.notSelectable": "\u53EA\u6709\u5F85\u9A8C\u6536\u4E14\u672A\u8FDB\u6279\u6B21\u7684\u4EFB\u52A1\u80FD\u53D1\u8D77\u9A8C\u6536",
   "action.deleting": "\u6B63\u5728\u5220\u9664",
   "action.pause": "\u6682\u505C",
   "action.resume": "\u7EE7\u7EED",
@@ -569,6 +585,7 @@ var zh = {
   "fact.notMerged": "\u672A\u5E76\u5165",
   "fact.warning": "\u8B66\u544A",
   "fact.usage": "\u7528\u91CF",
+  "fact.createdAt": "\u521B\u5EFA\u4E8E",
   "fact.paused": "\u6682\u505C\u4E8E",
   "fact.stopped": "\u505C\u6B62\u4E8E",
   "usage.total": "\u5171",
@@ -694,11 +711,17 @@ var en = {
   "filter.dev": "Developing",
   "filter.earlier": "Earlier",
   "action.accept": "Start acceptance",
+  "accept.passed": "passed",
   "action.working": "Starting",
   "toast.started": "Acceptance started",
   "action.pass": "Pass",
   "action.merge": "Merge",
   "action.delete": "Delete",
+  "action.batchDelete": "Delete selected",
+  "action.selectAll": "Select all",
+  "note.selected": "Selected",
+  "note.notDeletable": "Task is still depended on or occupied, cannot delete",
+  "note.notSelectable": "Only pending-acceptance tasks not yet in a batch can start acceptance",
   "action.deleting": "Deleting",
   "action.pause": "Pause",
   "action.resume": "Resume",
@@ -789,6 +812,7 @@ var en = {
   "fact.notMerged": "Not merged",
   "fact.warning": "Warning",
   "fact.usage": "Usage",
+  "fact.createdAt": "Created",
   "fact.paused": "Paused at",
   "fact.stopped": "Stopped at",
   "usage.total": "total",
@@ -1658,6 +1682,7 @@ function ModelField({ ui, label, value, catalog, error, onChange }) {
 var import_react4 = require("react");
 
 // src/client/panel/parts.tsx
+var React2 = __toESM(require("react"), 1);
 var import_react2 = require("react");
 
 // src/client/panel/store.ts
@@ -1697,8 +1722,8 @@ function writePaneLayout(group, layout) {
 }
 
 // src/client/panel/ui.module.css
-register("/* \u9762\u677F UI \u57FA\u7840\u4EF6\uFF1A\u9875\u5934\u3001\u5B50\u9762\u677F\u3001\u5217\u8868\u9879\u3001\u72B6\u6001\u3001\u952E\u503C\u4E0E\u8868\u5355\u3002\n   \u989C\u8272\u3001\u5706\u89D2\u3001\u5B57\u53F7\u5168\u90E8\u53D6 DSH \u8BED\u4E49\u53D8\u91CF\uFF0C\u4E0D\u5199\u5B57\u9762\u8272\u503C\u3002 */\n\n.df-pane-7d3126 {\n  position: absolute;\n  inset: 0;\n  display: flex;\n  flex-direction: column;\n  height: 100%;\n  min-height: 0;\n  color: var(--dsw-alias-label-primary);\n  font-size: 13px;\n  line-height: 20px;\n}\n\n/* \u2500\u2500 \u9875\u5934\uFF1A\u6587\u672C tab + \u65F6\u95F4 + \u5237\u65B0 \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500 */\n.df-head-7d3126 {\n  display: flex;\n  align-items: center;\n  gap: 2px;\n  flex: none;\n  height: 38px;\n  padding: 0 8px 0 16px;\n  border-bottom: 0.5px solid var(--dsw-alias-border-l3);\n}\n\n.df-tab-7d3126,\n.df-tabOn-7d3126 {\n  appearance: none;\n  border: 0;\n  flex: none;\n  padding: 0 10px;\n  height: 26px;\n  border-radius: var(--dsw-radius-sm, 6px);\n  background: transparent;\n  color: var(--dsw-alias-label-secondary);\n  font-family: inherit;\n  font-size: 13px;\n  line-height: 20px;\n  cursor: pointer;\n  white-space: nowrap;\n  transition: color 0.1s ease, background 0.1s ease;\n}\n\n/* \u7B2C\u4E00\u4E2A tab \u7684\u5185\u8FB9\u8DDD\u62B5\u6D88\u6389\uFF0C\u8BA9\u6587\u5B57\u4E0E\u9875\u5934\u5DE6\u5185\u8FB9\u8DDD\uFF0816px\uFF09\u4E25\u683C\u5BF9\u9F50 */\n.df-tab-7d3126:first-of-type,\n.df-tabOn-7d3126:first-of-type {\n  margin-left: -10px;\n}\n\n.df-tab-7d3126:hover {\n  color: var(--dsw-alias-label-primary);\n}\n\n.df-tab-7d3126:focus-visible,\n.df-tabOn-7d3126:focus-visible {\n  outline: 1px solid var(--dsw-alias-border-l2);\n  outline-offset: 1px;\n}\n\n.df-tabOn-7d3126 {\n  color: var(--dsw-alias-label-primary);\n  font-weight: 500;\n}\n\n@media (hover: hover) {\n  .df-tab-7d3126:hover {\n    background: var(--dsw-alias-interactive-bg-hover);\n    color: var(--dsw-alias-label-primary);\n  }\n}\n\n.df-stamp-7d3126 {\n  margin-left: auto;\n  padding: 0 8px 0 12px;\n  color: var(--dsw-alias-label-tertiary);\n  font-size: 12px;\n  line-height: 16px;\n  font-variant-numeric: tabular-nums;\n}\n\n.df-iconButton-7d3126 {\n  appearance: none;\n  display: inline-flex;\n  align-items: center;\n  justify-content: center;\n  flex: none;\n  width: 26px;\n  height: 26px;\n  border: 0;\n  border-radius: var(--dsw-radius-sm, 6px);\n  background: transparent;\n  color: var(--dsw-alias-label-secondary);\n  cursor: pointer;\n}\n\n@media (hover: hover) {\n  .df-iconButton-7d3126:hover {\n    background: var(--dsw-alias-interactive-bg-hover);\n    color: var(--dsw-alias-label-primary);\n  }\n}\n\n/* \u2500\u2500 \u5B50\u9762\u677F \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500 */\n.df-group-7d3126 {\n  display: flex;\n  flex-direction: column;\n  flex: 1 1 auto;\n  min-height: 0;\n  overflow: hidden;\n}\n\n.df-panel-7d3126 {\n  position: relative;\n  display: flex;\n  flex-direction: column;\n  flex: 0 1 auto;\n  min-height: 0;\n  overflow: hidden;\n  border-top: 0.5px solid var(--dsw-alias-border-l3);\n}\n\n/* \u4E0A\u8FB9\u6846\u5C31\u662F\u62D6\u62FD\u624B\u67C4\uFF1A\u70ED\u533A\u76D6\u5728\u8FB9\u6846\u4E0A\u4E0B\u5404 4px\u3002 */\n.df-grip-7d3126 {\n  position: absolute;\n  left: 0;\n  right: 0;\n  top: -4px;\n  height: 9px;\n  z-index: 2;\n  cursor: row-resize;\n  background: transparent;\n}\n\n.df-grip-7d3126::after {\n  content: '';\n  position: absolute;\n  left: 0;\n  right: 0;\n  top: 4px;\n  height: 1px;\n  background: transparent;\n  transition: background-color 120ms ease;\n}\n\n@media (hover: hover) {\n  .df-grip-7d3126:hover::after {\n    background: var(--dsw-alias-border-l2);\n  }\n}\n\n.df-group-7d3126>.df-panel-7d3126:first-child {\n  border-top: 0;\n}\n\n.df-panelHead-7d3126 {\n  appearance: none;\n  outline: none;\n  display: flex;\n  align-items: center;\n  gap: 6px;\n  flex: none;\n  width: auto;\n  margin: 0 8px;\n  height: 24px;\n  padding: 0 8px;\n  border: 0;\n  border-radius: 0;\n  background: transparent;\n  color: var(--dsw-alias-label-tertiary);\n  font: inherit;\n  text-align: left;\n  cursor: pointer;\n  transition: color 120ms ease;\n}\n\n/* \u53EA\u9760\u58A8\u8272\u4E0E\u7BAD\u5934\u53D8\u6DF1\u8868\u793A\u53EF\u70B9\uFF1A\u6574\u884C\u94FA\u5E95\u8272\u4F1A\u50CF\u201C\u88AB\u9009\u4E2D\u201D\uFF0C\u592A\u91CD */\n@media (hover: hover) {\n  .df-panelHead-7d3126:hover {\n    color: var(--dsw-alias-label-secondary);\n  }\n\n  .df-panelHead-7d3126:hover .df-headStatus-7d3126 {\n  display: inline-flex;\n  align-items: center;\n  gap: 6px;\n  font-size: 11px;\n  line-height: 16px;\n  color: var(--dsw-alias-label-tertiary);\n}\n\n.df-panelChev-7d3126 {\n    color: var(--dsw-alias-label-secondary);\n  }\n}\n\n.df-panelHead-7d3126:active {\n  color: var(--dsw-alias-label-primary);\n}\n\n/* \u6807\u9898\u4E0A\u4E0D\u753B\u4EFB\u4F55\u76D2\u5B50\uFF1A\u65E0\u5E95\u8272\u3001\u65E0\u63CF\u8FB9\u3001\u65E0\u5706\u89D2 */\n.df-panelHead-7d3126::before,\n.df-panelHead-7d3126::after {\n  content: none;\n}\n\n/* \u70B9\u51FB\u540E\u4E0D\u8981\u7559\u4E0B\u4E00\u4E2A\u65B9\u6846\uFF1A\u9F20\u6807\u70B9\u51FB\u7ED9 background \u53CD\u9988\uFF0C\u952E\u76D8\u805A\u7126\u624D\u663E\u793A\u6D45\u5E95\u3002\n   \u5BBF\u4E3B\u9875\u9762\u7ED9 button \u7684 :focus-visible \u63CF\u8FB9\u4F18\u5148\u7EA7\u66F4\u9AD8\uFF0C\u8FD9\u91CC\u663E\u5F0F\u538B\u6389\u3002 */\n.df-panelHead-7d3126:focus,\n.df-panelHead-7d3126:focus-visible,\n.df-panelHead-7d3126:focus-within {\n  outline: none !important;\n  box-shadow: none !important;\n}\n\n.df-panelHead-7d3126:focus-visible {\n  color: var(--dsw-alias-label-secondary);\n}\n\n.df-panelTitle-7d3126 {\n  font-size: 13px;\n  font-weight: 400;\n  white-space: nowrap;\n}\n\n.df-panelCount-7d3126 {\n  color: inherit;\n  font-size: 12px;\n  font-variant-numeric: tabular-nums;\n}\n\n.df-panelTail-7d3126 {\n  margin-left: auto;\n  display: inline-flex;\n  align-items: center;\n  gap: 6px;\n}\n\n.df-headStatus-7d3126 {\n  display: inline-flex;\n  align-items: center;\n  gap: 6px;\n  font-size: 11px;\n  line-height: 16px;\n  color: var(--dsw-alias-label-tertiary);\n}\n\n.df-panelChev-7d3126 {\n  display: inline-flex;\n  color: var(--dsw-alias-label-tertiary);\n  transform: rotate(0deg);\n  transition: transform 120ms ease;\n}\n\n.df-panelOpen-7d3126 .df-headStatus-7d3126 {\n  display: inline-flex;\n  align-items: center;\n  gap: 6px;\n  font-size: 11px;\n  line-height: 16px;\n  color: var(--dsw-alias-label-tertiary);\n}\n\n.df-panelOpen-7d3126 .df-panelChev-7d3126 {\n  transform: rotate(90deg);\n}\n\n.df-panelBody-7d3126 {\n  flex: 1;\n  min-height: 0;\n  overflow: auto;\n  padding-bottom: 4px;\n}\n\n.df-panelCollapsed-7d3126 .df-panelBody-7d3126 {\n  display: none;\n}\n\n.df-panelOpen-7d3126 {\n  flex-grow: 1;\n}\n\n.df-sash-7d3126 {\n  flex: none;\n  height: 9px;\n  cursor: row-resize;\n  position: relative;\n}\n\n.df-sash-7d3126::after {\n  content: '';\n  position: absolute;\n  left: 0;\n  right: 0;\n  top: 3px;\n  height: 1px;\n  background: transparent;\n}\n\n@media (hover: hover) {\n  .df-sash-7d3126:hover::after {\n    background: var(--dsw-alias-border-l2);\n  }\n}\n\n.df-sashActive-7d3126::after {\n  background: var(--dsw-alias-border-l2);\n}\n\n/* \u2500\u2500 \u5217\u8868\u9879 \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500 */\n.df-item-7d3126 {\n  display: flex;\n  align-items: center;\n  gap: 8px;\n  height: 38px;\n  padding: 0 16px;\n  border-radius: var(--dsw-radius-sm, 6px);\n  color: var(--dsw-alias-label-primary);\n}\n\n/* \u53EF\u70B9\u7684\u884C\u4E00\u5B9A\u6709\u53CD\u9988\uFF1A\u6307\u9488 + \u60AC\u505C\u5E95\u8272\uFF0C\u5426\u5219\u7528\u6237\u4E0D\u77E5\u9053\u80FD\u70B9\u3002 */\n.df-item-7d3126[role='button'] {\n  cursor: pointer;\n}\n\n.df-item-7d3126[role='button']:focus-visible {\n  outline: 2px solid var(--dsw-alias-border-l2);\n  outline-offset: -2px;\n}\n\n@media (hover: hover) {\n  .df-item-7d3126[role='button']:hover {\n    background: var(--dsw-alias-interactive-bg-hover);\n  }\n}\n\n.df-itemSub-7d3126 {\n  height: 30px;\n  padding-left: 44px;\n  font-size: 12px;\n  color: var(--dsw-alias-label-secondary);\n}\n\n@media (hover: hover) {\n  .df-item-7d3126:hover {\n    background: var(--dsw-alias-interactive-bg-hover);\n  }\n}\n\n.df-itemOn-7d3126 {\n  background: var(--dsw-alias-interactive-bg-hover);\n}\n\n.df-icon-7d3126 {\n  display: inline-flex;\n  align-items: center;\n  justify-content: center;\n  flex: none;\n  width: 20px;\n  height: 20px;\n  color: var(--dsw-alias-label-secondary);\n}\n\n.df-name-7d3126 {\n  display: flex;\n  align-items: baseline;\n  gap: 8px;\n  flex: 1;\n  min-width: 0;\n  white-space: nowrap;\n  overflow: hidden;\n}\n\n.df-nameText-7d3126 {\n  overflow: hidden;\n  text-overflow: ellipsis;\n}\n\n.df-itemHint-7d3126 {\n  color: var(--dsw-alias-label-tertiary);\n}\n\n.df-suffix-7d3126 {\n  flex: none;\n  color: var(--dsw-alias-label-tertiary);\n  font-family: var(--dsw-font-family-mono, ui-monospace, SFMono-Regular, Menlo, monospace);\n  font-size: 11px;\n  line-height: 16px;\n}\n\n.df-trail-7d3126 {\n  display: flex;\n  align-items: center;\n  gap: 14px;\n  flex: none;\n  color: var(--dsw-alias-label-secondary);\n  font-size: 12px;\n  white-space: nowrap;\n}\n\n.df-pair-7d3126 {\n  display: inline-flex;\n  align-items: baseline;\n  gap: 5px;\n}\n\n.df-pairLabel-7d3126 {\n  color: var(--dsw-alias-label-tertiary);\n  font-size: 11px;\n}\n\n.df-pairValue-7d3126 {\n  color: var(--dsw-alias-label-primary);\n  font-size: 13px;\n  font-weight: 500;\n  font-variant-numeric: tabular-nums;\n}\n\n/* \u2500\u2500 \u72B6\u6001\uFF1A\u706F + \u8BCD \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500 */\n.df-status-7d3126 {\n  display: inline-flex;\n  align-items: center;\n  gap: 6px;\n  color: var(--dsw-alias-label-secondary);\n  font-size: 12px;\n  white-space: nowrap;\n}\n\n.df-lamp-7d3126 {\n  position: relative;\n  width: 6px;\n  height: 6px;\n  border-radius: 50%;\n  flex: none;\n  background: var(--dsw-alias-label-tertiary);\n}\n\n.df-lampOk-7d3126 { background: var(--dsw-alias-state-success-primary); }\n.df-lampWarn-7d3126 { background: var(--dsw-alias-state-warn-primary); }\n.df-lampErr-7d3126 { background: var(--dsw-alias-state-error-primary); }\n.df-lampIdle-7d3126 { background: var(--dsw-alias-label-tertiary); }\n\n.df-lampRun-7d3126 {\n  width: 7px;\n  height: 7px;\n  background: var(--dsw-alias-state-business-primary);\n  animation: breathe 1.9s ease-in-out infinite;\n}\n\n.df-lampRun-7d3126::after {\n  content: '';\n  position: absolute;\n  inset: -2px;\n  border-radius: 50%;\n  background: var(--dsw-alias-state-business-primary);\n  opacity: 0.22;\n}\n\n@keyframes breathe {\n  0%, 100% { opacity: 1; }\n  50% { opacity: 0.45; }\n}\n\n@media (prefers-reduced-motion: reduce) {\n  .df-lampRun-7d3126 { animation: none; }\n}\n\n/* \u2500\u2500 \u6307\u6807\u4E0E\u8BF4\u660E \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500 */\n.df-metrics-7d3126 {\n  display: grid;\n  grid-template-columns: repeat(3, 1fr);\n  gap: 14px 10px;\n  padding: 14px 16px 14px;\n}\n\n.df-metric-7d3126 {\n  display: flex;\n  flex-direction: column;\n  gap: 2px;\n}\n\n.df-metricValue-7d3126 {\n  font-size: 22px;\n  line-height: 28px;\n  font-weight: 500;\n  font-variant-numeric: tabular-nums;\n}\n\n.df-metricLabel-7d3126 {\n  color: var(--dsw-alias-label-tertiary);\n  font-size: 12px;\n}\n\n.df-note-7d3126 {\n  padding: 0 16px 8px;\n  color: var(--dsw-alias-label-tertiary);\n  font-size: 11px;\n  line-height: 16px;\n}\n\n.df-pane-7d3126,\n.df-pane-7d3126 * {\n  box-sizing: border-box;\n}\n\n.df-empty-7d3126 {\n  display: flex;\n  flex-direction: column;\n  align-items: center;\n  justify-content: center;\n  gap: 8px;\n  min-height: 96px;\n  padding: 24px 16px;\n  color: var(--dsw-alias-label-tertiary);\n  font-size: 12px;\n  line-height: 18px;\n  text-align: center;\n}\n\n.df-emptyIcon-7d3126 {\n  display: inline-flex;\n  color: var(--dsw-alias-label-tertiary);\n  opacity: 0.9;\n}\n\n.df-noteIndent-7d3126 {\n  padding: 2px 16px 6px 44px;\n  line-height: 18px;\n}\n\n.df-disclosure-7d3126 {\n  appearance: none;\n  display: inline-flex;\n  align-items: center;\n  justify-content: center;\n  flex: none;\n  width: 20px;\n  height: 20px;\n  margin: -2px;\n  padding: 0;\n  border: 0;\n  border-radius: var(--dsw-radius-sm, 6px);\n  background: transparent;\n  color: var(--dsw-alias-label-tertiary);\n  cursor: pointer;\n}\n\n@media (hover: hover) {\n  .df-disclosure-7d3126:hover {\n    background: var(--dsw-alias-interactive-bg-hover);\n    color: var(--dsw-alias-label-secondary);\n  }\n}\n\n.df-disclosure-7d3126:focus-visible {\n  outline: 1px solid var(--dsw-alias-border-l3);\n  outline-offset: 1px;\n}\n\n.df-disclosureOpen-7d3126,\n.df-disclosureClosed-7d3126 {\n  display: inline-flex;\n  transition: transform 120ms ease;\n}\n\n.df-disclosureClosed-7d3126 {\n  transform: rotate(0deg);\n}\n\n.df-disclosureOpen-7d3126 {\n  transform: rotate(90deg);\n}\n\n.df-progress-7d3126 {\n  font-size: 12px;\n  line-height: 18px;\n  color: var(--dsw-alias-label-secondary);\n  font-variant-numeric: tabular-nums;\n}\n\n.df-detail-7d3126 {\n  padding: 2px 16px 12px;\n}\n\n.df-detailHead-7d3126 {\n  display: flex;\n  align-items: center;\n  gap: 8px;\n  padding: 4px 0 8px;\n}\n\n/* \u8BE6\u60C5\u6807\u9898\u524D\u7684\u7C7B\u578B\u56FE\u6807\uFF1A\u4E0E\u5217\u8868\u884C\u540C\u6B3E\uFF0C\u5C3A\u5BF8\u5BF9\u9F50 13px \u6587\u5B57 */\n.df-detailHeadIcon-7d3126 {\n  flex: none;\n  display: flex;\n  align-items: center;\n  justify-content: center;\n  width: 18px;\n  height: 18px;\n  color: var(--dsw-alias-label-secondary);\n}\n\n.df-detailHeadTitle-7d3126 {\n  flex: 1;\n  min-width: 0;\n  overflow: hidden;\n  text-overflow: ellipsis;\n  white-space: nowrap;\n  font-size: 13px;\n  line-height: 20px;\n  font-weight: 500;\n  color: var(--dsw-alias-label-primary);\n}\n\n.df-kvGrid-7d3126 {\n  display: grid;\n  grid-template-columns: repeat(2, minmax(0, 1fr));\n  column-gap: 24px;\n}\n\n.df-kvRow-7d3126 {\n  display: flex;\n  gap: 12px;\n  align-items: baseline;\n  min-height: 26px;\n  padding: 3px 0;\n}\n\n.df-kvLabel-7d3126 {\n  flex: none;\n  width: 44px;\n  font-size: 12px;\n  line-height: 18px;\n  color: var(--dsw-alias-label-tertiary);\n}\n\n.df-kvValue-7d3126 {\n  flex: 1;\n  min-width: 0;\n  overflow: hidden;\n  text-overflow: ellipsis;\n  white-space: nowrap;\n  font-size: 12px;\n  line-height: 18px;\n  color: var(--dsw-alias-label-secondary);\n  overflow-wrap: anywhere;\n}\n\n.df-fileList-7d3126 {\n  margin-top: 10px;\n}\n\n.df-alert-7d3126 {\n  display: flex;\n  align-items: flex-start;\n  gap: 8px;\n  margin: 2px 0 10px;\n  padding: 9px 10px;\n  /* \u5DE6\u4FA7 2px \u72B6\u6001\u8272\u7AD6\u6761 + \u4E00\u5708\u53D1\u4E1D\u63CF\u8FB9\uFF1A\u4E0D\u9760\u5E95\u8272\u4E5F\u80FD\u4E00\u773C\u770B\u89C1 */\n  border: 0.5px solid var(--dsw-alias-border-l2);\n  border-left: 2px solid currentColor;\n  border-radius: var(--dsw-radius-sm, 6px);\n  background: var(--dsw-alias-bg-layer-2);\n}\n\n.df-alertIcon-7d3126 {\n  flex: none;\n  display: flex;\n  padding-top: 2px;\n}\n\n.df-alertBody-7d3126 {\n  display: flex;\n  flex-direction: column;\n  gap: 4px;\n  min-width: 0;\n}\n\n.df-alertLine-7d3126 {\n  font-size: 13px;\n  line-height: 20px;\n  color: var(--dsw-alias-label-primary);\n  word-break: break-word;\n}\n\n.df-detailList-7d3126 {\n  display: flex;\n  flex-direction: column;\n  margin: 2px 0 6px;\n}\n\n/* \u8BE6\u60C5\u91CC\u7684\u4EFB\u52A1\u884C\u548C\u5217\u8868\u9875\u5B8C\u5168\u540C\u4E00\u5957\uFF1A\u62B5\u6D88 .df-detail-7d3126 \u7684 16px \u5185\u8FB9\u8DDD\uFF0C\n   \u8BA9 38px \u7684 Item \u4E0E\u5217\u8868\u9875\u7684\u884C\u4E00\u6837\u8D34\u7740\u9762\u677F\u5DE6\u53F3\u8FB9\u754C\u3002 */\n.df-detailList-7d3126 > * {\n  margin: 0 -16px;\n}\n\n.df-fileRow-7d3126 {\n  display: flex;\n  gap: 10px;\n  align-items: baseline;\n  min-height: 26px;\n  padding: 3px 0;\n}\n\n.df-filePath-7d3126 {\n  flex: 1;\n  min-width: 0;\n  overflow: hidden;\n  text-overflow: ellipsis;\n  white-space: nowrap;\n  font-family: var(--dsw-alias-font-mono, ui-monospace, SFMono-Regular, Menlo, monospace);\n  font-size: 11px;\n  line-height: 18px;\n  color: var(--dsw-alias-label-secondary);\n}\n\n.df-fileAdd-7d3126 {\n  font-variant-numeric: tabular-nums;\n  font-size: 12px;\n  color: var(--dsw-alias-state-success-primary);\n}\n\n.df-fileDel-7d3126 {\n  font-variant-numeric: tabular-nums;\n  font-size: 12px;\n  color: var(--dsw-alias-state-error-primary);\n}\n\n.df-emptyText-7d3126 {\n  margin: 0;\n  font-size: 12px;\n  line-height: 18px;\n  color: var(--dsw-alias-state-error-primary);\n  text-align: center;\n  word-break: break-word;\n}\n");
-var ui_default = { "pane": "df-pane-7d3126", "head": "df-head-7d3126", "tab": "df-tab-7d3126", "tabOn": "df-tabOn-7d3126", "stamp": "df-stamp-7d3126", "iconButton": "df-iconButton-7d3126", "group": "df-group-7d3126", "panel": "df-panel-7d3126", "grip": "df-grip-7d3126", "panelHead": "df-panelHead-7d3126", "headStatus": "df-headStatus-7d3126", "panelChev": "df-panelChev-7d3126", "panelTitle": "df-panelTitle-7d3126", "panelCount": "df-panelCount-7d3126", "panelTail": "df-panelTail-7d3126", "panelOpen": "df-panelOpen-7d3126", "panelBody": "df-panelBody-7d3126", "panelCollapsed": "df-panelCollapsed-7d3126", "sash": "df-sash-7d3126", "sashActive": "df-sashActive-7d3126", "item": "df-item-7d3126", "itemSub": "df-itemSub-7d3126", "itemOn": "df-itemOn-7d3126", "icon": "df-icon-7d3126", "name": "df-name-7d3126", "nameText": "df-nameText-7d3126", "itemHint": "df-itemHint-7d3126", "suffix": "df-suffix-7d3126", "trail": "df-trail-7d3126", "pair": "df-pair-7d3126", "pairLabel": "df-pairLabel-7d3126", "pairValue": "df-pairValue-7d3126", "status": "df-status-7d3126", "lamp": "df-lamp-7d3126", "lampOk": "df-lampOk-7d3126", "lampWarn": "df-lampWarn-7d3126", "lampErr": "df-lampErr-7d3126", "lampIdle": "df-lampIdle-7d3126", "lampRun": "df-lampRun-7d3126", "metrics": "df-metrics-7d3126", "metric": "df-metric-7d3126", "metricValue": "df-metricValue-7d3126", "metricLabel": "df-metricLabel-7d3126", "note": "df-note-7d3126", "empty": "df-empty-7d3126", "emptyIcon": "df-emptyIcon-7d3126", "noteIndent": "df-noteIndent-7d3126", "disclosure": "df-disclosure-7d3126", "disclosureOpen": "df-disclosureOpen-7d3126", "disclosureClosed": "df-disclosureClosed-7d3126", "progress": "df-progress-7d3126", "detail": "df-detail-7d3126", "detailHead": "df-detailHead-7d3126", "detailHeadIcon": "df-detailHeadIcon-7d3126", "detailHeadTitle": "df-detailHeadTitle-7d3126", "kvGrid": "df-kvGrid-7d3126", "kvRow": "df-kvRow-7d3126", "kvLabel": "df-kvLabel-7d3126", "kvValue": "df-kvValue-7d3126", "fileList": "df-fileList-7d3126", "alert": "df-alert-7d3126", "alertIcon": "df-alertIcon-7d3126", "alertBody": "df-alertBody-7d3126", "alertLine": "df-alertLine-7d3126", "detailList": "df-detailList-7d3126", "fileRow": "df-fileRow-7d3126", "filePath": "df-filePath-7d3126", "fileAdd": "df-fileAdd-7d3126", "fileDel": "df-fileDel-7d3126", "emptyText": "df-emptyText-7d3126" };
+register("/* \u9762\u677F UI \u57FA\u7840\u4EF6\uFF1A\u9875\u5934\u3001\u5B50\u9762\u677F\u3001\u5217\u8868\u9879\u3001\u72B6\u6001\u3001\u952E\u503C\u4E0E\u8868\u5355\u3002\n   \u989C\u8272\u3001\u5706\u89D2\u3001\u5B57\u53F7\u5168\u90E8\u53D6 DSH \u8BED\u4E49\u53D8\u91CF\uFF0C\u4E0D\u5199\u5B57\u9762\u8272\u503C\u3002 */\n\n.df-pane-ba85c7 {\n  position: absolute;\n  inset: 0;\n  display: flex;\n  flex-direction: column;\n  height: 100%;\n  min-height: 0;\n  color: var(--dsw-alias-label-primary);\n  font-size: 13px;\n  line-height: 20px;\n}\n\n/* \u2500\u2500 \u9875\u5934\uFF1A\u6587\u672C tab + \u65F6\u95F4 + \u5237\u65B0 \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500 */\n.df-head-ba85c7 {\n  display: flex;\n  align-items: center;\n  gap: 2px;\n  flex: none;\n  height: 38px;\n  padding: 0 8px 0 16px;\n  border-bottom: 0.5px solid var(--dsw-alias-border-l3);\n}\n\n.df-tab-ba85c7,\n.df-tabOn-ba85c7 {\n  appearance: none;\n  border: 0;\n  flex: none;\n  padding: 0 10px;\n  height: 26px;\n  border-radius: var(--dsw-radius-sm, 6px);\n  background: transparent;\n  color: var(--dsw-alias-label-secondary);\n  font-family: inherit;\n  font-size: 13px;\n  line-height: 20px;\n  cursor: pointer;\n  white-space: nowrap;\n  transition: color 0.1s ease, background 0.1s ease;\n}\n\n/* \u7B2C\u4E00\u4E2A tab \u7684\u5185\u8FB9\u8DDD\u62B5\u6D88\u6389\uFF0C\u8BA9\u6587\u5B57\u4E0E\u9875\u5934\u5DE6\u5185\u8FB9\u8DDD\uFF0816px\uFF09\u4E25\u683C\u5BF9\u9F50 */\n.df-tab-ba85c7:first-of-type,\n.df-tabOn-ba85c7:first-of-type {\n  margin-left: -10px;\n}\n\n.df-tab-ba85c7:hover {\n  color: var(--dsw-alias-label-primary);\n}\n\n.df-tab-ba85c7:focus-visible,\n.df-tabOn-ba85c7:focus-visible {\n  outline: 1px solid var(--dsw-alias-border-l2);\n  outline-offset: 1px;\n}\n\n.df-tabOn-ba85c7 {\n  color: var(--dsw-alias-label-primary);\n  font-weight: 500;\n}\n\n@media (hover: hover) {\n  .df-tab-ba85c7:hover {\n    background: var(--dsw-alias-interactive-bg-hover);\n    color: var(--dsw-alias-label-primary);\n  }\n}\n\n.df-stamp-ba85c7 {\n  margin-left: auto;\n  padding: 0 8px 0 12px;\n  color: var(--dsw-alias-label-tertiary);\n  font-size: 12px;\n  line-height: 16px;\n  font-variant-numeric: tabular-nums;\n}\n\n.df-iconButton-ba85c7 {\n  appearance: none;\n  display: inline-flex;\n  align-items: center;\n  justify-content: center;\n  flex: none;\n  width: 26px;\n  height: 26px;\n  border: 0;\n  border-radius: var(--dsw-radius-sm, 6px);\n  background: transparent;\n  color: var(--dsw-alias-label-secondary);\n  cursor: pointer;\n}\n\n.df-iconButton-ba85c7:disabled {\n  color: var(--dsw-alias-label-tertiary);\n  cursor: not-allowed;\n}\n\n@media (hover: hover) {\n  .df-iconButton-ba85c7:not(:disabled):hover {\n    background: var(--dsw-alias-interactive-bg-hover);\n    color: var(--dsw-alias-label-primary);\n  }\n}\n\n@media (hover: hover) {\n  .df-iconButton-ba85c7:hover {\n    background: var(--dsw-alias-interactive-bg-hover);\n    color: var(--dsw-alias-label-primary);\n  }\n}\n\n/* \u2500\u2500 \u5B50\u9762\u677F \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500 */\n.df-group-ba85c7 {\n  display: flex;\n  flex-direction: column;\n  flex: 1 1 auto;\n  min-height: 0;\n  overflow: hidden;\n}\n\n.df-panel-ba85c7 {\n  position: relative;\n  display: flex;\n  flex-direction: column;\n  flex: 0 1 auto;\n  min-height: 0;\n  overflow: hidden;\n  border-top: 0.5px solid var(--dsw-alias-border-l3);\n}\n\n/* \u4E0A\u8FB9\u6846\u5C31\u662F\u62D6\u62FD\u624B\u67C4\uFF1A\u70ED\u533A\u76D6\u5728\u8FB9\u6846\u4E0A\u4E0B\u5404 4px\u3002 */\n.df-grip-ba85c7 {\n  position: absolute;\n  left: 0;\n  right: 0;\n  top: -4px;\n  height: 9px;\n  z-index: 2;\n  cursor: row-resize;\n  background: transparent;\n}\n\n.df-grip-ba85c7::after {\n  content: '';\n  position: absolute;\n  left: 0;\n  right: 0;\n  top: 4px;\n  height: 1px;\n  background: transparent;\n  transition: background-color 120ms ease;\n}\n\n@media (hover: hover) {\n  .df-grip-ba85c7:hover::after {\n    background: var(--dsw-alias-border-l2);\n  }\n}\n\n.df-group-ba85c7>.df-panel-ba85c7:first-child {\n  border-top: 0;\n}\n\n.df-panelHead-ba85c7 {\n  appearance: none;\n  outline: none;\n  display: flex;\n  align-items: center;\n  gap: 6px;\n  flex: none;\n  width: auto;\n  margin: 0 8px;\n  height: 24px;\n  padding: 0 8px;\n  border: 0;\n  border-radius: 0;\n  background: transparent;\n  color: var(--dsw-alias-label-tertiary);\n  font: inherit;\n  text-align: left;\n  cursor: pointer;\n  transition: color 120ms ease;\n}\n\n/* \u53EA\u9760\u58A8\u8272\u4E0E\u7BAD\u5934\u53D8\u6DF1\u8868\u793A\u53EF\u70B9\uFF1A\u6574\u884C\u94FA\u5E95\u8272\u4F1A\u50CF\u201C\u88AB\u9009\u4E2D\u201D\uFF0C\u592A\u91CD */\n@media (hover: hover) {\n  .df-panelHead-ba85c7:hover {\n    color: var(--dsw-alias-label-secondary);\n  }\n\n  .df-panelHead-ba85c7:hover .df-headStatus-ba85c7 {\n  display: inline-flex;\n  align-items: center;\n  gap: 6px;\n  font-size: 11px;\n  line-height: 16px;\n  color: var(--dsw-alias-label-tertiary);\n}\n\n.df-panelChev-ba85c7 {\n    color: var(--dsw-alias-label-secondary);\n  }\n}\n\n.df-panelHead-ba85c7:active {\n  color: var(--dsw-alias-label-primary);\n}\n\n/* \u6807\u9898\u4E0A\u4E0D\u753B\u4EFB\u4F55\u76D2\u5B50\uFF1A\u65E0\u5E95\u8272\u3001\u65E0\u63CF\u8FB9\u3001\u65E0\u5706\u89D2 */\n.df-panelHead-ba85c7::before,\n.df-panelHead-ba85c7::after {\n  content: none;\n}\n\n/* \u70B9\u51FB\u540E\u4E0D\u8981\u7559\u4E0B\u4E00\u4E2A\u65B9\u6846\uFF1A\u9F20\u6807\u70B9\u51FB\u7ED9 background \u53CD\u9988\uFF0C\u952E\u76D8\u805A\u7126\u624D\u663E\u793A\u6D45\u5E95\u3002\n   \u5BBF\u4E3B\u9875\u9762\u7ED9 button \u7684 :focus-visible \u63CF\u8FB9\u4F18\u5148\u7EA7\u66F4\u9AD8\uFF0C\u8FD9\u91CC\u663E\u5F0F\u538B\u6389\u3002 */\n.df-panelHead-ba85c7:focus,\n.df-panelHead-ba85c7:focus-visible,\n.df-panelHead-ba85c7:focus-within {\n  outline: none !important;\n  box-shadow: none !important;\n}\n\n.df-panelHead-ba85c7:focus-visible {\n  color: var(--dsw-alias-label-secondary);\n}\n\n.df-panelTitle-ba85c7 {\n  font-size: 13px;\n  font-weight: 400;\n  white-space: nowrap;\n}\n\n.df-panelCount-ba85c7 {\n  color: inherit;\n  font-size: 12px;\n  font-variant-numeric: tabular-nums;\n}\n\n.df-panelTail-ba85c7 {\n  margin-left: auto;\n  display: inline-flex;\n  align-items: center;\n  gap: 6px;\n}\n\n.df-headStatus-ba85c7 {\n  display: inline-flex;\n  align-items: center;\n  gap: 6px;\n  font-size: 11px;\n  line-height: 16px;\n  color: var(--dsw-alias-label-tertiary);\n}\n\n.df-panelChev-ba85c7 {\n  display: inline-flex;\n  /* chevron-right \u5728 24 viewBox \u91CC\u58A8\u8FF9\u53EA\u5230 15\uFF0C\u53F3\u7559\u767D\u7EA6 5px @14px \u6E32\u67D3 */\n  margin-right: -5px;\n  color: var(--dsw-alias-label-tertiary);\n  transform: rotate(0deg);\n  transition: transform 120ms ease;\n}\n\n.df-panelOpen-ba85c7 .df-headStatus-ba85c7 {\n  display: inline-flex;\n  align-items: center;\n  gap: 6px;\n  font-size: 11px;\n  line-height: 16px;\n  color: var(--dsw-alias-label-tertiary);\n}\n\n.df-panelOpen-ba85c7 .df-panelChev-ba85c7 {\n  transform: rotate(90deg);\n}\n\n.df-panelBody-ba85c7 {\n  flex: 1;\n  min-height: 0;\n  overflow: auto;\n  padding-bottom: 4px;\n}\n\n.df-panelCollapsed-ba85c7 .df-panelBody-ba85c7 {\n  display: none;\n}\n\n.df-panelOpen-ba85c7 {\n  flex-grow: 1;\n}\n\n.df-sash-ba85c7 {\n  flex: none;\n  height: 9px;\n  cursor: row-resize;\n  position: relative;\n}\n\n.df-sash-ba85c7::after {\n  content: '';\n  position: absolute;\n  left: 0;\n  right: 0;\n  top: 3px;\n  height: 1px;\n  background: transparent;\n}\n\n@media (hover: hover) {\n  .df-sash-ba85c7:hover::after {\n    background: var(--dsw-alias-border-l2);\n  }\n}\n\n.df-sashActive-ba85c7::after {\n  background: var(--dsw-alias-border-l2);\n}\n\n/* \u2500\u2500 \u5217\u8868\u9879 \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500 */\n.df-item-ba85c7 {\n  display: flex;\n  align-items: center;\n  gap: 8px;\n  height: 38px;\n  padding: 0 16px;\n  border-radius: var(--dsw-radius-sm, 6px);\n  color: var(--dsw-alias-label-primary);\n}\n\n/* \u53EF\u70B9\u7684\u884C\u4E00\u5B9A\u6709\u53CD\u9988\uFF1A\u6307\u9488 + \u60AC\u505C\u5E95\u8272\uFF0C\u5426\u5219\u7528\u6237\u4E0D\u77E5\u9053\u80FD\u70B9\u3002 */\n.df-item-ba85c7[role='button'] {\n  cursor: pointer;\n}\n\n.df-item-ba85c7[role='button']:focus-visible {\n  outline: 2px solid var(--dsw-alias-border-l2);\n  outline-offset: -2px;\n}\n\n@media (hover: hover) {\n  .df-item-ba85c7[role='button']:hover {\n    background: var(--dsw-alias-interactive-bg-hover);\n  }\n}\n\n.df-itemSub-ba85c7 {\n  height: 30px;\n  padding-left: 44px;\n  font-size: 12px;\n  color: var(--dsw-alias-label-secondary);\n}\n\n@media (hover: hover) {\n  .df-item-ba85c7:hover {\n    background: var(--dsw-alias-interactive-bg-hover);\n  }\n}\n\n.df-itemOn-ba85c7 {\n  background: var(--dsw-alias-interactive-bg-hover);\n}\n\n.df-icon-ba85c7 {\n  display: inline-flex;\n  align-items: center;\n  justify-content: center;\n  flex: none;\n  width: 20px;\n  height: 20px;\n  color: var(--dsw-alias-label-secondary);\n}\n\n.df-name-ba85c7 {\n  flex: 1;\n  min-width: 0;\n  white-space: nowrap;\n  overflow: hidden;\n  text-overflow: ellipsis;\n}\n\n/* \u6807\u9898 + \u5206\u652F\u4F5C\u4E3A\u4E00\u6574\u6BB5\u6587\u5B57\u53C2\u4E0E\u7701\u7565\u4E0E\u6EDA\u52A8 */\n.df-nameRun-ba85c7 {\n  display: inline;\n  transform: translateX(0);\n}\n\n/* \u60AC\u505C\u6EDA\u52A8\uFF1A\u53BB\u6389\u7701\u7565\u53F7\uFF0C\u4E24\u4FA7\u6E10\u53D8\u6DE1\u51FA\uFF0C\u6574\u6BB5\u5300\u901F\u5E73\u79FB */\n.df-name-ba85c7[data-scroll='on'] {\n  text-overflow: clip;\n  -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 10px, #000 calc(100% - 14px), transparent 100%);\n  mask-image: linear-gradient(90deg, transparent 0, #000 10px, #000 calc(100% - 14px), transparent 100%);\n}\n\n.df-name-ba85c7[data-scroll='on'] .df-nameRun-ba85c7 {\n  display: inline-block;\n  transform: translateX(var(--scroll-shift, 0));\n  transition: transform var(--scroll-duration, 2.4s) linear;\n}\n\n/* \u6EDA\u5230\u5E95\uFF1A\u53EA\u5269\u5DE6\u7F18\u6DE1\u51FA\uFF0C\u53F3\u7F18\u906E\u7F69\u64A4\u6389 */\n.df-name-ba85c7[data-scroll='done'] {\n  text-overflow: clip;\n  -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 10px);\n  mask-image: linear-gradient(90deg, transparent 0, #000 10px);\n}\n\n.df-name-ba85c7[data-scroll='done'] .df-nameRun-ba85c7 {\n  display: inline-block;\n  transform: translateX(var(--scroll-shift, 0));\n}\n\n.df-name-ba85c7[data-scroll='off'] .df-nameRun-ba85c7 {\n  transition: transform 180ms ease;\n}\n\n.df-nameText-ba85c7 {\n  flex: 0 1 auto;\n  min-width: 0;\n  overflow: hidden;\n  text-overflow: ellipsis;\n  white-space: nowrap;\n}\n\n.df-itemHint-ba85c7 {\n  color: var(--dsw-alias-label-tertiary);\n}\n\n.df-suffix-ba85c7 {\n  margin-left: 8px;\n  color: var(--dsw-alias-label-tertiary);\n  font-family: var(--dsw-font-family-mono, ui-monospace, SFMono-Regular, Menlo, monospace);\n  font-size: 11px;\n  line-height: 16px;\n}\n\n.df-trail-ba85c7 {\n  display: flex;\n  align-items: center;\n  gap: 14px;\n  flex: none;\n  color: var(--dsw-alias-label-secondary);\n  font-size: 12px;\n  white-space: nowrap;\n}\n\n.df-pair-ba85c7 {\n  display: inline-flex;\n  align-items: baseline;\n  gap: 5px;\n}\n\n.df-pairLabel-ba85c7 {\n  color: var(--dsw-alias-label-tertiary);\n  font-size: 11px;\n}\n\n.df-pairValue-ba85c7 {\n  color: var(--dsw-alias-label-primary);\n  font-size: 13px;\n  font-weight: 500;\n  font-variant-numeric: tabular-nums;\n}\n\n/* \u2500\u2500 \u72B6\u6001\uFF1A\u706F + \u8BCD \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500 */\n.df-status-ba85c7 {\n  display: inline-flex;\n  align-items: center;\n  gap: 6px;\n  color: var(--dsw-alias-label-secondary);\n  font-size: 12px;\n  white-space: nowrap;\n}\n\n.df-lamp-ba85c7 {\n  position: relative;\n  width: 6px;\n  height: 6px;\n  border-radius: 50%;\n  flex: none;\n  background: var(--dsw-alias-label-tertiary);\n}\n\n.df-lampOk-ba85c7 { background: var(--dsw-alias-state-success-primary); }\n.df-lampWarn-ba85c7 { background: var(--dsw-alias-state-warn-primary); }\n.df-lampErr-ba85c7 { background: var(--dsw-alias-state-error-primary); }\n.df-lampIdle-ba85c7 { background: var(--dsw-alias-label-tertiary); }\n\n.df-lampRun-ba85c7 {\n  width: 7px;\n  height: 7px;\n  background: var(--dsw-alias-state-business-primary);\n  animation: breathe 1.9s ease-in-out infinite;\n}\n\n.df-lampRun-ba85c7::after {\n  content: '';\n  position: absolute;\n  inset: -2px;\n  border-radius: 50%;\n  background: var(--dsw-alias-state-business-primary);\n  opacity: 0.22;\n}\n\n@keyframes breathe {\n  0%, 100% { opacity: 1; }\n  50% { opacity: 0.45; }\n}\n\n@media (prefers-reduced-motion: reduce) {\n  .df-lampRun-ba85c7 { animation: none; }\n}\n\n/* \u2500\u2500 \u6307\u6807\u4E0E\u8BF4\u660E \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500 */\n.df-metrics-ba85c7 {\n  display: grid;\n  grid-template-columns: repeat(3, 1fr);\n  gap: 14px 10px;\n  padding: 14px 16px 14px;\n}\n\n.df-metric-ba85c7 {\n  display: flex;\n  flex-direction: column;\n  gap: 2px;\n}\n\n.df-metricValue-ba85c7 {\n  font-size: 22px;\n  line-height: 28px;\n  font-weight: 500;\n  font-variant-numeric: tabular-nums;\n}\n\n.df-metricLabel-ba85c7 {\n  color: var(--dsw-alias-label-tertiary);\n  font-size: 12px;\n}\n\n.df-note-ba85c7 {\n  padding: 0 16px 8px;\n  color: var(--dsw-alias-label-tertiary);\n  font-size: 11px;\n  line-height: 16px;\n}\n\n.df-pane-ba85c7,\n.df-pane-ba85c7 * {\n  box-sizing: border-box;\n}\n\n.df-empty-ba85c7 {\n  display: flex;\n  flex-direction: column;\n  align-items: center;\n  justify-content: center;\n  gap: 8px;\n  min-height: 96px;\n  padding: 24px 16px;\n  color: var(--dsw-alias-label-tertiary);\n  font-size: 12px;\n  line-height: 18px;\n  text-align: center;\n}\n\n.df-emptyIcon-ba85c7 {\n  display: inline-flex;\n  color: var(--dsw-alias-label-tertiary);\n  opacity: 0.9;\n}\n\n.df-noteIndent-ba85c7 {\n  padding: 2px 16px 6px 44px;\n  line-height: 18px;\n}\n\n.df-disclosure-ba85c7 {\n  appearance: none;\n  display: inline-flex;\n  align-items: center;\n  justify-content: center;\n  flex: none;\n  width: 20px;\n  height: 20px;\n  margin: -2px;\n  padding: 0;\n  border: 0;\n  border-radius: var(--dsw-radius-sm, 6px);\n  background: transparent;\n  color: var(--dsw-alias-label-tertiary);\n  cursor: pointer;\n}\n\n@media (hover: hover) {\n  .df-disclosure-ba85c7:hover {\n    background: var(--dsw-alias-interactive-bg-hover);\n    color: var(--dsw-alias-label-secondary);\n  }\n}\n\n.df-disclosure-ba85c7:focus-visible {\n  outline: 1px solid var(--dsw-alias-border-l3);\n  outline-offset: 1px;\n}\n\n.df-disclosureOpen-ba85c7,\n.df-disclosureClosed-ba85c7 {\n  display: inline-flex;\n  transition: transform 120ms ease;\n}\n\n.df-disclosureClosed-ba85c7 {\n  transform: rotate(0deg);\n}\n\n.df-disclosureOpen-ba85c7 {\n  transform: rotate(90deg);\n}\n\n.df-progress-ba85c7 {\n  font-size: 12px;\n  line-height: 18px;\n  color: var(--dsw-alias-label-secondary);\n  font-variant-numeric: tabular-nums;\n}\n\n.df-detail-ba85c7 {\n  padding: 2px 16px 12px;\n}\n\n.df-detailHead-ba85c7 {\n  display: flex;\n  align-items: center;\n  gap: 8px;\n  padding: 4px 0 8px;\n}\n\n/* \u8BE6\u60C5\u6807\u9898\u524D\u7684\u7C7B\u578B\u56FE\u6807\uFF1A\u4E0E\u5217\u8868\u884C\u540C\u6B3E\uFF0C\u5C3A\u5BF8\u5BF9\u9F50 13px \u6587\u5B57 */\n.df-detailHeadIcon-ba85c7 {\n  flex: none;\n  display: flex;\n  align-items: center;\n  justify-content: center;\n  width: 18px;\n  height: 18px;\n  color: var(--dsw-alias-label-secondary);\n}\n\n.df-detailHeadTitle-ba85c7 {\n  flex: 1;\n  min-width: 0;\n  overflow: hidden;\n  text-overflow: ellipsis;\n  white-space: nowrap;\n  font-size: 13px;\n  line-height: 20px;\n  font-weight: 500;\n  color: var(--dsw-alias-label-primary);\n}\n\n.df-kvGrid-ba85c7 {\n  display: grid;\n  grid-template-columns: repeat(2, minmax(0, 1fr));\n  column-gap: 24px;\n}\n\n.df-kvRow-ba85c7 {\n  display: flex;\n  gap: 12px;\n  align-items: baseline;\n  min-height: 26px;\n  padding: 3px 0;\n}\n\n.df-kvLabel-ba85c7 {\n  flex: none;\n  width: 44px;\n  font-size: 12px;\n  line-height: 18px;\n  color: var(--dsw-alias-label-tertiary);\n}\n\n.df-kvValue-ba85c7 {\n  flex: 1;\n  min-width: 0;\n  overflow: hidden;\n  text-overflow: ellipsis;\n  white-space: nowrap;\n  font-size: 12px;\n  line-height: 18px;\n  color: var(--dsw-alias-label-secondary);\n  overflow-wrap: anywhere;\n}\n\n.df-fileList-ba85c7 {\n  margin-top: 10px;\n}\n\n.df-alert-ba85c7 {\n  display: flex;\n  align-items: flex-start;\n  gap: 8px;\n  margin: 2px 0 10px;\n  padding: 9px 10px;\n  /* \u5DE6\u4FA7 2px \u72B6\u6001\u8272\u7AD6\u6761 + \u4E00\u5708\u53D1\u4E1D\u63CF\u8FB9\uFF1A\u4E0D\u9760\u5E95\u8272\u4E5F\u80FD\u4E00\u773C\u770B\u89C1 */\n  border: 0.5px solid var(--dsw-alias-border-l2);\n  border-left: 2px solid currentColor;\n  border-radius: var(--dsw-radius-sm, 6px);\n  background: var(--dsw-alias-bg-layer-2);\n}\n\n.df-alertIcon-ba85c7 {\n  flex: none;\n  display: flex;\n  padding-top: 2px;\n}\n\n.df-alertBody-ba85c7 {\n  display: flex;\n  flex-direction: column;\n  gap: 4px;\n  min-width: 0;\n}\n\n.df-alertLine-ba85c7 {\n  font-size: 13px;\n  line-height: 20px;\n  color: var(--dsw-alias-label-primary);\n  word-break: break-word;\n}\n\n.df-detailList-ba85c7 {\n  display: flex;\n  flex-direction: column;\n  margin: 2px 0 6px;\n}\n\n/* \u8BE6\u60C5\u91CC\u7684\u4EFB\u52A1\u884C\u548C\u5217\u8868\u9875\u5B8C\u5168\u540C\u4E00\u5957\uFF1A\u62B5\u6D88 .df-detail-ba85c7 \u7684 16px \u5185\u8FB9\u8DDD\uFF0C\n   \u8BA9 38px \u7684 Item \u4E0E\u5217\u8868\u9875\u7684\u884C\u4E00\u6837\u8D34\u7740\u9762\u677F\u5DE6\u53F3\u8FB9\u754C\u3002 */\n.df-detailList-ba85c7 > * {\n  margin: 0 -16px;\n}\n\n.df-fileRow-ba85c7 {\n  display: flex;\n  gap: 10px;\n  align-items: baseline;\n  min-height: 26px;\n  padding: 3px 0;\n}\n\n.df-filePath-ba85c7 {\n  flex: 1;\n  min-width: 0;\n  overflow: hidden;\n  text-overflow: ellipsis;\n  white-space: nowrap;\n  font-family: var(--dsw-alias-font-mono, ui-monospace, SFMono-Regular, Menlo, monospace);\n  font-size: 11px;\n  line-height: 18px;\n  color: var(--dsw-alias-label-secondary);\n}\n\n.df-fileAdd-ba85c7 {\n  font-variant-numeric: tabular-nums;\n  font-size: 12px;\n  color: var(--dsw-alias-state-success-primary);\n}\n\n.df-fileDel-ba85c7 {\n  font-variant-numeric: tabular-nums;\n  font-size: 12px;\n  color: var(--dsw-alias-state-error-primary);\n}\n\n.df-emptyText-ba85c7 {\n  margin: 0;\n  font-size: 12px;\n  line-height: 18px;\n  color: var(--dsw-alias-state-error-primary);\n  text-align: center;\n  word-break: break-word;\n}\n\n\n/* \u6587\u5B57\u6309\u94AE\uFF1A\u5DE5\u5177\u680F\u4E0E\u8BE6\u60C5\u64CD\u4F5C\u5171\u7528 */\n.df-btn-ba85c7 {\n  appearance: none;\n  flex: none;\n  border: 0;\n  height: 26px;\n  padding: 0 10px;\n  border-radius: var(--dsw-radius-sm, 6px);\n  background: transparent;\n  color: var(--dsw-alias-label-secondary);\n  font-family: inherit;\n  font-size: 12px;\n  line-height: 20px;\n  cursor: pointer;\n  white-space: nowrap;\n}\n\n.df-btn-ba85c7:disabled {\n  color: var(--dsw-alias-label-tertiary);\n  cursor: not-allowed;\n}\n\n.df-btnPrimary-ba85c7 {\n  color: var(--dsw-alias-label-primary);\n  font-weight: 500;\n}\n\n.df-btnDanger-ba85c7 {\n  color: var(--dsw-alias-state-error-primary);\n}\n\n@media (hover: hover) {\n  .df-btn-ba85c7:not(:disabled):hover {\n    background: var(--dsw-alias-interactive-bg-hover);\n  }\n}\n\n/* \u8BE6\u60C5\u5934\u90E8\u7684\u64CD\u4F5C\u6309\u94AE\u7EC4 */\n.df-detailActions-ba85c7 {\n  display: flex;\n  align-items: center;\n  gap: 2px;\n  flex: none;\n}\n\n.df-check-ba85c7 {\n  display: flex;\n  align-items: center;\n  justify-content: center;\n  width: 16px;\n  height: 16px;\n  border: 1px solid var(--dsw-alias-border-l2);\n  border-radius: 4px;\n  color: var(--dsw-alias-bg-base);\n}\n\n.df-checkOn-ba85c7 {\n  border-color: var(--dsw-alias-label-primary);\n  background: var(--dsw-alias-label-primary);\n  color: var(--dsw-alias-bg-base);\n}\n\n/* \u8BE6\u60C5\u91CC\u7684\u300C\u884C + \u53F3\u4FA7\u5224\u5B9A\u6309\u94AE\u300D */\n.df-detailRow-ba85c7 {\n  display: flex;\n  align-items: center;\n  gap: 4px;\n}\n\n.df-detailRow-ba85c7 > :first-child {\n  flex: 1;\n  min-width: 0;\n}\n\n/* \u5206\u533A\u5185\u64CD\u4F5C\u680F\uFF1A\u5B50\u9762\u677F\u5185\u5BB9\u7684\u7B2C\u4E00\u884C\uFF0C\u653E\u6279\u91CF\u64CD\u4F5C */\n.df-actionbar-ba85c7 {\n  position: sticky;\n  top: 0;\n  z-index: 1;\n  display: flex;\n  align-items: center;\n  gap: 2px;\n  height: 32px;\n  padding: 0 8px 0 16px;\n  background: var(--dsw-alias-bg-base);\n}\n\n.df-actionbarText-ba85c7 {\n  margin-right: auto;\n  min-width: 0;\n  overflow: hidden;\n  text-overflow: ellipsis;\n  white-space: nowrap;\n  font-size: 12px;\n  line-height: 18px;\n  color: var(--dsw-alias-label-tertiary);\n}\n\n/* \u6587\u5B57\u6309\u94AE\uFF1A\u5DE5\u5177\u680F\u4E0E\u8BE6\u60C5\u64CD\u4F5C\u5171\u7528 */\n.df-btn-ba85c7 {\n  appearance: none;\n  flex: none;\n  border: 0;\n  height: 26px;\n  padding: 0 10px;\n  border-radius: var(--dsw-radius-sm, 6px);\n  background: transparent;\n  color: var(--dsw-alias-label-secondary);\n  font-family: inherit;\n  font-size: 12px;\n  line-height: 20px;\n  cursor: pointer;\n  white-space: nowrap;\n}\n\n.df-btn-ba85c7:disabled {\n  color: var(--dsw-alias-label-tertiary);\n  cursor: not-allowed;\n}\n\n.df-btnPrimary-ba85c7 {\n  color: var(--dsw-alias-label-primary);\n  font-weight: 500;\n}\n\n.df-btnDanger-ba85c7 {\n  color: var(--dsw-alias-state-error-primary);\n}\n\n@media (hover: hover) {\n  .df-btn-ba85c7:not(:disabled):hover {\n    background: var(--dsw-alias-interactive-bg-hover);\n  }\n}\n\n/* \u8BE6\u60C5\u5934\u90E8\u7684\u64CD\u4F5C\u6309\u94AE\u7EC4 */\n.df-detailActions-ba85c7 {\n  display: flex;\n  align-items: center;\n  gap: 2px;\n  flex: none;\n}\n\n.df-check-ba85c7 {\n  display: flex;\n  align-items: center;\n  justify-content: center;\n  width: 16px;\n  height: 16px;\n  border: 1px solid var(--dsw-alias-border-l2);\n  border-radius: 4px;\n  color: var(--dsw-alias-bg-base);\n}\n\n.df-checkOn-ba85c7 {\n  border-color: var(--dsw-alias-label-primary);\n  background: var(--dsw-alias-label-primary);\n  color: var(--dsw-alias-bg-base);\n}\n\n/* \u8BE6\u60C5\u91CC\u7684\u300C\u884C + \u53F3\u4FA7\u5224\u5B9A\u6309\u94AE\u300D */\n.df-detailRow-ba85c7 {\n  display: flex;\n  align-items: center;\n  gap: 4px;\n}\n\n.df-detailRow-ba85c7 > :first-child {\n  flex: 1;\n  min-width: 0;\n}\n\n/* \u9875\u9762\u7EA7\u5DE5\u5177\u680F\uFF1A\u4F4D\u4E8E\u9876\u90E8\u5BFC\u822A\u4E4B\u4E0B\u3001\u5B50\u9762\u677F\u4E4B\u4E0A */\n.df-page-ba85c7 {\n  display: flex;\n  flex-direction: column;\n  flex: 1 1 auto;\n  min-height: 0;\n}\n\n.df-toolbar-ba85c7 {\n  display: flex;\n  align-items: center;\n  gap: 2px;\n  flex: none;\n  height: 36px;\n  padding: 0 8px 0 16px;\n  border-bottom: 0.5px solid var(--dsw-alias-border-l3);\n}\n\n.df-toolbarText-ba85c7 {\n  margin-right: auto;\n  min-width: 0;\n  overflow: hidden;\n  text-overflow: ellipsis;\n  white-space: nowrap;\n  font-size: 12px;\n  line-height: 18px;\n  color: var(--dsw-alias-label-tertiary);\n}\n\n/* \u56FE\u6807\u952E\u7684\u72B6\u6001\u53D8\u4F53\uFF1A\u6267\u884C\u952E\u6309\u52A8\u4F5C\u67D3\u8272 */\n.df-iconPrimary-ba85c7 {\n  color: var(--dsw-alias-label-primary);\n}\n\n.df-iconDanger-ba85c7 {\n  color: var(--dsw-alias-state-error-primary);\n}\n\n/* \u884C\u5C3E\uFF1A\u60AC\u505C\u65F6\u628A\u72B6\u6001\u6362\u6210\u64CD\u4F5C\u952E\uFF0C\u5BBD\u5EA6\u4E0D\u53D8\u907F\u514D\u8DF3\u52A8 */\n.df-trailSwap-ba85c7 {\n  display: flex;\n  align-items: center;\n  justify-content: flex-end;\n  min-width: 0;\n}\n\n.df-trailStatus-ba85c7,\n.df-trailActions-ba85c7 {\n  display: flex;\n  align-items: center;\n  gap: 2px;\n}\n\n/* 26px \u76D2\u91CC 16px \u5B57\u5F62\u5185\u7F29 5px\uFF0CLucide \u56FE\u5F62\u5728 24 viewBox \u5185\u8FD8\u6709\u7EA6 2px \u53F3\u7559\u767D\n   \uFF08trash 3..21\u3001badge-check 3..21\uFF09\uFF0C\u5408\u8D77\u6765\u628A\u5B57\u5F62\u58A8\u8FF9\u53F3\u7F18\u62C9\u56DE\u6587\u5B57\u53F3\u7F18 */\n.df-trailActions-ba85c7 {\n  margin-right: -7px;\n}\n\n.df-trailActions-ba85c7 {\n  display: none;\n}\n\n@media (hover: hover) {\n  .df-item-ba85c7:hover .df-trailStatus-ba85c7 {\n    display: none;\n  }\n\n  .df-item-ba85c7:hover .df-trailActions-ba85c7 {\n    display: flex;\n  }\n}\n\n.df-item-ba85c7:focus-within .df-trailStatus-ba85c7 {\n  display: none;\n}\n\n.df-item-ba85c7:focus-within .df-trailActions-ba85c7 {\n  display: flex;\n}\n\n/* \u60AC\u505C\u6C14\u6CE1\uFF1A\u6807\u9898 + \u5206\u652F / \u72B6\u6001 / \u69FD\u4F4D / \u7528\u91CF */\n.df-hoverCard-ba85c7 {\n  position: fixed;\n  z-index: 60;\n  display: flex;\n  flex-direction: column;\n  gap: 6px;\n  width: 280px;\n  padding: 10px 12px;\n  border: 0.5px solid rgb(255 255 255 / 8%);\n  border-radius: 8px;\n  /* \u9ED1\u5E95\u6C14\u6CE1\uFF1A\u4E24\u79CD\u4E3B\u9898\u4E0B\u90FD\u662F\u6DF1\u8272\u58A8\u9762 */\n  background: #232326;\n  color: #fff;\n  box-shadow: 0 8px 24px rgb(0 0 0 / 28%);\n  pointer-events: auto;\n}\n\n.df-hoverCard-ba85c7 .df-status-ba85c7 {\n  color: rgb(255 255 255 / 88%);\n}\n\n/* \u9ED1\u5E95\u4E0A\u7070\u706F\u51E0\u4E4E\u770B\u4E0D\u89C1\uFF0C\u53EA\u63D0\u4EAE idle \u4E00\u6863\uFF0C\u5F69\u8272\u706F\u4FDD\u6301\u539F\u6837 */\n.df-hoverCard-ba85c7 .df-lampIdle-ba85c7 {\n  background: rgb(255 255 255 / 42%);\n}\n\n.df-hoverCard-ba85c7 .df-cardValue-ba85c7 {\n  color: rgb(255 255 255 / 88%);\n}\n\n.df-cardTitle-ba85c7 {\n  font-size: 13px;\n  line-height: 20px;\n  font-weight: 500;\n  color: #fff;\n  white-space: normal;\n  word-break: break-word;\n}\n\n.df-cardRow-ba85c7 {\n  display: flex;\n  align-items: baseline;\n  gap: 10px;\n  font-size: 12px;\n  line-height: 18px;\n}\n\n.df-cardLabel-ba85c7 {\n  flex: none;\n  width: 56px;\n  color: rgb(255 255 255 / 58%);\n}\n\n.df-cardValue-ba85c7 {\n  min-width: 0;\n  color: var(--dsw-alias-label-secondary);\n  overflow: hidden;\n  text-overflow: ellipsis;\n  white-space: nowrap;\n}\n\n");
+var ui_default = { "pane": "df-pane-ba85c7", "head": "df-head-ba85c7", "tab": "df-tab-ba85c7", "tabOn": "df-tabOn-ba85c7", "stamp": "df-stamp-ba85c7", "iconButton": "df-iconButton-ba85c7", "group": "df-group-ba85c7", "panel": "df-panel-ba85c7", "grip": "df-grip-ba85c7", "panelHead": "df-panelHead-ba85c7", "headStatus": "df-headStatus-ba85c7", "panelChev": "df-panelChev-ba85c7", "panelTitle": "df-panelTitle-ba85c7", "panelCount": "df-panelCount-ba85c7", "panelTail": "df-panelTail-ba85c7", "panelOpen": "df-panelOpen-ba85c7", "panelBody": "df-panelBody-ba85c7", "panelCollapsed": "df-panelCollapsed-ba85c7", "sash": "df-sash-ba85c7", "sashActive": "df-sashActive-ba85c7", "item": "df-item-ba85c7", "itemSub": "df-itemSub-ba85c7", "itemOn": "df-itemOn-ba85c7", "icon": "df-icon-ba85c7", "name": "df-name-ba85c7", "nameRun": "df-nameRun-ba85c7", "nameText": "df-nameText-ba85c7", "itemHint": "df-itemHint-ba85c7", "suffix": "df-suffix-ba85c7", "trail": "df-trail-ba85c7", "pair": "df-pair-ba85c7", "pairLabel": "df-pairLabel-ba85c7", "pairValue": "df-pairValue-ba85c7", "status": "df-status-ba85c7", "lamp": "df-lamp-ba85c7", "lampOk": "df-lampOk-ba85c7", "lampWarn": "df-lampWarn-ba85c7", "lampErr": "df-lampErr-ba85c7", "lampIdle": "df-lampIdle-ba85c7", "lampRun": "df-lampRun-ba85c7", "metrics": "df-metrics-ba85c7", "metric": "df-metric-ba85c7", "metricValue": "df-metricValue-ba85c7", "metricLabel": "df-metricLabel-ba85c7", "note": "df-note-ba85c7", "empty": "df-empty-ba85c7", "emptyIcon": "df-emptyIcon-ba85c7", "noteIndent": "df-noteIndent-ba85c7", "disclosure": "df-disclosure-ba85c7", "disclosureOpen": "df-disclosureOpen-ba85c7", "disclosureClosed": "df-disclosureClosed-ba85c7", "progress": "df-progress-ba85c7", "detail": "df-detail-ba85c7", "detailHead": "df-detailHead-ba85c7", "detailHeadIcon": "df-detailHeadIcon-ba85c7", "detailHeadTitle": "df-detailHeadTitle-ba85c7", "kvGrid": "df-kvGrid-ba85c7", "kvRow": "df-kvRow-ba85c7", "kvLabel": "df-kvLabel-ba85c7", "kvValue": "df-kvValue-ba85c7", "fileList": "df-fileList-ba85c7", "alert": "df-alert-ba85c7", "alertIcon": "df-alertIcon-ba85c7", "alertBody": "df-alertBody-ba85c7", "alertLine": "df-alertLine-ba85c7", "detailList": "df-detailList-ba85c7", "fileRow": "df-fileRow-ba85c7", "filePath": "df-filePath-ba85c7", "fileAdd": "df-fileAdd-ba85c7", "fileDel": "df-fileDel-ba85c7", "emptyText": "df-emptyText-ba85c7", "btn": "df-btn-ba85c7", "btnPrimary": "df-btnPrimary-ba85c7", "btnDanger": "df-btnDanger-ba85c7", "detailActions": "df-detailActions-ba85c7", "check": "df-check-ba85c7", "checkOn": "df-checkOn-ba85c7", "detailRow": "df-detailRow-ba85c7", "actionbar": "df-actionbar-ba85c7", "actionbarText": "df-actionbarText-ba85c7", "page": "df-page-ba85c7", "toolbar": "df-toolbar-ba85c7", "toolbarText": "df-toolbarText-ba85c7", "iconPrimary": "df-iconPrimary-ba85c7", "iconDanger": "df-iconDanger-ba85c7", "trailSwap": "df-trailSwap-ba85c7", "trailStatus": "df-trailStatus-ba85c7", "trailActions": "df-trailActions-ba85c7", "hoverCard": "df-hoverCard-ba85c7", "cardValue": "df-cardValue-ba85c7", "cardTitle": "df-cardTitle-ba85c7", "cardRow": "df-cardRow-ba85c7", "cardLabel": "df-cardLabel-ba85c7" };
 
 // src/client/panel/parts.tsx
 var LAMP_CLASS = {
@@ -1709,8 +1734,13 @@ var LAMP_CLASS = {
   run: ui_default.lampRun
 };
 function Status({ tone, label }) {
-  return /* @__PURE__ */ React.createElement("span", { className: ui_default.status }, /* @__PURE__ */ React.createElement("i", { className: `${ui_default.lamp} ${LAMP_CLASS[tone]}`, "aria-hidden": "true" }), label);
+  return /* @__PURE__ */ React2.createElement("span", { className: ui_default.status }, /* @__PURE__ */ React2.createElement("i", { className: `${ui_default.lamp} ${LAMP_CLASS[tone]}`, "aria-hidden": "true" }), label);
 }
+var cardHiddenAt = 0;
+var activeClose = null;
+var CARD_DELAY = 600;
+var CARD_WIDTH = 280;
+var CARD_GRACE = 240;
 function Item({
   icon,
   title,
@@ -1720,17 +1750,112 @@ function Item({
   onClick,
   selected,
   titleAttr,
-  dataId
+  dataId,
+  card
 }) {
   const className = [ui_default.item, sub ? ui_default.itemSub : "", selected ? ui_default.itemOn : ""].filter(Boolean).join(" ");
-  const body = /* @__PURE__ */ React.createElement(React.Fragment, null, icon === void 0 ? null : /* @__PURE__ */ React.createElement("span", { className: ui_default.icon }, icon), /* @__PURE__ */ React.createElement("span", { className: ui_default.name }, /* @__PURE__ */ React.createElement("span", { className: ui_default.nameText, title: titleAttr }, title), suffix === void 0 ? null : /* @__PURE__ */ React.createElement("span", { className: ui_default.suffix }, suffix)), trail === void 0 ? null : /* @__PURE__ */ React.createElement("span", { className: ui_default.trail }, trail));
+  const scrollRef = (0, import_react2.useRef)(null);
+  const scrollTimer = (0, import_react2.useRef)(null);
+  const startScroll = () => {
+    const element = scrollRef.current;
+    if (element === null) return;
+    const max = element.scrollWidth - element.clientWidth;
+    if (max <= 2) return;
+    const seconds = Math.min(8, Math.max(1.4, max / 48));
+    element.style.setProperty("--scroll-duration", `${seconds}s`);
+    element.style.setProperty("--scroll-shift", `-${max}px`);
+    element.dataset.scroll = "on";
+    if (scrollTimer.current !== null) window.clearTimeout(scrollTimer.current);
+    scrollTimer.current = window.setTimeout(() => {
+      if (scrollRef.current !== null) scrollRef.current.dataset.scroll = "done";
+    }, seconds * 1e3 + 40);
+  };
+  const resetScroll = () => {
+    const element = scrollRef.current;
+    if (scrollTimer.current !== null) {
+      window.clearTimeout(scrollTimer.current);
+      scrollTimer.current = null;
+    }
+    if (element === null) return;
+    element.dataset.scroll = "off";
+    element.style.setProperty("--scroll-shift", "0px");
+  };
+  const body = /* @__PURE__ */ React2.createElement(React2.Fragment, null, icon === void 0 ? null : /* @__PURE__ */ React2.createElement("span", { className: ui_default.icon }, icon), /* @__PURE__ */ React2.createElement("span", { className: ui_default.name, ref: scrollRef, title: titleAttr }, /* @__PURE__ */ React2.createElement("span", { className: ui_default.nameRun }, title, suffix === void 0 ? null : /* @__PURE__ */ React2.createElement("span", { className: ui_default.suffix }, suffix))), trail === void 0 ? null : /* @__PURE__ */ React2.createElement("span", { className: ui_default.trail }, trail));
   const dataAttr = dataId === void 0 ? {} : { "data-task-id": dataId };
-  if (!onClick) return /* @__PURE__ */ React.createElement("div", { className, ...dataAttr }, body);
-  return /* @__PURE__ */ React.createElement(
+  const rowRef = (0, import_react2.useRef)(null);
+  const cardTimer = (0, import_react2.useRef)(null);
+  const [cardAt, setCardAt] = (0, import_react2.useState)(null);
+  const showCard = () => {
+    if (card === void 0) return;
+    if (cardTimer.current !== null) window.clearTimeout(cardTimer.current);
+    const warm = activeClose !== null || Date.now() - cardHiddenAt < CARD_GRACE;
+    cardTimer.current = window.setTimeout(() => {
+      const rect = rowRef.current?.getBoundingClientRect();
+      if (rect === void 0) return;
+      if (activeClose !== null && activeClose !== hideCard) activeClose();
+      const gap = 10;
+      const left = rect.left - CARD_WIDTH - gap;
+      setCardAt({
+        left: left >= 8 ? left : rect.right + gap,
+        top: Math.max(8, Math.min(rect.top - 4, window.innerHeight - 240))
+      });
+      activeClose = hideCard;
+    }, warm ? 0 : CARD_DELAY);
+  };
+  const hideTimer = (0, import_react2.useRef)(null);
+  const cancelHide = () => {
+    if (hideTimer.current !== null) {
+      window.clearTimeout(hideTimer.current);
+      hideTimer.current = null;
+    }
+  };
+  const hideCard = () => {
+    cancelHide();
+    if (cardTimer.current !== null) {
+      window.clearTimeout(cardTimer.current);
+      cardTimer.current = null;
+    }
+    cardHiddenAt = Date.now();
+    if (activeClose === hideCard) activeClose = null;
+    setCardAt(null);
+  };
+  const scheduleHide = () => {
+    cancelHide();
+    hideTimer.current = window.setTimeout(hideCard, 200);
+  };
+  const cardNode = card !== void 0 && cardAt !== null ? /* @__PURE__ */ React2.createElement(
+    "div",
+    {
+      className: ui_default.hoverCard,
+      style: { left: cardAt.left, top: cardAt.top, width: CARD_WIDTH },
+      onClick: (event) => {
+        event.stopPropagation();
+      },
+      onPointerEnter: cancelHide,
+      onPointerLeave: scheduleHide
+    },
+    card
+  ) : null;
+  const scrollProps = {
+    onPointerEnter: () => {
+      startScroll();
+      showCard();
+    },
+    onPointerLeave: () => {
+      resetScroll();
+      scheduleHide();
+    },
+    onFocus: startScroll,
+    onBlur: resetScroll
+  };
+  if (!onClick) return /* @__PURE__ */ React2.createElement("div", { className, ref: rowRef, ...dataAttr, ...scrollProps }, body, cardNode);
+  return /* @__PURE__ */ React2.createElement(
     "div",
     {
       className,
+      ref: rowRef,
       ...dataAttr,
+      ...scrollProps,
       role: "button",
       tabIndex: 0,
       onClick,
@@ -1741,13 +1866,41 @@ function Item({
         }
       }
     },
-    body
+    body,
+    cardNode
   );
+}
+function IconAction({
+  ui,
+  label,
+  icon,
+  onClick,
+  disabled,
+  tone,
+  size = 26
+}) {
+  const className = [
+    ui_default.iconButton,
+    tone === "primary" ? ui_default.iconPrimary : "",
+    tone === "danger" ? ui_default.iconDanger : ""
+  ].filter(Boolean).join(" ");
+  return /* @__PURE__ */ React2.createElement(Tip, { ui, label }, /* @__PURE__ */ React2.createElement(
+    "button",
+    {
+      type: "button",
+      className,
+      style: { width: size, height: size },
+      disabled,
+      "aria-label": label,
+      onClick
+    },
+    icon
+  ));
 }
 function Pairs({ items }) {
   const shown = items.filter((item) => item.value > 0);
   if (shown.length === 0) return null;
-  return /* @__PURE__ */ React.createElement(React.Fragment, null, shown.map((item) => /* @__PURE__ */ React.createElement("span", { key: item.label, className: ui_default.pair }, /* @__PURE__ */ React.createElement("span", { className: ui_default.pairLabel }, item.label), /* @__PURE__ */ React.createElement(
+  return /* @__PURE__ */ React2.createElement(React2.Fragment, null, shown.map((item) => /* @__PURE__ */ React2.createElement("span", { key: item.label, className: ui_default.pair }, /* @__PURE__ */ React2.createElement("span", { className: ui_default.pairLabel }, item.label), /* @__PURE__ */ React2.createElement(
     "span",
     {
       className: ui_default.pairValue,
@@ -2017,7 +2170,7 @@ function SplitGroup({ panes, footer, expandKey, expandSignal }) {
   };
   const openList = order.filter((index) => collapsed[index] !== true);
   const view = order;
-  return /* @__PURE__ */ React.createElement("div", { className: ui_default.group }, view.map((index, position) => {
+  return /* @__PURE__ */ React2.createElement("div", { className: ui_default.group }, view.map((index, position) => {
     const pane = panes[index];
     const isCollapsed = collapsed[index] === true;
     const size = sizes[index];
@@ -2027,7 +2180,7 @@ function SplitGroup({ panes, footer, expandKey, expandSignal }) {
       flexGrow: !isCollapsed && index === openList[openList.length - 1] ? 1 : 0,
       flexShrink: isCollapsed ? 0 : 1
     };
-    return /* @__PURE__ */ React.createElement(
+    return /* @__PURE__ */ React2.createElement(
       "section",
       {
         key: pane.key,
@@ -2037,7 +2190,7 @@ function SplitGroup({ panes, footer, expandKey, expandSignal }) {
           panels.current[index] = node;
         }
       },
-      position > 0 && !isCollapsed && collapsed[view[position - 1]] !== true && /* @__PURE__ */ React.createElement(
+      position > 0 && !isCollapsed && collapsed[view[position - 1]] !== true && /* @__PURE__ */ React2.createElement(
         "div",
         {
           className: ui_default.grip,
@@ -2047,7 +2200,7 @@ function SplitGroup({ panes, footer, expandKey, expandSignal }) {
           onPointerDown: (event) => beginResize(view[position - 1], index, event)
         }
       ),
-      /* @__PURE__ */ React.createElement(
+      /* @__PURE__ */ React2.createElement(
         "button",
         {
           type: "button",
@@ -2055,24 +2208,24 @@ function SplitGroup({ panes, footer, expandKey, expandSignal }) {
           "aria-expanded": !isCollapsed,
           onPointerDown: (event) => beginMove(index, event)
         },
-        /* @__PURE__ */ React.createElement("span", { className: ui_default.panelTitle }, pane.title),
-        pane.count === void 0 ? null : /* @__PURE__ */ React.createElement("span", { className: ui_default.panelCount }, pane.count),
-        /* @__PURE__ */ React.createElement("span", { className: ui_default.panelTail }, pane.actions, /* @__PURE__ */ React.createElement("span", { className: ui_default.panelChev }, Chevron()))
+        /* @__PURE__ */ React2.createElement("span", { className: ui_default.panelTitle }, pane.title),
+        pane.count === void 0 ? null : /* @__PURE__ */ React2.createElement("span", { className: ui_default.panelCount }, pane.count),
+        /* @__PURE__ */ React2.createElement("span", { className: ui_default.panelTail }, pane.actions, /* @__PURE__ */ React2.createElement("span", { className: ui_default.panelChev }, Chevron()))
       ),
-      /* @__PURE__ */ React.createElement("div", { className: ui_default.panelBody, ref: (node) => {
+      /* @__PURE__ */ React2.createElement("div", { className: ui_default.panelBody, ref: (node) => {
         bodies.current[index] = node;
       } }, pane.content)
     );
   }), footer);
 }
-var Boundary = class extends React.Component {
+var Boundary = class extends React2.Component {
   state = { message: null };
   static getDerivedStateFromError(error) {
     return { message: error instanceof Error ? error.message : String(error) };
   }
   render() {
     if (this.state.message !== null) {
-      return /* @__PURE__ */ React.createElement("div", { className: ui_default.empty }, /* @__PURE__ */ React.createElement("p", { className: ui_default.emptyText }, this.state.message));
+      return /* @__PURE__ */ React2.createElement("div", { className: ui_default.empty }, /* @__PURE__ */ React2.createElement("p", { className: ui_default.emptyText }, this.state.message));
     }
     return this.props.children;
   }
@@ -2080,13 +2233,13 @@ var Boundary = class extends React.Component {
 function Alert({ items, tone = "warn" }) {
   if (items.length === 0) return null;
   const color = tone === "err" ? "var(--dsw-alias-state-error-primary)" : "var(--dsw-alias-state-warn-primary)";
-  return /* @__PURE__ */ React.createElement("div", { className: ui_default.alert, role: "status", style: { color } }, /* @__PURE__ */ React.createElement("span", { className: ui_default.alertIcon }, IconWarning()), /* @__PURE__ */ React.createElement("span", { className: ui_default.alertBody }, items.map((item, index) => /* @__PURE__ */ React.createElement("span", { key: `${index}:${item}`, className: ui_default.alertLine }, item))));
+  return /* @__PURE__ */ React2.createElement("div", { className: ui_default.alert, role: "status", style: { color } }, /* @__PURE__ */ React2.createElement("span", { className: ui_default.alertIcon }, IconWarning()), /* @__PURE__ */ React2.createElement("span", { className: ui_default.alertBody }, items.map((item, index) => /* @__PURE__ */ React2.createElement("span", { key: `${index}:${item}`, className: ui_default.alertLine }, item))));
 }
 function Empty({ icon, text }) {
-  return /* @__PURE__ */ React.createElement("div", { className: ui_default.empty }, /* @__PURE__ */ React.createElement("span", { className: ui_default.emptyIcon }, icon ?? IconTray()), /* @__PURE__ */ React.createElement("span", null, text));
+  return /* @__PURE__ */ React2.createElement("div", { className: ui_default.empty }, /* @__PURE__ */ React2.createElement("span", { className: ui_default.emptyIcon }, icon ?? IconTray()), /* @__PURE__ */ React2.createElement("span", null, text));
 }
 function Svg({ children, size = 16, viewBox = "0 0 16 16", strokeWidth = 1 }) {
-  return /* @__PURE__ */ React.createElement(
+  return /* @__PURE__ */ React2.createElement(
     "svg",
     {
       width: size,
@@ -2103,38 +2256,64 @@ function Svg({ children, size = 16, viewBox = "0 0 16 16", strokeWidth = 1 }) {
   );
 }
 function Chevron() {
-  return /* @__PURE__ */ React.createElement(Svg, { size: 14, viewBox: "0 0 24 24", strokeWidth: 1.5 }, /* @__PURE__ */ React.createElement("path", { d: "m9 18 6-6-6-6" }));
+  return /* @__PURE__ */ React2.createElement(Svg, { size: 14, viewBox: "0 0 24 24", strokeWidth: 1.5 }, /* @__PURE__ */ React2.createElement("path", { d: "m9 18 6-6-6-6" }));
 }
 function IconDevTask() {
-  return /* @__PURE__ */ React.createElement(Svg, { size: 18, viewBox: "0 0 24 24", strokeWidth: 1.5 }, /* @__PURE__ */ React.createElement("path", { d: "M6 22a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.704.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2z" }), /* @__PURE__ */ React.createElement("path", { d: "M14 2v5a1 1 0 0 0 1 1h5" }), /* @__PURE__ */ React.createElement("path", { d: "M10 12.5 8 15l2 2.5" }), /* @__PURE__ */ React.createElement("path", { d: "m14 12.5 2 2.5-2 2.5" }));
+  return /* @__PURE__ */ React2.createElement(Svg, { size: 18, viewBox: "0 0 24 24", strokeWidth: 1.5 }, /* @__PURE__ */ React2.createElement("path", { d: "M6 22a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.704.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2z" }), /* @__PURE__ */ React2.createElement("path", { d: "M14 2v5a1 1 0 0 0 1 1h5" }), /* @__PURE__ */ React2.createElement("path", { d: "M10 12.5 8 15l2 2.5" }), /* @__PURE__ */ React2.createElement("path", { d: "m14 12.5 2 2.5-2 2.5" }));
 }
 function IconAcceptTask() {
-  return /* @__PURE__ */ React.createElement(Svg, { size: 18, viewBox: "0 0 24 24", strokeWidth: 1.5 }, /* @__PURE__ */ React.createElement("path", { d: "m13 13.5 2-2.5-2-2.5" }), /* @__PURE__ */ React.createElement("path", { d: "m21 21-4.3-4.3" }), /* @__PURE__ */ React.createElement("path", { d: "M9 8.5 7 11l2 2.5" }), /* @__PURE__ */ React.createElement("circle", { cx: "11", cy: "11", r: "8" }));
+  return /* @__PURE__ */ React2.createElement(Svg, { size: 18, viewBox: "0 0 24 24", strokeWidth: 1.5 }, /* @__PURE__ */ React2.createElement("path", { d: "m13 13.5 2-2.5-2-2.5" }), /* @__PURE__ */ React2.createElement("path", { d: "m21 21-4.3-4.3" }), /* @__PURE__ */ React2.createElement("path", { d: "M9 8.5 7 11l2 2.5" }), /* @__PURE__ */ React2.createElement("circle", { cx: "11", cy: "11", r: "8" }));
 }
 function IconRepo() {
-  return /* @__PURE__ */ React.createElement(Svg, { size: 18, viewBox: "0 0 24 24", strokeWidth: 1.5 }, /* @__PURE__ */ React.createElement("path", { d: "M10 10.5 8 13l2 2.5" }), /* @__PURE__ */ React.createElement("path", { d: "m14 10.5 2 2.5-2 2.5" }), /* @__PURE__ */ React.createElement("path", { d: "M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2z" }));
+  return /* @__PURE__ */ React2.createElement(Svg, { size: 18, viewBox: "0 0 24 24", strokeWidth: 1.5 }, /* @__PURE__ */ React2.createElement("path", { d: "M10 10.5 8 13l2 2.5" }), /* @__PURE__ */ React2.createElement("path", { d: "m14 10.5 2 2.5-2 2.5" }), /* @__PURE__ */ React2.createElement("path", { d: "M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2z" }));
 }
 function IconAgent() {
-  return /* @__PURE__ */ React.createElement(Svg, { size: 18, viewBox: "0 0 24 24", strokeWidth: 1.5 }, /* @__PURE__ */ React.createElement("path", { d: "M12 8V4H8" }), /* @__PURE__ */ React.createElement("path", { d: "M2 14h2" }), /* @__PURE__ */ React.createElement("path", { d: "M20 14h2" }), /* @__PURE__ */ React.createElement("path", { d: "M15 13v2" }), /* @__PURE__ */ React.createElement("path", { d: "M9 13v2" }), /* @__PURE__ */ React.createElement("path", { d: "M4 8h16a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2" }));
+  return /* @__PURE__ */ React2.createElement(Svg, { size: 18, viewBox: "0 0 24 24", strokeWidth: 1.5 }, /* @__PURE__ */ React2.createElement("path", { d: "M12 8V4H8" }), /* @__PURE__ */ React2.createElement("path", { d: "M2 14h2" }), /* @__PURE__ */ React2.createElement("path", { d: "M20 14h2" }), /* @__PURE__ */ React2.createElement("path", { d: "M15 13v2" }), /* @__PURE__ */ React2.createElement("path", { d: "M9 13v2" }), /* @__PURE__ */ React2.createElement("path", { d: "M4 8h16a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2" }));
 }
 function IconChat() {
-  return /* @__PURE__ */ React.createElement(Svg, null, /* @__PURE__ */ React.createElement("path", { d: "M3.6 5.2a1.6 1.6 0 0 1 1.6-1.6h5.6a1.6 1.6 0 0 1 1.6 1.6v3.2a1.6 1.6 0 0 1-1.6 1.6H7l-2.6 2v-2H5.2a1.6 1.6 0 0 1-1.6-1.6Z" }));
+  return /* @__PURE__ */ React2.createElement(Svg, null, /* @__PURE__ */ React2.createElement("path", { d: "M3.6 5.2a1.6 1.6 0 0 1 1.6-1.6h5.6a1.6 1.6 0 0 1 1.6 1.6v3.2a1.6 1.6 0 0 1-1.6 1.6H7l-2.6 2v-2H5.2a1.6 1.6 0 0 1-1.6-1.6Z" }));
 }
 function IconTray() {
-  return /* @__PURE__ */ React.createElement(Svg, { size: 28 }, /* @__PURE__ */ React.createElement("path", { d: "M3.2 9.2h2.6l1.2 2h4l1.2-2h2.6" }), /* @__PURE__ */ React.createElement("path", { d: "M3.2 9.2 5 4.9A1.4 1.4 0 0 1 6.3 4h5.4a1.4 1.4 0 0 1 1.3.9l1.8 4.3v4.2a1.4 1.4 0 0 1-1.4 1.4H4.6a1.4 1.4 0 0 1-1.4-1.4Z" }));
+  return /* @__PURE__ */ React2.createElement(Svg, { size: 28 }, /* @__PURE__ */ React2.createElement("path", { d: "M3.2 9.2h2.6l1.2 2h4l1.2-2h2.6" }), /* @__PURE__ */ React2.createElement("path", { d: "M3.2 9.2 5 4.9A1.4 1.4 0 0 1 6.3 4h5.4a1.4 1.4 0 0 1 1.3.9l1.8 4.3v4.2a1.4 1.4 0 0 1-1.4 1.4H4.6a1.4 1.4 0 0 1-1.4-1.4Z" }));
+}
+function IconCheck({ size = 16 }) {
+  return /* @__PURE__ */ React2.createElement(Svg, { size, viewBox: "0 0 24 24", strokeWidth: 1.5 }, /* @__PURE__ */ React2.createElement("path", { d: "M20 6 9 17l-5-5" }));
+}
+function IconBadgeCheck() {
+  return /* @__PURE__ */ React2.createElement(Svg, { viewBox: "0 0 24 24", strokeWidth: 1.5 }, /* @__PURE__ */ React2.createElement("path", { d: "M3.85 8.62a4 4 0 0 1 4.78-4.77 4 4 0 0 1 6.74 0 4 4 0 0 1 4.78 4.78 4 4 0 0 1 0 6.74 4 4 0 0 1-4.77 4.78 4 4 0 0 1-6.75 0 4 4 0 0 1-4.78-4.77 4 4 0 0 1 0-6.76Z" }), /* @__PURE__ */ React2.createElement("path", { d: "m16 9-5.5 5.5L8 12" }));
+}
+function IconTrash() {
+  return /* @__PURE__ */ React2.createElement(Svg, { viewBox: "0 0 24 24", strokeWidth: 1.5 }, /* @__PURE__ */ React2.createElement("path", { d: "M10 11v6" }), /* @__PURE__ */ React2.createElement("path", { d: "M14 11v6" }), /* @__PURE__ */ React2.createElement("path", { d: "M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" }), /* @__PURE__ */ React2.createElement("path", { d: "M3 6h18" }), /* @__PURE__ */ React2.createElement("path", { d: "M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" }));
+}
+function Tip({ ui, label, children }) {
+  if (ui?.Tooltip === void 0) return (0, import_react2.cloneElement)(children, { title: label });
+  const Component2 = ui.Tooltip;
+  return /* @__PURE__ */ React2.createElement(Component2, { label, side: "bottom", delayMs: 400 }, children);
+}
+function IconTrashOff() {
+  return /* @__PURE__ */ React2.createElement(Svg, { viewBox: "0 0 24 24", strokeWidth: 1.5 }, /* @__PURE__ */ React2.createElement("path", { d: "M10 11v6" }), /* @__PURE__ */ React2.createElement("path", { d: "M14 17v-3" }), /* @__PURE__ */ React2.createElement("path", { d: "M16 6V4a2 2 0 0 0-2-2h-4a2 2 0 0 0-1.576.768" }), /* @__PURE__ */ React2.createElement("path", { d: "M19 6v7.344" }), /* @__PURE__ */ React2.createElement("path", { d: "m2 2 20 20" }), /* @__PURE__ */ React2.createElement("path", { d: "M21 6h-9.344" }), /* @__PURE__ */ React2.createElement("path", { d: "M3 6h3" }), /* @__PURE__ */ React2.createElement("path", { d: "M5 6v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-1" }));
+}
+function IconCircleCheck() {
+  return /* @__PURE__ */ React2.createElement(Svg, { viewBox: "0 0 24 24", strokeWidth: 1.5 }, /* @__PURE__ */ React2.createElement("circle", { cx: "12", cy: "12", r: "10" }), /* @__PURE__ */ React2.createElement("path", { d: "m16 9-5.5 5.5L8 12" }));
+}
+function IconCircleX() {
+  return /* @__PURE__ */ React2.createElement(Svg, { viewBox: "0 0 24 24", strokeWidth: 1.5 }, /* @__PURE__ */ React2.createElement("circle", { cx: "12", cy: "12", r: "10" }), /* @__PURE__ */ React2.createElement("path", { d: "m15 9-6 6" }), /* @__PURE__ */ React2.createElement("path", { d: "m9 9 6 6" }));
+}
+function IconCancel() {
+  return /* @__PURE__ */ React2.createElement(Svg, { viewBox: "0 0 24 24", strokeWidth: 1.5 }, /* @__PURE__ */ React2.createElement("path", { d: "M18 6 6 18" }), /* @__PURE__ */ React2.createElement("path", { d: "m6 6 12 12" }));
+}
+function IconSelectAll() {
+  return /* @__PURE__ */ React2.createElement(Svg, { viewBox: "0 0 24 24", strokeWidth: 1.5 }, /* @__PURE__ */ React2.createElement("path", { d: "m3 17 2 2 4-4" }), /* @__PURE__ */ React2.createElement("path", { d: "m3 7 2 2 4-4" }), /* @__PURE__ */ React2.createElement("path", { d: "M13 6h8" }), /* @__PURE__ */ React2.createElement("path", { d: "M13 12h8" }), /* @__PURE__ */ React2.createElement("path", { d: "M13 18h8" }));
 }
 function IconWarning() {
-  return /* @__PURE__ */ React.createElement(Svg, { size: 16, viewBox: "0 0 24 24", strokeWidth: 1.5 }, /* @__PURE__ */ React.createElement("path", { d: "m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3" }), /* @__PURE__ */ React.createElement("path", { d: "M12 9v4" }), /* @__PURE__ */ React.createElement("path", { d: "M12 17h.01" }));
+  return /* @__PURE__ */ React2.createElement(Svg, { size: 16, viewBox: "0 0 24 24", strokeWidth: 1.5 }, /* @__PURE__ */ React2.createElement("path", { d: "m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3" }), /* @__PURE__ */ React2.createElement("path", { d: "M12 9v4" }), /* @__PURE__ */ React2.createElement("path", { d: "M12 17h.01" }));
 }
 function IconSchedule() {
-  return /* @__PURE__ */ React.createElement(Svg, { size: 18, viewBox: "0 0 24 24", strokeWidth: 1.5 }, /* @__PURE__ */ React.createElement("path", { d: "m3 17 2 2 4-4" }), /* @__PURE__ */ React.createElement("path", { d: "m3 7 2 2 4-4" }), /* @__PURE__ */ React.createElement("path", { d: "M13 6h8" }), /* @__PURE__ */ React.createElement("path", { d: "M13 12h8" }), /* @__PURE__ */ React.createElement("path", { d: "M13 18h8" }));
+  return /* @__PURE__ */ React2.createElement(Svg, { size: 18, viewBox: "0 0 24 24", strokeWidth: 1.5 }, /* @__PURE__ */ React2.createElement("path", { d: "M13 13.74a2 2 0 0 1-2 0L2.5 8.87a1 1 0 0 1 0-1.74L11 2.26a2 2 0 0 1 2 0l8.5 4.87a1 1 0 0 1 0 1.74z" }), /* @__PURE__ */ React2.createElement("path", { d: "m20 14.285 1.5.845a1 1 0 0 1 0 1.74L13 21.74a2 2 0 0 1-2 0l-8.5-4.87a1 1 0 0 1 0-1.74l1.5-.845" }));
 }
 function IconRefresh() {
-  return /* @__PURE__ */ React.createElement(Svg, { viewBox: "0 0 24 24", strokeWidth: 1.5 }, /* @__PURE__ */ React.createElement("path", { d: "M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8" }), /* @__PURE__ */ React.createElement("path", { d: "M21 3v5h-5" }), /* @__PURE__ */ React.createElement("path", { d: "M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16" }), /* @__PURE__ */ React.createElement("path", { d: "M8 16H3v5" }));
+  return /* @__PURE__ */ React2.createElement(Svg, { viewBox: "0 0 24 24", strokeWidth: 1.5 }, /* @__PURE__ */ React2.createElement("path", { d: "M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8" }), /* @__PURE__ */ React2.createElement("path", { d: "M21 3v5h-5" }), /* @__PURE__ */ React2.createElement("path", { d: "M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16" }), /* @__PURE__ */ React2.createElement("path", { d: "M8 16H3v5" }));
 }
-
-// src/client/panel/Tasks.tsx
-var import_react3 = require("react");
 
 // src/client/panel/status.ts
 var TONES = {
@@ -2143,7 +2322,8 @@ var TONES = {
   accepting: "run",
   scheduling: "run",
   dispatched: "ok",
-  "pending-acceptance": "ok",
+  /* 待验收是「等你处理」，还没通过：用警告色提示需要人介入 */
+  "pending-acceptance": "warn",
   accepted: "ok",
   merged: "ok",
   "pending-merge": "warn",
@@ -2182,21 +2362,161 @@ function openTaskOrder(status) {
   return ORDER[status] ?? 9;
 }
 
-// src/client/panel/Tasks.tsx
+// src/client/panel/cards.tsx
+function timeText(value) {
+  if (!value) return "";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return String(value);
+  const pad = (n) => String(n).padStart(2, "0");
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}`;
+}
 function usageText(usage) {
   if (!usage || usage.totalTokens <= 0) return "";
   if (usage.totalTokens >= 1e3) return `${(usage.totalTokens / 1e3).toFixed(1)}k`;
   return String(usage.totalTokens);
+}
+function branchText(task) {
+  const branches = Object.values(task.slots ?? {}).map((slot) => slot.branch ?? "").filter((branch) => branch !== "");
+  return branches.length > 0 ? branches.join("\u3000") : "";
 }
 function slotText(task) {
   const entries = Object.entries(task.slots ?? {});
   if (entries.length > 0) return entries.map(([repo, slot]) => `${repo}/${slot.number ?? ""}`).join("\u3000");
   return (task.repos ?? []).join("\u3000");
 }
-function Tasks({ data, t, call, sessionId, focus }) {
+function Row({ label, children }) {
+  return /* @__PURE__ */ React.createElement("div", { className: ui_default.cardRow }, /* @__PURE__ */ React.createElement("span", { className: ui_default.cardLabel }, label), /* @__PURE__ */ React.createElement("span", { className: ui_default.cardValue }, children));
+}
+function TaskCard({ task, t }) {
+  const base = Object.entries(task.bases ?? {}).map(([repo, branch]) => `${repo} ${branch}`).join("\u3000");
+  return /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("div", { className: ui_default.cardTitle }, task.title), /* @__PURE__ */ React.createElement(Row, { label: t("fact.branch") }, branchText(task) || "\u2014"), /* @__PURE__ */ React.createElement(Row, { label: t("fact.state") }, /* @__PURE__ */ React.createElement(Status, { tone: toneOf(task.status), label: statusText(t, task.status) })), /* @__PURE__ */ React.createElement(Row, { label: t("fact.slot") }, slotText(task) || "\u2014"), /* @__PURE__ */ React.createElement(Row, { label: t("fact.base") }, base || task.base || "\u2014"), /* @__PURE__ */ React.createElement(Row, { label: t("fact.usage") }, usageText(task.usage) || "\u2014"), /* @__PURE__ */ React.createElement(Row, { label: t("fact.createdAt") }, timeText(task.createdAt) || "\u2014"));
+}
+function AcceptCard({ batch, contained, t }) {
+  const passed = contained.filter((task) => task.status === "accepted" || task.acceptance === "accepted").length;
+  const total = contained.length || (batch.taskIds ?? []).length;
+  return /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("div", { className: ui_default.cardTitle }, batch.title), /* @__PURE__ */ React.createElement(Row, { label: t("fact.state") }, /* @__PURE__ */ React.createElement(Status, { tone: toneOf(batch.status), label: statusText(t, batch.status) })), /* @__PURE__ */ React.createElement(Row, { label: t("section.devTasks") }, `${total}\u3000\xB7\u3000${t("accept.passed")} ${passed}`), /* @__PURE__ */ React.createElement(Row, { label: t("fact.base") }, batch.base ?? batch.baseGroup ?? "\u2014"), /* @__PURE__ */ React.createElement(Row, { label: t("fact.usage") }, usageText(batch.usage) || "\u2014"), /* @__PURE__ */ React.createElement(Row, { label: t("fact.createdAt") }, timeText(batch.createdAt) || "\u2014"));
+}
+function ScheduleCard({ schedule, t }) {
+  const targets = (schedule.slots ?? []).map((slot) => [slot.repo, slot.number].filter(Boolean).join("/")).filter((text) => text !== "");
+  return /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("div", { className: ui_default.cardTitle }, schedule.title), /* @__PURE__ */ React.createElement(Row, { label: t("fact.state") }, /* @__PURE__ */ React.createElement(Status, { tone: toneOf(schedule.status), label: statusText(t, schedule.status) })), /* @__PURE__ */ React.createElement(Row, { label: t("fact.base") }, schedule.base ?? schedule.baseGroup ?? "\u2014"), /* @__PURE__ */ React.createElement(Row, { label: t("fact.slot") }, targets.join("\u3000") || "\u2014"), /* @__PURE__ */ React.createElement(Row, { label: t("fact.taskCount") }, String((schedule.taskIds ?? []).length)), /* @__PURE__ */ React.createElement(Row, { label: t("fact.usage") }, usageText(schedule.usage) || "\u2014"), /* @__PURE__ */ React.createElement(Row, { label: t("fact.createdAt") }, timeText(schedule.createdAt) || "\u2014"));
+}
+
+// src/client/panel/TaskItem.tsx
+function TaskItem({
+  task,
+  t,
+  ui,
+  variant = "dev",
+  selected,
+  onSelect,
+  mode,
+  picked,
+  busy,
+  onAction,
+  contained,
+  onJudge
+}) {
+  const isAccept = variant === "accept";
+  const picking = mode !== null && mode !== void 0;
+  const icon = picking ? /* @__PURE__ */ React.createElement("span", { className: `${ui_default.check} ${picked ? ui_default.checkOn : ""}` }, picked ? /* @__PURE__ */ React.createElement(IconCheck, { size: 12 }) : null) : isAccept ? /* @__PURE__ */ React.createElement(IconAcceptTask, null) : /* @__PURE__ */ React.createElement(IconDevTask, null);
+  const status = /* @__PURE__ */ React.createElement(Status, { tone: toneOf(task.status), label: statusText(t, task.status) });
+  const card = isAccept ? /* @__PURE__ */ React.createElement(AcceptCard, { batch: task, contained: contained ?? [], t }) : /* @__PURE__ */ React.createElement(TaskCard, { task, t });
+  if (variant === "plain") {
+    return /* @__PURE__ */ React.createElement(
+      Item,
+      {
+        icon,
+        title: task.title,
+        suffix: branchText(task) || (task.repos ?? [])[0],
+        trail: status,
+        titleAttr: `${task.title} \xB7 ${t("action.detail")}`,
+        onClick: onSelect,
+        dataId: task.id,
+        card
+      }
+    );
+  }
+  const actions = isAccept ? onJudge === void 0 || task.status !== "accepting" ? null : /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement(
+    IconAction,
+    {
+      ui,
+      label: t("action.fail"),
+      icon: /* @__PURE__ */ React.createElement(IconCircleX, null),
+      disabled: busy,
+      onClick: (event) => {
+        event.stopPropagation();
+        onJudge(task, "rejected");
+      }
+    }
+  ), /* @__PURE__ */ React.createElement(
+    IconAction,
+    {
+      ui,
+      label: t("action.pass"),
+      icon: /* @__PURE__ */ React.createElement(IconCircleCheck, null),
+      disabled: busy,
+      onClick: (event) => {
+        event.stopPropagation();
+        onJudge(task, "accepted");
+      }
+    }
+  )) : onAction === void 0 ? null : /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement(
+    IconAction,
+    {
+      ui,
+      label: t("action.accept"),
+      icon: /* @__PURE__ */ React.createElement(IconBadgeCheck, null),
+      disabled: busy || task.selectable !== true,
+      onClick: (event) => {
+        event.stopPropagation();
+        onAction("accept");
+      }
+    }
+  ), /* @__PURE__ */ React.createElement(
+    IconAction,
+    {
+      ui,
+      label: task.deletable === true ? t("action.delete") : t("action.deleteDisabled"),
+      icon: task.deletable === true ? /* @__PURE__ */ React.createElement(IconTrash, null) : /* @__PURE__ */ React.createElement(IconTrashOff, null),
+      disabled: busy || task.deletable !== true,
+      tone: "danger",
+      onClick: (event) => {
+        event.stopPropagation();
+        onAction("delete");
+      }
+    }
+  ));
+  return /* @__PURE__ */ React.createElement(
+    Item,
+    {
+      icon,
+      title: task.title,
+      titleAttr: task.title,
+      suffix: isAccept ? void 0 : branchText(task),
+      card,
+      trail: /* @__PURE__ */ React.createElement("div", { className: ui_default.trailSwap }, /* @__PURE__ */ React.createElement("span", { className: ui_default.trailStatus }, isAccept ? /* @__PURE__ */ React.createElement("span", { className: ui_default.progress }, progressText(task, contained)) : status), /* @__PURE__ */ React.createElement("span", { className: ui_default.trailActions }, picking ? null : actions)),
+      selected,
+      onClick: onSelect
+    }
+  );
+}
+function progressText(task, contained) {
+  const rows = contained ?? [];
+  const passed = rows.filter((row) => row.status === "accepted" || row.acceptance === "accepted").length;
+  const total = rows.length || (task.taskIds ?? []).length;
+  return `${passed}/${total}`;
+}
+
+// src/client/panel/Tasks.tsx
+var import_react3 = require("react");
+function Tasks({ data, t, call, sessionId, focus, reload, ui }) {
   const [picked, setPicked] = (0, import_react3.useState)(null);
   const [diff, setDiff] = (0, import_react3.useState)(null);
   const [pickTick, setPickTick] = (0, import_react3.useState)(0);
+  const [mode, setMode] = (0, import_react3.useState)(null);
+  const [chosen, setChosen] = (0, import_react3.useState)([]);
+  const [busy, setBusy] = (0, import_react3.useState)(false);
+  const [note, setNote] = (0, import_react3.useState)("");
   const tasks = data.tasks ?? [];
   const schedules = data.schedules ?? [];
   const newest = (a, b) => String(b.createdAt ?? "").localeCompare(String(a.createdAt ?? ""));
@@ -2232,6 +2552,44 @@ function Tasks({ data, t, call, sessionId, focus }) {
     setPicked({ kind: "schedule", schedule });
     setPickTick((value) => value + 1);
   };
+  const run = async (endpoint, payload) => {
+    if (busy) return;
+    setBusy(true);
+    setNote("");
+    try {
+      const result = await call(endpoint, { sessionId, ...payload });
+      const warnings = result?.deleteWarnings ?? [];
+      if (warnings.length > 0) setNote(warnings.join("\uFF1B"));
+      setMode(null);
+      setChosen([]);
+      await reload();
+    } catch (reason) {
+      setNote(reason instanceof Error ? reason.message : String(reason));
+    } finally {
+      setBusy(false);
+    }
+  };
+  const startMode = (next) => {
+    setMode(next);
+    setChosen([]);
+    setNote("");
+  };
+  const canPick = (task) => mode === "delete" ? task.deletable === true : task.selectable === true;
+  const togglePick = (task) => {
+    if (!canPick(task)) {
+      setNote(mode === "delete" ? t("note.notDeletable") : t("note.notSelectable"));
+      return;
+    }
+    setChosen((prev) => prev.includes(task.id) ? prev.filter((id) => id !== task.id) : [...prev, task.id]);
+  };
+  const confirmBatch = () => {
+    if (chosen.length === 0) return;
+    if (mode === "delete") {
+      void run("task-delete", { ids: chosen });
+      return;
+    }
+    void run("accept-start", { id: `b-${Date.now().toString(36)}`, taskIds: chosen });
+  };
   const panes = [
     {
       key: "schedule",
@@ -2250,28 +2608,57 @@ function Tasks({ data, t, call, sessionId, focus }) {
       key: "dev",
       title: t("section.devTasks"),
       count: dev.length,
-      content: dev.length === 0 ? /* @__PURE__ */ React.createElement(Empty, { text: t("section.emptyDev") }) : dev.map((task) => /* @__PURE__ */ React.createElement(
-        DevRow,
+      content: /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("div", { className: ui_default.actionbar }, /* @__PURE__ */ React.createElement("span", { className: ui_default.actionbarText }, mode === null ? "" : note !== "" ? note : `${t("note.selected")} ${chosen.length}`), mode === null ? /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement(IconAction, { ui, label: t("action.accept"), icon: /* @__PURE__ */ React.createElement(IconBadgeCheck, null), onClick: () => startMode("accept") }), /* @__PURE__ */ React.createElement(IconAction, { ui, label: t("action.batchDelete"), icon: /* @__PURE__ */ React.createElement(IconTrash, null), onClick: () => startMode("delete") })) : /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement(IconAction, { ui, label: t("action.cancel"), icon: /* @__PURE__ */ React.createElement(IconCancel, null), onClick: () => {
+        setMode(null);
+        setChosen([]);
+        setNote("");
+      } }), /* @__PURE__ */ React.createElement(IconAction, { ui, label: t("action.selectAll"), icon: /* @__PURE__ */ React.createElement(IconSelectAll, null), onClick: () => setChosen(dev.filter(canPick).map((task) => task.id)) }), /* @__PURE__ */ React.createElement(
+        IconAction,
+        {
+          ui,
+          label: busy ? mode === "delete" ? t("action.deleting") : t("action.working") : `${mode === "delete" ? t("action.batchDelete") : t("action.accept")} ${chosen.length}`,
+          icon: mode === "delete" ? /* @__PURE__ */ React.createElement(IconTrash, null) : /* @__PURE__ */ React.createElement(IconBadgeCheck, null),
+          disabled: busy || chosen.length === 0,
+          tone: mode === "delete" ? "danger" : "primary",
+          onClick: confirmBatch
+        }
+      ))), dev.length === 0 ? /* @__PURE__ */ React.createElement(Empty, { text: t("section.emptyDev") }) : dev.map((task) => /* @__PURE__ */ React.createElement(
+        TaskItem,
         {
           key: task.id,
           task,
           t,
+          variant: "dev",
+          mode,
+          picked: mode === null ? void 0 : chosen.includes(task.id),
           selected: pickedTask?.id === task.id,
-          onSelect: () => pickTask(task)
+          onSelect: () => mode === null ? pickTask(task) : togglePick(task),
+          ui,
+          busy,
+          onAction: mode === null ? (action) => {
+            if (action === "delete") void run("task-delete", { ids: [task.id] });
+            else void run("accept-start", { id: `b-${Date.now().toString(36)}`, taskIds: [task.id] });
+          } : void 0
         }
-      ))
+      )))
     },
     {
       key: "accept",
       title: t("section.acceptTasks"),
       count: accept.length,
       content: accept.length === 0 ? /* @__PURE__ */ React.createElement(Empty, { text: t("section.emptyAccept") }) : accept.map((batch) => /* @__PURE__ */ React.createElement(
-        AcceptRow,
+        TaskItem,
         {
           key: batch.id,
-          batch,
-          tasks,
+          task: batch,
           t,
+          variant: "accept",
+          ui,
+          busy,
+          contained: containedTasks(tasks, batch),
+          onJudge: (child, result) => {
+            void run("accept-task", { id: batch.id, taskId: child.id, result });
+          },
           selected: pickedTask?.id === batch.id,
           onSelect: () => pickTask(batch)
         }
@@ -2286,8 +2673,18 @@ function Tasks({ data, t, call, sessionId, focus }) {
           task: pickedTask,
           diff,
           t,
+          ui,
+          busy,
           onPick: pickTask,
-          contained: pickedTask.kind === "accept" ? containedTasks(tasks, pickedTask) : void 0
+          contained: pickedTask.kind === "accept" ? containedTasks(tasks, pickedTask) : void 0,
+          onAction: (action) => {
+            const endpoint = { pause: "task-pause", resume: "task-resume", stop: "task-stop", merge: "task-merge", delete: "task-delete" }[action];
+            if (action === "delete") void run("task-delete", { ids: [pickedTask.id] });
+            else void run(endpoint, { taskId: pickedTask.id });
+          },
+          onJudge: (child, result) => {
+            void run("accept-task", { id: pickedTask.id, taskId: child.id, result });
+          }
         }
       ) : pickedSchedule ? /* @__PURE__ */ React.createElement(ScheduleDetail, { schedule: pickedSchedule, t }) : /* @__PURE__ */ React.createElement(Empty, { text: t("section.emptyDetail") })
     }
@@ -2307,57 +2704,20 @@ function SchedulePane({
       Item,
       {
         key: schedule.id,
-        icon: /* @__PURE__ */ React.createElement("span", { className: ui_default.suffix }, schedule.baseGroup ?? "\xB7"),
+        icon: /* @__PURE__ */ React.createElement(IconSchedule, null),
         title: schedule.title,
         titleAttr: schedule.title,
-        suffix: target ? [target.repo, target.number].filter(Boolean).join("/") : void 0,
+        suffix: [
+          schedule.baseGroup,
+          target ? [target.repo, target.number].filter(Boolean).join("/") : void 0
+        ].filter(Boolean).join("\u3000") || void 0,
         trail: /* @__PURE__ */ React.createElement(Status, { tone: toneOf(schedule.status), label: statusText(t, schedule.status) }),
         selected: pickedId === schedule.id,
-        onClick: () => onPick(schedule)
+        onClick: () => onPick(schedule),
+        card: /* @__PURE__ */ React.createElement(ScheduleCard, { schedule, t })
       }
     );
   }));
-}
-function DevRow({
-  task,
-  t,
-  selected,
-  onSelect
-}) {
-  return /* @__PURE__ */ React.createElement(
-    Item,
-    {
-      icon: /* @__PURE__ */ React.createElement(IconDevTask, null),
-      title: task.title,
-      titleAttr: task.title,
-      suffix: slotText(task),
-      trail: /* @__PURE__ */ React.createElement(Status, { tone: toneOf(task.status), label: statusText(t, task.status) }),
-      selected,
-      onClick: onSelect
-    }
-  );
-}
-function AcceptRow({
-  batch,
-  tasks,
-  t,
-  selected,
-  onSelect
-}) {
-  const contained = containedTasks(tasks, batch);
-  const passed = contained.filter((task) => task.status === "accepted" || task.acceptance === "accepted").length;
-  const total = contained.length || (batch.taskIds ?? []).length;
-  return /* @__PURE__ */ React.createElement(
-    Item,
-    {
-      icon: /* @__PURE__ */ React.createElement(IconAcceptTask, null),
-      title: batch.title,
-      titleAttr: batch.title,
-      trail: /* @__PURE__ */ React.createElement("span", { className: ui_default.progress }, `${passed}/${total}`),
-      selected,
-      onClick: onSelect
-    }
-  );
 }
 function containedTasks(tasks, batch) {
   const ids = batch.taskIds ?? [];
@@ -2371,20 +2731,46 @@ function kv(label, value) {
 function fileList(files, t) {
   return /* @__PURE__ */ React.createElement("div", { className: ui_default.fileList }, files.map((file) => /* @__PURE__ */ React.createElement("div", { key: `${file.repo}:${file.path}`, className: ui_default.fileRow }, /* @__PURE__ */ React.createElement("span", { className: ui_default.filePath }, file.binary ? `${file.path}\uFF08binary\uFF09` : file.path), /* @__PURE__ */ React.createElement("span", { className: ui_default.fileAdd }, `+${file.added}`), /* @__PURE__ */ React.createElement("span", { className: ui_default.fileDel }, `-${file.deleted}`))));
 }
-function DetailPane({ task, diff, t, contained, onPick }) {
+function DetailPane({ task, diff, t, ui, contained, onPick, onAction, onJudge, busy }) {
   const files = diff?.files ?? [];
   const entries = Object.entries(task.bases ?? {});
   const base = entries.length > 0 ? entries.map(([repo, branch]) => `${repo} ${branch}`).join("\u3000") : task.base ?? "\u2014";
   const isBatch = task.kind === "accept";
   const deps = task.dependsOn ?? [];
-  return /* @__PURE__ */ React.createElement("div", { className: ui_default.detail }, /* @__PURE__ */ React.createElement("div", { className: ui_default.detailHead }, /* @__PURE__ */ React.createElement("span", { className: ui_default.detailHeadIcon }, isBatch ? /* @__PURE__ */ React.createElement(IconAcceptTask, null) : /* @__PURE__ */ React.createElement(IconDevTask, null)), /* @__PURE__ */ React.createElement("span", { className: ui_default.detailHeadTitle, title: task.title }, task.title), /* @__PURE__ */ React.createElement(Status, { tone: toneOf(task.status), label: statusText(t, task.status) })), task.warnings && task.warnings.length > 0 ? /* @__PURE__ */ React.createElement(Alert, { items: task.warnings }) : null, /* @__PURE__ */ React.createElement("div", { className: ui_default.kvGrid }, kv(t("fact.slot"), slotText(task) || "\u2014"), kv(t("fact.branch"), Object.values(task.slots ?? {})[0]?.branch || "\u2014"), kv(t("fact.base"), base), kv(t("fact.usage"), usageText(task.usage) || "\u2014"), task.pausedAt ? kv(t("fact.paused"), task.pausedAt) : null, task.stoppedAt ? kv(t("fact.stopped"), task.stoppedAt) : null, isBatch && contained && contained.length > 0 ? kv(t("section.devTasks"), String(contained.length)) : null, !isBatch && deps.length > 0 ? kv(t("fact.depends"), String(deps.length)) : null, files.length > 0 ? kv(t("fact.changeFiles"), String(files.length)) : null), isBatch && contained && contained.length > 0 ? /* @__PURE__ */ React.createElement("div", { className: ui_default.detailList }, contained.map((child) => /* @__PURE__ */ React.createElement(
-    DevRow,
+  return /* @__PURE__ */ React.createElement("div", { className: ui_default.detail }, /* @__PURE__ */ React.createElement("div", { className: ui_default.detailHead }, /* @__PURE__ */ React.createElement("span", { className: ui_default.detailHeadIcon }, isBatch ? /* @__PURE__ */ React.createElement(IconAcceptTask, null) : /* @__PURE__ */ React.createElement(IconDevTask, null)), /* @__PURE__ */ React.createElement("span", { className: ui_default.detailHeadTitle, title: task.title }, task.title), /* @__PURE__ */ React.createElement(Status, { tone: toneOf(task.status), label: statusText(t, task.status) }), onAction === void 0 && onJudge === void 0 ? null : /* @__PURE__ */ React.createElement("span", { className: ui_default.detailActions }, actionsFor(task, isBatch, t, onAction, busy))), task.warnings && task.warnings.length > 0 ? /* @__PURE__ */ React.createElement(Alert, { items: task.warnings }) : null, /* @__PURE__ */ React.createElement("div", { className: ui_default.kvGrid }, kv(t("fact.slot"), slotText(task) || "\u2014"), kv(t("fact.branch"), Object.values(task.slots ?? {})[0]?.branch || "\u2014"), kv(t("fact.base"), base), kv(t("fact.usage"), usageText(task.usage) || "\u2014"), kv(t("fact.createdAt"), timeText(task.createdAt) || "\u2014"), task.pausedAt ? kv(t("fact.paused"), task.pausedAt) : null, task.stoppedAt ? kv(t("fact.stopped"), task.stoppedAt) : null, isBatch && contained && contained.length > 0 ? kv(t("section.devTasks"), String(contained.length)) : null, !isBatch && deps.length > 0 ? kv(t("fact.depends"), String(deps.length)) : null, files.length > 0 ? kv(t("fact.changeFiles"), String(files.length)) : null), isBatch && contained && contained.length > 0 ? /* @__PURE__ */ React.createElement("div", { className: ui_default.detailList }, contained.map((child) => /* @__PURE__ */ React.createElement(
+    TaskItem,
     {
       key: child.id,
       task: child,
       t,
+      variant: "dev",
       selected: false,
-      onSelect: () => onPick?.(child)
+      onSelect: () => onPick?.(child),
+      actions: onJudge === void 0 || task.status !== "accepting" ? void 0 : /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement(
+        IconAction,
+        {
+          ui,
+          label: t("action.fail"),
+          icon: /* @__PURE__ */ React.createElement(IconCircleX, null),
+          disabled: busy,
+          onClick: (event) => {
+            event.stopPropagation();
+            onJudge(child, "rejected");
+          }
+        }
+      ), /* @__PURE__ */ React.createElement(
+        IconAction,
+        {
+          ui,
+          label: t("action.pass"),
+          icon: /* @__PURE__ */ React.createElement(IconCircleCheck, null),
+          disabled: busy,
+          onClick: (event) => {
+            event.stopPropagation();
+            onJudge(child, "accepted");
+          }
+        }
+      ))
     }
   ))) : null, !isBatch && deps.length > 0 ? /* @__PURE__ */ React.createElement("div", { className: ui_default.detailList }, deps.map((dep) => /* @__PURE__ */ React.createElement(
     Item,
@@ -2398,6 +2784,27 @@ function DetailPane({ task, diff, t, contained, onPick }) {
       onClick: onPick ? () => onPick(dep) : void 0
     }
   ))) : null, files.length > 0 ? fileList(files, t) : null);
+}
+function actionsFor(task, isBatch, t, onAction, busy) {
+  if (onAction === void 0 || isBatch) return null;
+  const buttons = [];
+  if (task.pausedAt) buttons.push({ key: "resume", label: t("action.resume") });
+  else if (task.status === "developing") buttons.push({ key: "pause", label: t("action.pause") });
+  if (task.status === "developing" || task.pausedAt) buttons.push({ key: "stop", label: t("action.stop") });
+  if (task.status === "pending-merge") buttons.push({ key: "merge", label: t("action.merge") });
+  if (task.deletable) buttons.push({ key: "delete", label: t("action.delete"), danger: true });
+  if (buttons.length === 0) return null;
+  return buttons.map((button) => /* @__PURE__ */ React.createElement(
+    "button",
+    {
+      key: button.key,
+      type: "button",
+      className: `${ui_default.btn} ${button.danger ? ui_default.btnDanger : ui_default.btnPrimary}`,
+      disabled: busy,
+      onClick: () => onAction(button.key)
+    },
+    button.label
+  ));
 }
 function ScheduleDetail({ schedule, t }) {
   const target = schedule.slots?.[0];
@@ -2580,7 +2987,7 @@ function stamp(date) {
   const pad = (value) => String(value).padStart(2, "0");
   return `${pad(date.getHours())}:${pad(date.getMinutes())}`;
 }
-function Panel({ sessionId, call, t }) {
+function Panel({ sessionId, call, t, ui }) {
   const [page, setPage] = (0, import_react4.useState)("overview");
   const [focus, setFocus] = (0, import_react4.useState)(null);
   const [data, setData] = (0, import_react4.useState)(null);
@@ -2615,10 +3022,11 @@ function Panel({ sessionId, call, t }) {
   }).catch((reason) => {
     if (alive.current) setError(textOf(reason));
   });
+  const reload = () => load();
   (0, import_react4.useEffect)(() => {
     void load();
   }, [sessionId]);
-  return /* @__PURE__ */ React.createElement("div", { className: ui_default.pane, ref: root }, /* @__PURE__ */ React.createElement("div", { className: ui_default.head }, PAGES.map((id) => /* @__PURE__ */ React.createElement(
+  return /* @__PURE__ */ React.createElement(Boundary, null, /* @__PURE__ */ React.createElement("div", { className: ui_default.pane, ref: root }, /* @__PURE__ */ React.createElement("div", { className: ui_default.head }, PAGES.map((id) => /* @__PURE__ */ React.createElement(
     "button",
     {
       key: id,
@@ -2628,22 +3036,12 @@ function Panel({ sessionId, call, t }) {
       onClick: () => setPage(id)
     },
     t(`page.${id}`)
-  )), /* @__PURE__ */ React.createElement("span", { className: ui_default.stamp }, stamp(at)), /* @__PURE__ */ React.createElement(
-    "button",
-    {
-      type: "button",
-      className: ui_default.iconButton,
-      title: t("action.refresh"),
-      "aria-label": t("action.refresh"),
-      onClick: () => {
-        void load();
-      }
-    },
-    /* @__PURE__ */ React.createElement(IconRefresh, null)
-  )), error === "" ? null : /* @__PURE__ */ React.createElement("p", { className: ui_default.note, role: "status" }, error), data === null ? null : data.initialized === false ? /* @__PURE__ */ React.createElement(Empty, { text: t("empty.init") }) : /* @__PURE__ */ React.createElement(Boundary, null, page === "overview" ? /* @__PURE__ */ React.createElement(Overview, { data, t, onOpenTask: (task) => {
+  )), /* @__PURE__ */ React.createElement("span", { className: ui_default.stamp }, stamp(at)), /* @__PURE__ */ React.createElement(IconAction, { ui, label: t("action.refresh"), icon: /* @__PURE__ */ React.createElement(IconRefresh, null), onClick: () => {
+    void load();
+  } })), error === "" ? null : /* @__PURE__ */ React.createElement("p", { className: ui_default.note, role: "status" }, error), data === null ? null : data.initialized === false ? /* @__PURE__ */ React.createElement(Empty, { text: t("empty.init") }) : /* @__PURE__ */ React.createElement(React.Fragment, null, page === "overview" ? /* @__PURE__ */ React.createElement(Overview, { data, t, onOpenTask: (task) => {
     setFocus({ id: task.id, tick: Date.now() });
     setPage("tasks");
-  } }) : page === "tasks" ? /* @__PURE__ */ React.createElement(Tasks, { data, t, call, sessionId, focus }) : page === "slots" ? /* @__PURE__ */ React.createElement(Slots, { data, t }) : page === "bases" ? /* @__PURE__ */ React.createElement(Bases, { data, t }) : /* @__PURE__ */ React.createElement(Agents, { data, t })));
+  } }) : page === "tasks" ? /* @__PURE__ */ React.createElement(Tasks, { data, t, call, sessionId, focus, reload, ui }) : page === "slots" ? /* @__PURE__ */ React.createElement(Slots, { data, t }) : page === "bases" ? /* @__PURE__ */ React.createElement(Bases, { data, t }) : /* @__PURE__ */ React.createElement(Agents, { data, t }))));
 }
 function Overview({ data, t, onOpenTask }) {
   const tasks = (data.tasks ?? []).filter((task) => isOpenTask(task.status)).sort((a, b) => openTaskOrder(a.status) - openTaskOrder(b.status));
@@ -2669,7 +3067,7 @@ function Overview({ data, t, onOpenTask }) {
           key: "open",
           title: t("section.open"),
           count: tasks.length,
-          content: tasks.length === 0 ? /* @__PURE__ */ React.createElement(Empty, { text: t("overview.noTasks") }) : tasks.map((task) => /* @__PURE__ */ React.createElement(TaskItem, { key: task.id, task, t, onOpen: () => onOpenTask(task) }))
+          content: tasks.length === 0 ? /* @__PURE__ */ React.createElement(Empty, { text: t("overview.noTasks") }) : tasks.map((task) => /* @__PURE__ */ React.createElement(TaskItem, { key: task.id, task, t, variant: "plain", onSelect: () => onOpenTask(task) }))
         },
         {
           key: "projects",
@@ -2680,20 +3078,6 @@ function Overview({ data, t, onOpenTask }) {
       ]
     }
   ));
-}
-function TaskItem({ task, t, onOpen }) {
-  return /* @__PURE__ */ React.createElement(
-    Item,
-    {
-      icon: task.kind === "accept" ? /* @__PURE__ */ React.createElement(IconAcceptTask, null) : /* @__PURE__ */ React.createElement(IconDevTask, null),
-      title: task.title,
-      suffix: task.repos[0],
-      trail: /* @__PURE__ */ React.createElement(Status, { tone: toneOf(task.status), label: statusText(t, task.status) }),
-      titleAttr: `${task.title} \xB7 ${t("action.detail")}`,
-      onClick: onOpen,
-      dataId: task.id
-    }
-  );
 }
 var COUNT_ORDER = [
   { status: "developing", label: "status.developing" },

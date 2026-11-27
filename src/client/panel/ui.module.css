@@ -94,6 +94,18 @@
   cursor: pointer;
 }
 
+.iconButton:disabled {
+  color: var(--dsw-alias-label-tertiary);
+  cursor: not-allowed;
+}
+
+@media (hover: hover) {
+  .iconButton:not(:disabled):hover {
+    background: var(--dsw-alias-interactive-bg-hover);
+    color: var(--dsw-alias-label-primary);
+  }
+}
+
 @media (hover: hover) {
   .iconButton:hover {
     background: var(--dsw-alias-interactive-bg-hover);
@@ -247,6 +259,8 @@
 
 .panelChev {
   display: inline-flex;
+  /* chevron-right 在 24 viewBox 里墨迹只到 15，右留白约 5px @14px 渲染 */
+  margin-right: -5px;
   color: var(--dsw-alias-label-tertiary);
   transform: rotate(0deg);
   transition: transform 120ms ease;
@@ -362,18 +376,54 @@
 }
 
 .name {
-  display: flex;
-  align-items: baseline;
-  gap: 8px;
   flex: 1;
   min-width: 0;
   white-space: nowrap;
   overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* 标题 + 分支作为一整段文字参与省略与滚动 */
+.nameRun {
+  display: inline;
+  transform: translateX(0);
+}
+
+/* 悬停滚动：去掉省略号，两侧渐变淡出，整段匀速平移 */
+.name[data-scroll='on'] {
+  text-overflow: clip;
+  -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 10px, #000 calc(100% - 14px), transparent 100%);
+  mask-image: linear-gradient(90deg, transparent 0, #000 10px, #000 calc(100% - 14px), transparent 100%);
+}
+
+.name[data-scroll='on'] .nameRun {
+  display: inline-block;
+  transform: translateX(var(--scroll-shift, 0));
+  transition: transform var(--scroll-duration, 2.4s) linear;
+}
+
+/* 滚到底：只剩左缘淡出，右缘遮罩撤掉 */
+.name[data-scroll='done'] {
+  text-overflow: clip;
+  -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 10px);
+  mask-image: linear-gradient(90deg, transparent 0, #000 10px);
+}
+
+.name[data-scroll='done'] .nameRun {
+  display: inline-block;
+  transform: translateX(var(--scroll-shift, 0));
+}
+
+.name[data-scroll='off'] .nameRun {
+  transition: transform 180ms ease;
 }
 
 .nameText {
+  flex: 0 1 auto;
+  min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .itemHint {
@@ -381,7 +431,7 @@
 }
 
 .suffix {
-  flex: none;
+  margin-left: 8px;
   color: var(--dsw-alias-label-tertiary);
   font-family: var(--dsw-font-family-mono, ui-monospace, SFMono-Regular, Menlo, monospace);
   font-size: 11px;
@@ -735,3 +785,320 @@
   text-align: center;
   word-break: break-word;
 }
+
+
+/* 文字按钮：工具栏与详情操作共用 */
+.btn {
+  appearance: none;
+  flex: none;
+  border: 0;
+  height: 26px;
+  padding: 0 10px;
+  border-radius: var(--dsw-radius-sm, 6px);
+  background: transparent;
+  color: var(--dsw-alias-label-secondary);
+  font-family: inherit;
+  font-size: 12px;
+  line-height: 20px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.btn:disabled {
+  color: var(--dsw-alias-label-tertiary);
+  cursor: not-allowed;
+}
+
+.btnPrimary {
+  color: var(--dsw-alias-label-primary);
+  font-weight: 500;
+}
+
+.btnDanger {
+  color: var(--dsw-alias-state-error-primary);
+}
+
+@media (hover: hover) {
+  .btn:not(:disabled):hover {
+    background: var(--dsw-alias-interactive-bg-hover);
+  }
+}
+
+/* 详情头部的操作按钮组 */
+.detailActions {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  flex: none;
+}
+
+.check {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  border: 1px solid var(--dsw-alias-border-l2);
+  border-radius: 4px;
+  color: var(--dsw-alias-bg-base);
+}
+
+.checkOn {
+  border-color: var(--dsw-alias-label-primary);
+  background: var(--dsw-alias-label-primary);
+  color: var(--dsw-alias-bg-base);
+}
+
+/* 详情里的「行 + 右侧判定按钮」 */
+.detailRow {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.detailRow > :first-child {
+  flex: 1;
+  min-width: 0;
+}
+
+/* 分区内操作栏：子面板内容的第一行，放批量操作 */
+.actionbar {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  height: 32px;
+  padding: 0 8px 0 16px;
+  background: var(--dsw-alias-bg-base);
+}
+
+.actionbarText {
+  margin-right: auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 12px;
+  line-height: 18px;
+  color: var(--dsw-alias-label-tertiary);
+}
+
+/* 文字按钮：工具栏与详情操作共用 */
+.btn {
+  appearance: none;
+  flex: none;
+  border: 0;
+  height: 26px;
+  padding: 0 10px;
+  border-radius: var(--dsw-radius-sm, 6px);
+  background: transparent;
+  color: var(--dsw-alias-label-secondary);
+  font-family: inherit;
+  font-size: 12px;
+  line-height: 20px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.btn:disabled {
+  color: var(--dsw-alias-label-tertiary);
+  cursor: not-allowed;
+}
+
+.btnPrimary {
+  color: var(--dsw-alias-label-primary);
+  font-weight: 500;
+}
+
+.btnDanger {
+  color: var(--dsw-alias-state-error-primary);
+}
+
+@media (hover: hover) {
+  .btn:not(:disabled):hover {
+    background: var(--dsw-alias-interactive-bg-hover);
+  }
+}
+
+/* 详情头部的操作按钮组 */
+.detailActions {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  flex: none;
+}
+
+.check {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  border: 1px solid var(--dsw-alias-border-l2);
+  border-radius: 4px;
+  color: var(--dsw-alias-bg-base);
+}
+
+.checkOn {
+  border-color: var(--dsw-alias-label-primary);
+  background: var(--dsw-alias-label-primary);
+  color: var(--dsw-alias-bg-base);
+}
+
+/* 详情里的「行 + 右侧判定按钮」 */
+.detailRow {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.detailRow > :first-child {
+  flex: 1;
+  min-width: 0;
+}
+
+/* 页面级工具栏：位于顶部导航之下、子面板之上 */
+.page {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.toolbar {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  flex: none;
+  height: 36px;
+  padding: 0 8px 0 16px;
+  border-bottom: 0.5px solid var(--dsw-alias-border-l3);
+}
+
+.toolbarText {
+  margin-right: auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 12px;
+  line-height: 18px;
+  color: var(--dsw-alias-label-tertiary);
+}
+
+/* 图标键的状态变体：执行键按动作染色 */
+.iconPrimary {
+  color: var(--dsw-alias-label-primary);
+}
+
+.iconDanger {
+  color: var(--dsw-alias-state-error-primary);
+}
+
+/* 行尾：悬停时把状态换成操作键，宽度不变避免跳动 */
+.trailSwap {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  min-width: 0;
+}
+
+.trailStatus,
+.trailActions {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+/* 26px 盒里 16px 字形内缩 5px，Lucide 图形在 24 viewBox 内还有约 2px 右留白
+   （trash 3..21、badge-check 3..21），合起来把字形墨迹右缘拉回文字右缘 */
+.trailActions {
+  margin-right: -7px;
+}
+
+.trailActions {
+  display: none;
+}
+
+@media (hover: hover) {
+  .item:hover .trailStatus {
+    display: none;
+  }
+
+  .item:hover .trailActions {
+    display: flex;
+  }
+}
+
+.item:focus-within .trailStatus {
+  display: none;
+}
+
+.item:focus-within .trailActions {
+  display: flex;
+}
+
+/* 悬停气泡：标题 + 分支 / 状态 / 槽位 / 用量 */
+.hoverCard {
+  position: fixed;
+  z-index: 60;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 280px;
+  padding: 10px 12px;
+  border: 0.5px solid rgb(255 255 255 / 8%);
+  border-radius: 8px;
+  /* 黑底气泡：两种主题下都是深色墨面 */
+  background: #232326;
+  color: #fff;
+  box-shadow: 0 8px 24px rgb(0 0 0 / 28%);
+  pointer-events: auto;
+}
+
+.hoverCard .status {
+  color: rgb(255 255 255 / 88%);
+}
+
+/* 黑底上灰灯几乎看不见，只提亮 idle 一档，彩色灯保持原样 */
+.hoverCard .lampIdle {
+  background: rgb(255 255 255 / 42%);
+}
+
+.hoverCard .cardValue {
+  color: rgb(255 255 255 / 88%);
+}
+
+.cardTitle {
+  font-size: 13px;
+  line-height: 20px;
+  font-weight: 500;
+  color: #fff;
+  white-space: normal;
+  word-break: break-word;
+}
+
+.cardRow {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  font-size: 12px;
+  line-height: 18px;
+}
+
+.cardLabel {
+  flex: none;
+  width: 56px;
+  color: rgb(255 255 255 / 58%);
+}
+
+.cardValue {
+  min-width: 0;
+  color: var(--dsw-alias-label-secondary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+

@@ -1,8 +1,11 @@
 import type React from 'react'
 import { useEffect, useState } from 'react'
+import type { UiKit } from '../ui'
 import type { Call, ScheduleRow, Snapshot, TaskDiff, TaskDiffFile, TaskRow, Translate, TokenUsage } from '../types'
-import { Alert, Empty, IconAcceptTask, IconDevTask, IconSchedule, Item, SplitGroup, Status } from './parts'
+import { TaskItem } from './TaskItem'
+import { Alert, Empty, IconAcceptTask, IconAction, IconBadgeCheck, IconCancel, IconCircleCheck, IconCircleX, IconDevTask, IconSchedule, IconSelectAll, IconTrash, Item, SplitGroup, Status } from './parts'
 import type { PaneDef } from './parts'
+import { branchText, slotText, timeText, usageText, AcceptCard, ScheduleCard, TaskCard } from './cards'
 import { openTaskOrder, statusText, toneOf } from './status'
 import css from './ui.module.css'
 
@@ -10,29 +13,30 @@ type Pick =
   | { kind: 'schedule', schedule: ScheduleRow }
   | { kind: 'task', task: TaskRow }
 
-function usageText(usage?: TokenUsage | null): string {
-  if (!usage || usage.totalTokens <= 0) return ''
-  if (usage.totalTokens >= 1000) return `${(usage.totalTokens / 1000).toFixed(1)}k`
-  return String(usage.totalTokens)
-}
 
-function slotText(task: TaskRow): string {
-  const entries = Object.entries(task.slots ?? {})
-  if (entries.length > 0) return entries.map(([repo, slot]) => `${repo}/${slot.number ?? ''}`).join('　')
-  return (task.repos ?? []).join('　')
-}
 
-export function Tasks({ data, t, call, sessionId, focus }: {
+
+
+export function Tasks({ data, t, call, sessionId, focus, reload, ui }: {
   data: Snapshot
   t: Translate
   call: Call
   sessionId?: string
   /** 从概览点进来的任务：切页后自动选中并展开详情。 */
   focus?: { id: string, tick: number } | null
+  /** 操作完成后重新拉一次快照。 */
+  reload: () => void | Promise<void>
+  /** DSH 组件（Tooltip 等）。 */
+  ui?: UiKit
 }) {
   const [picked, setPicked] = useState<Pick | null>(null)
   const [diff, setDiff] = useState<TaskDiff | null>(null)
   const [pickTick, setPickTick] = useState(0)
+  /** null = 普通浏览；delete / accept = 正在批量选择。 */
+  const [mode, setMode] = useState<'delete' | 'accept' | null>(null)
+  const [chosen, setChosen] = useState<string[]>([])
+  const [busy, setBusy] = useState(false)
+  const [note, setNote] = useState('')
 
   const tasks = data.tasks ?? []
   const schedules = data.schedules ?? []
@@ -76,6 +80,51 @@ export function Tasks({ data, t, call, sessionId, focus }: {
     setPickTick((value) => value + 1)
   }
 
+  const run = async (endpoint: string, payload: Record<string, unknown>) => {
+    if (busy) return
+    setBusy(true)
+    setNote('')
+    try {
+      const result = await call(endpoint, { sessionId, ...payload }) as { deleteWarnings?: string[] } | undefined
+      const warnings = result?.deleteWarnings ?? []
+      if (warnings.length > 0) setNote(warnings.join('；'))
+      setMode(null)
+      setChosen([])
+      await reload()
+    } catch (reason) {
+      setNote(reason instanceof Error ? reason.message : String(reason))
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  const startMode = (next: 'delete' | 'accept') => {
+    setMode(next)
+    setChosen([])
+    setNote('')
+  }
+
+  const canPick = (task: TaskRow) => (mode === 'delete' ? task.deletable === true : task.selectable === true)
+
+  const togglePick = (task: TaskRow) => {
+    if (!canPick(task)) {
+      setNote(mode === 'delete'
+        ? t('note.notDeletable')
+        : t('note.notSelectable'))
+      return
+    }
+    setChosen((prev) => (prev.includes(task.id) ? prev.filter((id) => id !== task.id) : [...prev, task.id]))
+  }
+
+  const confirmBatch = () => {
+    if (chosen.length === 0) return
+    if (mode === 'delete') {
+      void run('task-delete', { ids: chosen })
+      return
+    }
+    void run('accept-start', { id: `b-${Date.now().toString(36)}`, taskIds: chosen })
+  }
+
   const panes: PaneDef[] = [
     {
       key: 'schedule',
@@ -95,17 +144,60 @@ export function Tasks({ data, t, call, sessionId, focus }: {
       key: 'dev',
       title: t('section.devTasks'),
       count: dev.length,
-      content: dev.length === 0
-        ? <Empty text={t('section.emptyDev')} />
-        : dev.map((task) => (
-          <DevRow
-            key={task.id}
-            task={task}
-            t={t}
-            selected={pickedTask?.id === task.id}
-            onSelect={() => pickTask(task)}
-          />
-        )),
+      content: (
+        <>
+          <div className={css.actionbar}>
+            <span className={css.actionbarText}>
+              {mode === null ? '' : (note !== '' ? note : `${t('note.selected')} ${chosen.length}`)}
+            </span>
+            {mode === null
+              ? (
+                <>
+                  <IconAction ui={ui} label={t('action.accept')} icon={<IconBadgeCheck />} onClick={() => startMode('accept')} />
+                  <IconAction ui={ui} label={t('action.batchDelete')} icon={<IconTrash />} onClick={() => startMode('delete')} />
+                </>
+              )
+              : (
+                <>
+                  <IconAction ui={ui} label={t('action.cancel')} icon={<IconCancel />} onClick={() => { setMode(null); setChosen([]); setNote('') }} />
+                  <IconAction ui={ui} label={t('action.selectAll')} icon={<IconSelectAll />} onClick={() => setChosen(dev.filter(canPick).map((task) => task.id))} />
+                  <IconAction
+                    ui={ui}
+                    label={busy
+                      ? (mode === 'delete' ? t('action.deleting') : t('action.working'))
+                      : `${mode === 'delete' ? t('action.batchDelete') : t('action.accept')} ${chosen.length}`}
+                    icon={mode === 'delete' ? <IconTrash /> : <IconBadgeCheck />}
+                    disabled={busy || chosen.length === 0}
+                    tone={mode === 'delete' ? 'danger' : 'primary'}
+                    onClick={confirmBatch}
+                  />
+                </>
+              )}
+          </div>
+          {dev.length === 0
+            ? <Empty text={t('section.emptyDev')} />
+            : dev.map((task) => (
+              <TaskItem
+                key={task.id}
+                task={task}
+                t={t}
+                variant="dev"
+                mode={mode}
+                picked={mode === null ? undefined : chosen.includes(task.id)}
+                selected={pickedTask?.id === task.id}
+                onSelect={() => (mode === null ? pickTask(task) : togglePick(task))}
+                ui={ui}
+                busy={busy}
+                onAction={mode === null
+                  ? (action) => {
+                    if (action === 'delete') void run('task-delete', { ids: [task.id] })
+                    else void run('accept-start', { id: `b-${Date.now().toString(36)}`, taskIds: [task.id] })
+                  }
+                  : undefined}
+              />
+            ))}
+        </>
+      ),
     },
     {
       key: 'accept',
@@ -114,11 +206,15 @@ export function Tasks({ data, t, call, sessionId, focus }: {
       content: accept.length === 0
         ? <Empty text={t('section.emptyAccept')} />
         : accept.map((batch) => (
-          <AcceptRow
+          <TaskItem
             key={batch.id}
-            batch={batch}
-            tasks={tasks}
+            task={batch}
             t={t}
+            variant="accept"
+            ui={ui}
+            busy={busy}
+            contained={containedTasks(tasks, batch)}
+            onJudge={(child, result) => { void run('accept-task', { id: batch.id, taskId: child.id, result }) }}
             selected={pickedTask?.id === batch.id}
             onSelect={() => pickTask(batch)}
           />
@@ -133,8 +229,16 @@ export function Tasks({ data, t, call, sessionId, focus }: {
             task={pickedTask}
             diff={diff}
             t={t}
+            ui={ui}
+            busy={busy}
             onPick={pickTask}
             contained={pickedTask.kind === 'accept' ? containedTasks(tasks, pickedTask) : undefined}
+            onAction={(action) => {
+              const endpoint = { pause: 'task-pause', resume: 'task-resume', stop: 'task-stop', merge: 'task-merge', delete: 'task-delete' }[action]
+              if (action === 'delete') void run('task-delete', { ids: [pickedTask.id] })
+              else void run(endpoint, { taskId: pickedTask.id })
+            }}
+            onJudge={(child, result) => { void run('accept-task', { id: pickedTask.id, taskId: child.id, result }) }}
           />
         )
         : pickedSchedule
@@ -164,13 +268,17 @@ function SchedulePane({
         return (
           <Item
             key={schedule.id}
-            icon={<span className={css.suffix}>{schedule.baseGroup ?? '·'}</span>}
+            icon={<IconSchedule />}
             title={schedule.title}
             titleAttr={schedule.title}
-            suffix={target ? [target.repo, target.number].filter(Boolean).join('/') : undefined}
+            suffix={[
+              schedule.baseGroup,
+              target ? [target.repo, target.number].filter(Boolean).join('/') : undefined,
+            ].filter(Boolean).join('　') || undefined}
             trail={<Status tone={toneOf(schedule.status)} label={statusText(t, schedule.status)} />}
             selected={pickedId === schedule.id}
             onClick={() => onPick(schedule)}
+            card={<ScheduleCard schedule={schedule} t={t} />}
           />
         )
       })}
@@ -179,27 +287,6 @@ function SchedulePane({
 }
 
 /* ── 开发任务 ─────────────────────────────────────────────────────── */
-
-function DevRow({
-  task, t, selected, onSelect,
-}: {
-  task: TaskRow
-  t: Translate
-  selected: boolean
-  onSelect: () => void
-}) {
-  return (
-    <Item
-      icon={<IconDevTask />}
-      title={task.title}
-      titleAttr={task.title}
-      suffix={slotText(task)}
-      trail={<Status tone={toneOf(task.status)} label={statusText(t, task.status)} />}
-      selected={selected}
-      onClick={onSelect}
-    />
-  )
-}
 
 /* ── 验收批次 ─────────────────────────────────────────────────────── */
 
@@ -223,6 +310,7 @@ function AcceptRow({
       trail={<span className={css.progress}>{`${passed}/${total}`}</span>}
       selected={selected}
       onClick={onSelect}
+      card={<AcceptCard batch={batch} contained={contained} t={t} />}
     />
   )
 }
@@ -263,12 +351,16 @@ function fileList(files: TaskDiffFile[], t: Translate) {
   )
 }
 
-function DetailPane({ task, diff, t, contained, onPick }: {
+function DetailPane({ task, diff, t, ui, contained, onPick, onAction, onJudge, busy }: {
   task: TaskRow
   diff: TaskDiff | null
   t: Translate
+  ui?: UiKit
   contained?: TaskRow[]
   onPick?: (task: TaskRow) => void
+  onAction?: (action: 'pause' | 'resume' | 'stop' | 'merge' | 'delete') => void
+  onJudge?: (child: TaskRow, result: 'accepted' | 'rejected') => void
+  busy?: boolean
 }) {
   const files = diff?.files ?? []
   const entries = Object.entries(task.bases ?? {})
@@ -283,6 +375,11 @@ function DetailPane({ task, diff, t, contained, onPick }: {
         <span className={css.detailHeadIcon}>{isBatch ? <IconAcceptTask /> : <IconDevTask />}</span>
         <span className={css.detailHeadTitle} title={task.title}>{task.title}</span>
         <Status tone={toneOf(task.status)} label={statusText(t, task.status)} />
+        {onAction === undefined && onJudge === undefined ? null : (
+          <span className={css.detailActions}>
+            {actionsFor(task, isBatch, t, onAction, busy)}
+          </span>
+        )}
       </div>
       {task.warnings && task.warnings.length > 0 ? <Alert items={task.warnings} /> : null}
       <div className={css.kvGrid}>
@@ -290,6 +387,7 @@ function DetailPane({ task, diff, t, contained, onPick }: {
         {kv(t('fact.branch'), Object.values(task.slots ?? {})[0]?.branch || '—')}
         {kv(t('fact.base'), base)}
         {kv(t('fact.usage'), usageText(task.usage) || '—')}
+        {kv(t('fact.createdAt'), timeText(task.createdAt) || '—')}
         {task.pausedAt ? kv(t('fact.paused'), task.pausedAt) : null}
         {task.stoppedAt ? kv(t('fact.stopped'), task.stoppedAt) : null}
         {isBatch && contained && contained.length > 0 ? kv(t('section.devTasks'), String(contained.length)) : null}
@@ -300,12 +398,33 @@ function DetailPane({ task, diff, t, contained, onPick }: {
         ? (
           <div className={css.detailList}>
             {contained.map((child) => (
-              <DevRow
+              <TaskItem
                 key={child.id}
                 task={child}
                 t={t}
+                variant="dev"
                 selected={false}
                 onSelect={() => onPick?.(child)}
+                actions={onJudge === undefined || task.status !== 'accepting'
+                  ? undefined
+                  : (
+                    <>
+                      <IconAction
+                        ui={ui}
+                        label={t('action.fail')}
+                        icon={<IconCircleX />}
+                        disabled={busy}
+                        onClick={(event) => { event.stopPropagation(); onJudge(child, 'rejected') }}
+                      />
+                      <IconAction
+                        ui={ui}
+                        label={t('action.pass')}
+                        icon={<IconCircleCheck />}
+                        disabled={busy}
+                        onClick={(event) => { event.stopPropagation(); onJudge(child, 'accepted') }}
+                      />
+                    </>
+                  )}
               />
             ))}
           </div>
@@ -331,6 +450,34 @@ function DetailPane({ task, diff, t, contained, onPick }: {
       {files.length > 0 ? fileList(files, t) : null}
     </div>
   )
+}
+
+function actionsFor(
+  task: TaskRow,
+  isBatch: boolean,
+  t: Translate,
+  onAction?: (action: 'pause' | 'resume' | 'stop' | 'merge' | 'delete') => void,
+  busy?: boolean,
+) {
+  if (onAction === undefined || isBatch) return null
+  const buttons: { key: 'pause' | 'resume' | 'stop' | 'merge' | 'delete', label: string, danger?: boolean }[] = []
+  if (task.pausedAt) buttons.push({ key: 'resume', label: t('action.resume') })
+  else if (task.status === 'developing') buttons.push({ key: 'pause', label: t('action.pause') })
+  if (task.status === 'developing' || task.pausedAt) buttons.push({ key: 'stop', label: t('action.stop') })
+  if (task.status === 'pending-merge') buttons.push({ key: 'merge', label: t('action.merge') })
+  if (task.deletable) buttons.push({ key: 'delete', label: t('action.delete'), danger: true })
+  if (buttons.length === 0) return null
+  return buttons.map((button) => (
+    <button
+      key={button.key}
+      type="button"
+      className={`${css.btn} ${button.danger ? css.btnDanger : css.btnPrimary}`}
+      disabled={busy}
+      onClick={() => onAction(button.key)}
+    >
+      {button.label}
+    </button>
+  ))
 }
 
 function ScheduleDetail({ schedule, t }: { schedule: ScheduleRow, t: Translate }) {
