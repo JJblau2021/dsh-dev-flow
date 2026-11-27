@@ -1,5 +1,5 @@
 import { createHash } from 'node:crypto'
-import { readFileSync, writeFileSync } from 'node:fs'
+import { readFileSync, renameSync, writeFileSync } from 'node:fs'
 import { createRequire } from 'node:module'
 import { dirname, relative, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -81,5 +81,9 @@ window.__ModuleLoader__.load({
 });
 `
 
-writeFileSync(resolve(root, 'client.js'), client)
+// 原子替换：先写临时文件再改名，避免宿主在构建中途读到半个 bundle 而整体白屏。
+const target = resolve(root, 'client.js')
+const temp = `${target}.tmp`
+writeFileSync(temp, client)
+renameSync(temp, target)
 console.log('built client.js')

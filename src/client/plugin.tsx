@@ -2,7 +2,8 @@ import { DIFF_KIND, DIFF_PATTERN, DIFF_TYPE_ID, diffAddress, diffTitle } from '.
 import { DiffTab } from './diff-tab'
 import { en, NAMESPACE, zh } from './locale'
 import { ensureSheet } from './sheet'
-import { Panel, SettingsForm, Title, WorkflowSwitch } from './pages'
+import { SettingsForm, Title, WorkflowSwitch } from './pages'
+import { Panel } from './panel/Panel'
 import type { Call, ClientContext, Translate } from './types'
 import { loadUi, type UiKit } from './ui'
 

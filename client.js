@@ -129,9 +129,6 @@ function loadUi() {
     return {};
   }
 }
-function Dot({ ui, state }) {
-  return ui.StateDot ? /* @__PURE__ */ React.createElement(ui.StateDot, { state }) : /* @__PURE__ */ React.createElement("span", { "data-state": state });
-}
 function ActionButton({
   ui,
   children,
@@ -544,12 +541,23 @@ var zh = {
   "project.active": "\u5F00\u53D1\u6D3B\u8DC3\u4E2D",
   "project.pending": "\u4EFB\u52A1\u5F85\u9A8C\u6536",
   "section.emptyProjects": "\u6CA1\u6709\u9879\u76EE",
+  "section.open": "\u6D3B\u8DC3\u4EFB\u52A1",
+  "nav.projects": "\u9879\u76EE",
+  "metric.dirtyBases": "\u57FA\u7EBF\u6539\u52A8",
   "section.scheduleTasks": "\u8C03\u5EA6\u4EFB\u52A1",
   "section.emptySchedule": "\u6CA1\u6709\u8C03\u5EA6\u4EFB\u52A1",
+  "section.scheduleHint": "\u8C03\u5EA6\u5668\u6BCF 30 \u79D2\u626B\u4E00\u6B21\u961F\u5217\uFF0C\u628A\u7B49\u5F85\u4E2D\u7684\u4EFB\u52A1\u6D3E\u7ED9\u7A7A\u95F2\u69FD\u4F4D",
+  "section.scheduleEvery": "\u6BCF 30 \u79D2\u5DE1\u68C0",
+  "fact.concurrency": "\u5E76\u53D1",
+  "fact.changeFiles": "\u6539\u52A8\u6587\u4EF6",
+  "action.expand": "\u5C55\u5F00",
+  "action.collapse": "\u6536\u8D77",
   "section.devTasks": "\u5F00\u53D1\u4EFB\u52A1",
   "section.acceptTasks": "\u9A8C\u6536\u4EFB\u52A1",
   "section.emptyDev": "\u6CA1\u6709\u5F00\u53D1\u4EFB\u52A1",
   "section.emptyAccept": "\u6CA1\u6709\u9A8C\u6536\u4EFB\u52A1",
+  "section.emptyDetail": "\u70B9\u51FB\u4EFB\u4E00\u8C03\u5EA6 / \u5F00\u53D1 / \u9A8C\u6536\u4EFB\u52A1\u67E5\u770B\u8BE6\u60C5",
+  "section.emptyBatchTasks": "\u672C\u6279\u6B21\u6CA1\u6709\u5173\u8054\u7684\u5F00\u53D1\u4EFB\u52A1",
   "fact.slot": "\u69FD\u4F4D",
   "fact.branch": "\u5206\u652F",
   "fact.base": "\u57FA\u7EBF",
@@ -628,7 +636,27 @@ var zh = {
   "status.rejected": "\u4E0D\u901A\u8FC7",
   "hint.order": "\u6309\u52FE\u9009\u987A\u5E8F\u5E76\u5165",
   "hint.pick": "\u5148\u52FE\u9009\u5F85\u9A8C\u6536\u4EFB\u52A1",
-  "hint.baseMismatch": "\u6240\u9009\u4EFB\u52A1\u7684\u57FA\u7EBF\u4E0D\u4E00\u81F4\uFF0C\u8BF7\u5206\u5F00\u9A8C\u6536"
+  "hint.baseMismatch": "\u6240\u9009\u4EFB\u52A1\u7684\u57FA\u7EBF\u4E0D\u4E00\u81F4\uFF0C\u8BF7\u5206\u5F00\u9A8C\u6536",
+  "slots.empty": "\u8FD8\u6CA1\u6709\u4ED3\u5E93",
+  "slots.emptyRepo": "\u8FD9\u4E2A\u4ED3\u5E93\u8FD8\u6CA1\u6709\u69FD\u4F4D",
+  "slots.accept": "\u9A8C\u6536",
+  "slots.acceptFree": "\u9A8C\u6536\u7A7A\u95F2",
+  "bases.empty": "\u8FD8\u6CA1\u6709\u57FA\u7EBF",
+  "bases.emptyGroup": "\u8FD9\u4E00\u7EC4\u8FD8\u6CA1\u6709\u6210\u5458",
+  "bases.repos": "\u4E2A\u9879\u76EE",
+  "bases.root": "\u6839\u76EE\u5F55\u68C0\u51FA",
+  "bases.slot": "\u57FA\u7EBF\u69FD\u4F4D",
+  "bases.busy": "\u88AB\u5360\u7528",
+  "bases.missing": "\u69FD\u4F4D\u7F3A\u5931",
+  "bases.none": "\u672A\u5EFA\u7ACB",
+  "agents.main": "\u4E3B\u4F1A\u8BDD",
+  "agents.sub": "\u5B50\u4EE3\u7406",
+  "agents.mainHint": "\u53EA\u505A\u8C03\u5EA6\uFF0C\u6BCF 30 \u79D2\u5DE1\u68C0",
+  "agents.notCounted": "\u4E0D\u8BA1\u5165",
+  "agents.running": "\u8FD0\u884C\u4E2D",
+  "agents.empty": "\u6CA1\u6709\u5B50\u4EE3\u7406",
+  "status.running": "\u8FD0\u884C\u4E2D",
+  "status.none": "\u672A\u5EFA\u7ACB"
 };
 var en = {
   "tab.title": "dev-flow",
@@ -636,6 +664,26 @@ var en = {
   "tab.description": "Tasks, slots, and agents for a multi-repo workspace",
   "switch.label": "Workflow",
   "page.overview": "Overview",
+  "slots.empty": "No repositories yet",
+  "slots.emptyRepo": "No slots in this repository",
+  "slots.accept": "Accept",
+  "slots.acceptFree": "Accept free",
+  "bases.empty": "No baselines yet",
+  "bases.emptyGroup": "No members in this group",
+  "bases.repos": "repos",
+  "bases.root": "Root checkout",
+  "bases.slot": "Base slot",
+  "bases.busy": "In use",
+  "bases.missing": "Slot missing",
+  "bases.none": "Not created",
+  "agents.main": "Main session",
+  "agents.sub": "Subagents",
+  "agents.mainHint": "Schedules only, sweeps every 30s",
+  "agents.notCounted": "Not counted",
+  "agents.running": "Running",
+  "agents.empty": "No subagents",
+  "status.running": "Running",
+  "status.none": "Not created",
   "page.tasks": "Tasks",
   "page.slots": "Slots",
   "page.agents": "Agents",
@@ -716,8 +764,15 @@ var en = {
   "project.active": "Development active",
   "project.pending": "Awaiting acceptance",
   "section.emptyProjects": "No projects",
+  "section.open": "Active",
+  "nav.projects": "Projects",
+  "metric.dirtyBases": "Changed bases",
   "section.scheduleTasks": "Scheduling",
   "section.emptySchedule": "No scheduling tasks",
+  "section.emptyDetail": "Pick a scheduled, dev or acceptance row to see details",
+  "section.emptyBatchTasks": "No dev tasks in this batch",
+  "fact.concurrency": "concurrency",
+  "fact.changeFiles": "Changed files",
   "section.devTasks": "Development",
   "section.acceptTasks": "Acceptance",
   "section.emptyDev": "No development tasks",
@@ -1404,9 +1459,6 @@ function WorkflowSwitch({
   };
   return /* @__PURE__ */ React.createElement("span", { className: "df-note", "data-on": enabled ? "true" : "false", title: error || (enabled ? "dev-flow \u5DF2\u5F00\u542F" : "dev-flow \u5DF2\u5173\u95ED") }, /* @__PURE__ */ React.createElement("span", { className: "df-note-title" }, "dev-flow"), /* @__PURE__ */ React.createElement("button", { type: "button", className: "df-toggle", role: "switch", "aria-checked": enabled, "aria-label": label, onClick: () => toggle(!enabled) }, /* @__PURE__ */ React.createElement("i", null)));
 }
-function Panel(props) {
-  return /* @__PURE__ */ React.createElement(PanelBoundary, null, /* @__PURE__ */ React.createElement(PanelView, { ...props }));
-}
 var PanelBoundary = class extends React.Component {
   state = { error: "" };
   static getDerivedStateFromError(error) {
@@ -1417,842 +1469,6 @@ var PanelBoundary = class extends React.Component {
     return this.props.children;
   }
 };
-function PanelView({ ui, sessionId, call, t, openDiff }) {
-  const [page, setPage] = useState2("overview");
-  const [data, setData] = useState2(null);
-  const [picked, setPicked] = useState2([]);
-  const { show, node } = useToast();
-  const load = (failure) => call("snapshot", { sessionId }).then((value) => {
-    const snapshot = normalizeSnapshot(value);
-    setData(snapshot);
-    if (failure) show(textOf(failure), "error");
-    else if (snapshot?.problem) show(snapshot.problem, "error");
-  }).catch((reason) => show(textOf(reason), "error"));
-  useEffect2(() => {
-    void load();
-  }, [sessionId]);
-  const pages = [
-    { value: "overview", label: t("page.overview"), id: "dev-flow-tab-overview", panelId: "dev-flow-panel-overview" },
-    { value: "tasks", label: t("page.tasks"), id: "dev-flow-tab-tasks", panelId: "dev-flow-panel-tasks" },
-    { value: "slots", label: t("page.slots"), id: "dev-flow-tab-slots", panelId: "dev-flow-panel-slots" },
-    { value: "bases", label: t("page.bases"), id: "dev-flow-tab-bases", panelId: "dev-flow-panel-bases" },
-    { value: "agents", label: t("page.agents"), id: "dev-flow-tab-agents", panelId: "dev-flow-panel-agents" }
-  ];
-  return /* @__PURE__ */ React.createElement("div", { className: "df" }, node, /* @__PURE__ */ React.createElement("div", { className: "df-toolbar" }, ui.SegmentedTabs ? /* @__PURE__ */ React.createElement(ui.SegmentedTabs, { size: "sm", label: t("tab.title"), items: pages, value: page, onChange: (value) => setPage(value) }) : /* @__PURE__ */ React.createElement("div", { role: "tablist", className: "df-filters" }, pages.map((item) => /* @__PURE__ */ React.createElement("button", { key: item.value, type: "button", "aria-selected": page === item.value, onClick: () => setPage(item.value) }, item.label))), /* @__PURE__ */ React.createElement(ActionButton, { ui, variant: "ghost", onClick: () => {
-    void load();
-  } }, t("action.refresh"))), !data ? null : data.problem ? null : !data.initialized ? /* @__PURE__ */ React.createElement(Uninitialized, { ui, t, sessionId, call, reload: load, workspace: data.workspace }) : /* @__PURE__ */ React.createElement(PageBody, { ui, page, data, t, picked, setPicked, sessionId, call, reload: load, show, openDiff }));
-}
-function Uninitialized({ ui, t, sessionId, call, reload, workspace }) {
-  return /* @__PURE__ */ React.createElement("div", { className: "df-empty" }, /* @__PURE__ */ React.createElement("p", null, t("empty.init")), workspace ? /* @__PURE__ */ React.createElement("p", { className: "df-meta" }, workspace) : null, /* @__PURE__ */ React.createElement(ActionButton, { ui, variant: "primary", onClick: () => {
-    call("init", { sessionId }).then(() => reload()).catch((reason) => reload(reason));
-  } }, t("action.init")));
-}
-function PageBody(props) {
-  if (props.page === "overview") return /* @__PURE__ */ React.createElement(Overview, { ui: props.ui, data: props.data, t: props.t });
-  if (props.page === "tasks") return /* @__PURE__ */ React.createElement(Tasks, { ...props });
-  if (props.page === "slots") return /* @__PURE__ */ React.createElement(Slots, { ui: props.ui, data: props.data, t: props.t });
-  if (props.page === "bases") return /* @__PURE__ */ React.createElement(Bases, { ui: props.ui, data: props.data, t: props.t, call: props.call, reload: props.reload, show: props.show, sessionId: props.sessionId });
-  return /* @__PURE__ */ React.createElement(Agents, { ui: props.ui, data: props.data, t: props.t });
-}
-var OVERVIEW_DEV_ORDER = {
-  failed: 0,
-  "pending-acceptance": 1,
-  "pending-merge": 2,
-  developing: 3,
-  waiting: 4,
-  paused: 5
-};
-var OVERVIEW_ACCEPT_STATUSES = /* @__PURE__ */ new Set(["accepting", "pending-merge"]);
-function newestFirst(left, right) {
-  return String(right.createdAt ?? "").localeCompare(String(left.createdAt ?? ""));
-}
-function overviewCounts(data, projectName) {
-  const emptyBases = { active: 0, dirty: 0, total: 0 };
-  const emptyTasks = { developing: 0, pending: 0, total: 0 };
-  if (projectName === void 0) {
-    return {
-      activeAgents: data.counts.activeAgents,
-      agentLimit: data.counts.agentLimit ?? 0,
-      baseSlots: data.counts.baseSlots ?? emptyBases,
-      devTasks: data.counts.devTasks ?? emptyTasks
-    };
-  }
-  const stats = (data.projects ?? []).find((project) => project.name === projectName)?.stats;
-  return {
-    activeAgents: stats?.activeAgents ?? 0,
-    agentLimit: data.counts.agentLimit,
-    baseSlots: stats?.baseSlots ?? emptyBases,
-    devTasks: stats?.devTasks ?? emptyTasks
-  };
-}
-function ProjectTag({ ui, tone, label, count }) {
-  return ui.Tag ? /* @__PURE__ */ React.createElement(ui.Tag, { tone, className: "df-project-tag" }, label, /* @__PURE__ */ React.createElement("span", { className: "df-status-count" }, count)) : /* @__PURE__ */ React.createElement("span", { className: "df-chip" }, label, /* @__PURE__ */ React.createElement("span", { className: "df-status-count" }, count));
-}
-function OverviewTaskRow({ ui, t, task }) {
-  const created = createdText(task.createdAt);
-  const status = shownStatus(task);
-  return /* @__PURE__ */ React.createElement("div", { className: "df-task-line", "data-tone": toneOf(status) }, /* @__PURE__ */ React.createElement("div", { className: "df-task-main" }, /* @__PURE__ */ React.createElement("span", { className: "df-name", title: `${task.title} \xB7 ${task.id}` }, task.title), /* @__PURE__ */ React.createElement("span", { className: "df-task-sub" }, task.repos.map((repo) => /* @__PURE__ */ React.createElement("span", { key: repo, className: "df-chip" }, repo)), task.base ? /* @__PURE__ */ React.createElement("span", { className: "df-chip" }, task.base) : null)), /* @__PURE__ */ React.createElement("div", { className: "df-task-side" }, task.agentStatus === "running" ? /* @__PURE__ */ React.createElement("span", { className: "df-live", "aria-hidden": "true" }) : null, created ? /* @__PURE__ */ React.createElement("span", { className: "df-meta" }, created) : null, /* @__PURE__ */ React.createElement(StatusTag, { ui, t, status })));
-}
-function OverviewAcceptRow({ ui, t, task }) {
-  const created = createdText(task.createdAt);
-  const count = (task.taskIds ?? []).length;
-  return /* @__PURE__ */ React.createElement("div", { className: "df-task-line", "data-tone": toneOf(task.status) }, /* @__PURE__ */ React.createElement("div", { className: "df-task-main" }, /* @__PURE__ */ React.createElement("span", { className: "df-name", title: `${task.title} \xB7 ${task.id}` }, task.title), /* @__PURE__ */ React.createElement("span", { className: "df-task-sub" }, task.repos.map((repo) => /* @__PURE__ */ React.createElement("span", { key: repo, className: "df-chip" }, repo)), count > 0 ? /* @__PURE__ */ React.createElement("span", { className: "df-meta" }, t("base.tasks").replace("{count}", String(count))) : null)), /* @__PURE__ */ React.createElement("div", { className: "df-task-side" }, created ? /* @__PURE__ */ React.createElement("span", { className: "df-meta" }, created) : null, /* @__PURE__ */ React.createElement(StatusTag, { ui, t, status: task.status })));
-}
-function CollapsiblePanel({
-  open,
-  onToggle,
-  title,
-  count,
-  children,
-  tools,
-  footer,
-  sash,
-  className,
-  bodyClassName,
-  style,
-  dataPane,
-  onHeadPointerDown
-}) {
-  return /* @__PURE__ */ React.createElement("section", { className: `df-view ${className ?? ""}`, "data-pane": dataPane, "data-open": open ? "true" : "false", style }, /* @__PURE__ */ React.createElement(
-    "button",
-    {
-      type: "button",
-      className: "df-view-head",
-      "aria-expanded": open,
-      onClick: onToggle,
-      onPointerDown: onHeadPointerDown
-    },
-    /* @__PURE__ */ React.createElement("span", { className: "df-view-chev", "aria-hidden": "true" }, /* @__PURE__ */ React.createElement(Chevron, null)),
-    title,
-    count === void 0 ? null : /* @__PURE__ */ React.createElement("span", { className: "df-view-count" }, count)
-  ), open ? /* @__PURE__ */ React.createElement(React.Fragment, null, tools, /* @__PURE__ */ React.createElement("div", { className: `df-view-body ${bodyClassName ?? ""}` }, children), footer) : null, sash);
-}
-function Overview({ ui, data, t }) {
-  const [scope, setScope] = useState2("all");
-  const [closed, setClosed] = useState2({});
-  const open = (id) => closed[id] !== true;
-  const toggle = (id) => setClosed((prev) => ({ ...prev, [id]: !prev[id] }));
-  const projects = data.projects ?? [];
-  const selected = projects.some((project) => project.name === scope) ? scope : "all";
-  const counts = overviewCounts(data, selected === "all" ? void 0 : selected);
-  const cards = [
-    {
-      key: "agents",
-      label: t("metric.agents"),
-      parts: [
-        { value: counts.activeAgents, tone: counts.activeAgents > 0 ? "info" : void 0 },
-        { value: counts.agentLimit }
-      ],
-      legend: `${t("metric.active")} / ${t("metric.limit")}`
-    },
-    {
-      key: "bases",
-      label: t("metric.baseSlots"),
-      parts: [
-        { value: counts.baseSlots.active },
-        { value: counts.baseSlots.dirty, tone: counts.baseSlots.dirty > 0 ? "warn" : void 0 },
-        { value: counts.baseSlots.total }
-      ],
-      legend: `${t("metric.active")} / ${t("base.dirty")} / ${t("metric.total")}`
-    },
-    {
-      key: "tasks",
-      label: t("metric.devTasks"),
-      parts: [
-        { value: counts.devTasks.developing, tone: counts.devTasks.developing > 0 ? "info" : void 0 },
-        { value: counts.devTasks.pending, tone: counts.devTasks.pending > 0 ? "warn" : void 0 },
-        { value: counts.devTasks.total }
-      ],
-      legend: `${t("filter.dev")} / ${t("filter.pending")} / ${t("metric.total")}`
-    }
-  ];
-  const inScope = (task) => selected === "all" || task.repos.includes(selected);
-  const devRows = (data.tasks ?? []).filter((task) => task.kind !== "accept" && OVERVIEW_DEV_ORDER[task.status] !== void 0 && inScope(task)).sort((left, right) => (OVERVIEW_DEV_ORDER[left.status] ?? 9) - (OVERVIEW_DEV_ORDER[right.status] ?? 9) || newestFirst(left, right));
-  const acceptRows = (data.tasks ?? []).filter((task) => task.kind === "accept" && OVERVIEW_ACCEPT_STATUSES.has(task.status) && inScope(task)).sort(newestFirst);
-  return /* @__PURE__ */ React.createElement("div", { className: "df-scroll" }, /* @__PURE__ */ React.createElement(
-    CollapsiblePanel,
-    {
-      className: "df-fold",
-      open: open("metrics"),
-      onToggle: () => toggle("metrics"),
-      title: t("overview.metrics"),
-      bodyClassName: "df-fold-body"
-    },
-    /* @__PURE__ */ React.createElement("div", { className: "df-scope" }, /* @__PURE__ */ React.createElement("div", { className: "df-filters" }, ui.Pill ? /* @__PURE__ */ React.createElement(ui.Pill, { active: selected === "all", onClick: () => setScope("all") }, t("filter.allProjects"), /* @__PURE__ */ React.createElement("span", { className: "df-filter-count" }, projects.length)) : /* @__PURE__ */ React.createElement("button", { type: "button", "aria-pressed": selected === "all", onClick: () => setScope("all") }, t("filter.allProjects"), /* @__PURE__ */ React.createElement("span", { className: "df-filter-count" }, projects.length)), projects.map((project) => ui.Pill ? /* @__PURE__ */ React.createElement(ui.Pill, { key: project.name, active: selected === project.name, onClick: () => setScope(project.name) }, project.name) : /* @__PURE__ */ React.createElement("button", { key: project.name, type: "button", "aria-pressed": selected === project.name, onClick: () => setScope(project.name) }, project.name)))),
-    /* @__PURE__ */ React.createElement("div", { className: "df-metrics" }, cards.map((card) => /* @__PURE__ */ React.createElement("div", { key: card.key, className: "df-metric" }, /* @__PURE__ */ React.createElement("div", { className: "df-kicker" }, card.label), /* @__PURE__ */ React.createElement("div", { className: "df-metric-value" }, card.parts.map((part, index) => /* @__PURE__ */ React.createElement("span", { key: `${card.key}:${index}`, className: "df-metric-part" }, index > 0 ? /* @__PURE__ */ React.createElement("span", { className: "df-metric-sep", "aria-hidden": "true" }, "/") : null, /* @__PURE__ */ React.createElement("strong", { "data-tone": part.tone }, part.value)))), card.legend ? /* @__PURE__ */ React.createElement("span", { className: "df-metric-legend" }, card.legend) : null)))
-  ), /* @__PURE__ */ React.createElement(
-    CollapsiblePanel,
-    {
-      className: "df-fold",
-      open: open("projects"),
-      onToggle: () => toggle("projects"),
-      title: t("section.projects"),
-      count: projects.length,
-      bodyClassName: "df-fold-body"
-    },
-    projects.length === 0 ? /* @__PURE__ */ React.createElement("p", { className: "df-empty-line" }, t("section.emptyProjects")) : /* @__PURE__ */ React.createElement("div", { className: "df-card" }, projects.map((project) => {
-      const stats = project.stats;
-      const dirty = stats?.baseSlots.dirty ?? 0;
-      const active = stats?.devTasks.developing ?? 0;
-      const pending = stats?.devTasks.pending ?? 0;
-      return /* @__PURE__ */ React.createElement("article", { key: project.name, className: "df-project", "data-scoped": selected === project.name ? "true" : "false", title: project.path }, /* @__PURE__ */ React.createElement("div", { className: "df-project-head" }, /* @__PURE__ */ React.createElement("span", { className: "df-name" }, project.name), project.branch ? /* @__PURE__ */ React.createElement("span", { className: "df-branch" }, project.branch) : null, /* @__PURE__ */ React.createElement("div", { className: "df-project-status" }, dirty > 0 ? /* @__PURE__ */ React.createElement(ProjectTag, { ui, tone: "danger", label: t("project.dirty"), count: dirty }) : null, active > 0 ? /* @__PURE__ */ React.createElement(ProjectTag, { ui, tone: "info", label: t("project.active"), count: active }) : null, pending > 0 ? /* @__PURE__ */ React.createElement(ProjectTag, { ui, tone: "warning", label: t("project.pending"), count: pending }) : null, dirty + active + pending === 0 ? /* @__PURE__ */ React.createElement("span", { className: "df-meta" }, t("project.idle")) : null)), project.description ? /* @__PURE__ */ React.createElement("p", { className: "df-project-desc" }, project.description) : null);
-    }))
-  ), /* @__PURE__ */ React.createElement(
-    CollapsiblePanel,
-    {
-      className: "df-fold df-fold-fill",
-      open: open("tasks"),
-      onToggle: () => toggle("tasks"),
-      title: t("overview.tasks"),
-      count: devRows.length + acceptRows.length,
-      bodyClassName: "df-fold-body-fill"
-    },
-    /* @__PURE__ */ React.createElement("section", { className: "df-task-panel" }, devRows.length === 0 && acceptRows.length === 0 ? /* @__PURE__ */ React.createElement("div", { className: "df-task-rest" }, t("overview.noTasks")) : /* @__PURE__ */ React.createElement(React.Fragment, null, devRows.length > 0 ? /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("h4", { className: "df-subsection" }, t("section.devTasks"), /* @__PURE__ */ React.createElement("span", { className: "df-subsection-count" }, devRows.length)), /* @__PURE__ */ React.createElement("div", { className: "df-card" }, devRows.map((task) => /* @__PURE__ */ React.createElement(OverviewTaskRow, { key: task.id, ui, t, task })))) : null, acceptRows.length > 0 ? /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("h4", { className: "df-subsection" }, t("section.acceptTasks"), /* @__PURE__ */ React.createElement("span", { className: "df-subsection-count" }, acceptRows.length)), /* @__PURE__ */ React.createElement("div", { className: "df-card" }, acceptRows.map((task) => /* @__PURE__ */ React.createElement(OverviewAcceptRow, { key: task.id, ui, t, task })))) : null, /* @__PURE__ */ React.createElement("div", { className: "df-task-rest" }, t("overview.allShown"))))
-  ));
-}
-function Tasks({
-  ui,
-  data,
-  t,
-  picked,
-  setPicked,
-  sessionId,
-  call,
-  reload,
-  show,
-  openDiff
-}) {
-  const [filter, setFilter] = useState2("all");
-  const [busy, setBusy] = useState2(false);
-  const [opened, setOpened] = useState2({});
-  const [scheduleOpen, setScheduleOpen] = useState2({});
-  const [pickedBatches, setPickedBatches] = useState2([]);
-  const [selectionMode, setSelectionMode] = useState2(null);
-  const [removing, setRemoving] = useState2(false);
-  const [details, setDetails] = useState2({});
-  const detailProps = (id) => ({
-    detailsOpen: details[id] === true,
-    onToggleDetails: () => setDetails({ ...details, [id]: !details[id] })
-  });
-  const [layout, setLayout] = useState2(loadPaneLayout);
-  const [dropY, setDropY] = useState2(null);
-  const dragged = useRef2(false);
-  const dropAt = useRef2(null);
-  const splitRef = useRef2(null);
-  const { order, open, heights } = layout;
-  const newest = (left, right) => String(right.createdAt ?? "").localeCompare(String(left.createdAt ?? ""));
-  const devAll = data.tasks.filter((task) => task.kind !== "accept").sort(newest);
-  const devRows = devAll.filter((task) => matchFilter(filter, task));
-  const acceptRows = data.tasks.filter((task) => task.kind === "accept").sort(newest);
-  const reason = acceptReason(data, picked, t);
-  const pickedDev = data.tasks.filter((task) => task.kind !== "accept" && picked.includes(task.id));
-  const acceptSelected = pickedDev.filter((task) => task.selectable === true);
-  const deleteSelected = pickedDev.filter((task) => task.deletable === true);
-  const deleteBlocked = pickedDev.filter((task) => task.deletable !== true);
-  const deleteHint = t("hint.deleteTasks").replace("{count}", String(deleteSelected.length));
-  const chooseMode = (next) => {
-    setSelectionMode((current) => current === next ? null : next);
-    setPicked([]);
-  };
-  const deleteReason = deleteBlocked.length === 0 ? "" : `${t("hint.deleteBlocked")}\uFF1A${deleteBlocked.map((task) => task.title).join("\u3001")}`;
-  const filters = [
-    ["all", t("filter.all")],
-    ["pending", t("filter.pending")],
-    ["dev", t("filter.dev")],
-    ["earlier", t("filter.earlier")]
-  ];
-  const launch = () => {
-    if (busy || reason !== "") return;
-    setBusy(true);
-    start(call, sessionId, acceptSelected.map((task) => task.id), setPicked, reload).then(() => {
-      setSelectionMode(null);
-      show(t("toast.started"), "info");
-    }).catch(() => void 0).finally(() => setBusy(false));
-  };
-  const removeOne = (id) => {
-    void removeTasks(call, sessionId, [id], picked, setPicked, setRemoving, reload, show, t);
-  };
-  const removeSelected = () => {
-    void removeTasks(call, sessionId, deleteSelected.map((task) => task.id), picked, setPicked, setRemoving, reload, show, t);
-  };
-  const resizePane = (id, event) => {
-    event.preventDefault();
-    event.stopPropagation();
-    const section = event.currentTarget.parentElement;
-    const parent = splitRef.current;
-    if (!section || !parent) return;
-    const startY = event.clientY;
-    const startHeight = section.getBoundingClientRect().height;
-    const limit = parent.getBoundingClientRect().height;
-    const move = (next) => {
-      const height = Math.round(Math.min(Math.max(120, limit - 80), Math.max(120, startHeight + next.clientY - startY)));
-      setLayout((prev) => ({ ...prev, heights: { ...prev.heights, [id]: height } }));
-    };
-    const stop = () => {
-      window.removeEventListener("pointermove", move);
-      window.removeEventListener("pointerup", stop);
-    };
-    event.currentTarget.setPointerCapture(event.pointerId);
-    window.addEventListener("pointermove", move);
-    window.addEventListener("pointerup", stop);
-  };
-  const pressHeader = (id, event) => {
-    if (event.button !== 0) return;
-    const startY = event.clientY;
-    let moved = false;
-    const move = (next) => {
-      if (!moved && Math.abs(next.clientY - startY) < 4) return;
-      moved = true;
-      dragged.current = true;
-      const parent = splitRef.current;
-      if (!parent) return;
-      const parentRect = parent.getBoundingClientRect();
-      const sections = [...parent.querySelectorAll("[data-pane]")];
-      let index = sections.length;
-      let line = parentRect.height;
-      for (let i = 0; i < sections.length; i += 1) {
-        const rect = sections[i].getBoundingClientRect();
-        if (next.clientY < rect.top + rect.height / 2) {
-          index = i;
-          line = rect.top - parentRect.top;
-          break;
-        }
-      }
-      dropAt.current = index;
-      setDropY(line);
-    };
-    const stop = () => {
-      window.removeEventListener("pointermove", move);
-      window.removeEventListener("pointerup", stop);
-      const index = dropAt.current;
-      dropAt.current = null;
-      setDropY(null);
-      if (!moved || index === null) return;
-      setLayout((prev) => {
-        const from = prev.order.indexOf(id);
-        if (from < 0 || index === from || index === from + 1) return prev;
-        const next = prev.order.filter((item) => item !== id);
-        next.splice(index > from ? index - 1 : index, 0, id);
-        return { ...prev, order: next };
-      });
-    };
-    window.addEventListener("pointermove", move);
-    window.addEventListener("pointerup", stop);
-  };
-  useEffect2(() => {
-    savePaneLayout(layout);
-  }, [layout]);
-  const schedules = [...data.schedules ?? []].sort((left, right) => String(right.createdAt ?? "").localeCompare(String(left.createdAt ?? "")));
-  const visible = order.filter((id) => open[id]);
-  const paneStyle = (id) => {
-    if (!open[id] || visible.length < 2 || id === visible[visible.length - 1]) return void 0;
-    return { flex: `0 0 ${heights[id] ?? 220}px` };
-  };
-  const togglePane = (id) => {
-    if (dragged.current) {
-      dragged.current = false;
-      return;
-    }
-    setLayout((prev) => ({ ...prev, open: { ...prev.open, [id]: !prev.open[id] } }));
-  };
-  return /* @__PURE__ */ React.createElement("div", { className: "df-views", ref: splitRef }, dropY !== null ? /* @__PURE__ */ React.createElement("div", { className: "df-drop", style: { top: dropY } }) : null, order.map((id) => {
-    const laterOpen = order.slice(order.indexOf(id) + 1).some((next) => open[next]);
-    const title = id === "schedule" ? t("section.scheduleTasks") : id === "dev" ? t("section.devTasks") : t("section.acceptTasks");
-    const count = id === "schedule" ? schedules.length : id === "dev" ? devAll.length : acceptRows.length;
-    const tools = id === "dev" ? /* @__PURE__ */ React.createElement("div", { className: "df-pane-tools" }, /* @__PURE__ */ React.createElement("div", { className: "df-filters" }, filters.map(([value, label]) => {
-      const count2 = devAll.filter((task) => matchFilter(value, task)).length;
-      const text = `${label} ${count2}`;
-      return ui.Pill ? /* @__PURE__ */ React.createElement(ui.Pill, { key: value, active: filter === value, onClick: () => setFilter(value) }, text) : /* @__PURE__ */ React.createElement("button", { key: value, type: "button", "aria-pressed": filter === value, onClick: () => setFilter(value) }, text);
-    })), /* @__PURE__ */ React.createElement("div", { className: "df-pane-actions" }, /* @__PURE__ */ React.createElement(
-      ActionButton,
-      {
-        ui,
-        variant: "ghost",
-        className: `df-icon-btn${selectionMode === "delete" ? " df-icon-btn-active" : ""}`,
-        title: t("action.delete"),
-        ariaLabel: t("action.delete"),
-        onClick: () => chooseMode("delete")
-      },
-      /* @__PURE__ */ React.createElement(TrashIcon, null),
-      deleteSelected.length > 0 ? /* @__PURE__ */ React.createElement("span", { className: "df-icon-badge" }, deleteSelected.length) : null
-    ), /* @__PURE__ */ React.createElement(
-      ActionButton,
-      {
-        ui,
-        variant: "ghost",
-        className: `df-icon-btn${selectionMode === "accept" ? " df-icon-btn-active" : ""}`,
-        title: t("action.accept"),
-        ariaLabel: t("action.accept"),
-        onClick: () => chooseMode("accept")
-      },
-      /* @__PURE__ */ React.createElement(AcceptIcon, null),
-      acceptSelected.length > 0 ? /* @__PURE__ */ React.createElement("span", { className: "df-icon-badge" }, acceptSelected.length) : null
-    ))) : void 0;
-    const footer = id === "dev" && selectionMode !== null ? /* @__PURE__ */ React.createElement("div", { className: "df-foot" }, selectionMode === "accept" ? /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement(ActionButton, { ui, className: "df-go", variant: "primary", disabled: busy || reason !== "" || acceptSelected.length === 0, title: reason, onClick: launch }, busy ? t("action.working") : `${t("action.accept")} (${acceptSelected.length})`), /* @__PURE__ */ React.createElement("p", { className: "df-hint" }, reason !== "" ? reason : `${t("hint.order")}\uFF1A${acceptSelected.map((task) => task.title).join(" \u2192 ")}`)) : /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement(ActionButton, { ui, className: "df-go", disabled: removing || deleteReason !== "" || deleteSelected.length === 0, title: deleteReason || deleteHint, onClick: removeSelected }, removing ? t("action.deleting") : `${t("action.delete")} (${deleteSelected.length})`), /* @__PURE__ */ React.createElement("p", { className: "df-hint" }, deleteReason !== "" ? deleteReason : deleteHint)), /* @__PURE__ */ React.createElement(ActionButton, { ui, variant: "ghost", className: "df-cancel", onClick: () => chooseMode(selectionMode) }, t("action.cancel"))) : id === "accept" && pickedBatches.length > 0 ? /* @__PURE__ */ React.createElement("div", { className: "df-foot" }, /* @__PURE__ */ React.createElement(ActionButton, { ui, className: "df-go", disabled: removing, onClick: () => removeBatches(call, sessionId, pickedBatches, setPickedBatches, setRemoving, reload, show) }, removing ? t("action.deleting") : t("action.delete")), /* @__PURE__ */ React.createElement("p", { className: "df-hint" }, `${pickedBatches.length} \u4E2A\u9A8C\u6536\u4EFB\u52A1\uFF0C\u5220\u9664\u65F6\u4E00\u5E76\u5220\u6389\u9A8C\u6536\u5206\u652F`)) : void 0;
-    return /* @__PURE__ */ React.createElement(
-      CollapsiblePanel,
-      {
-        key: id,
-        open: open[id],
-        onToggle: () => togglePane(id),
-        onHeadPointerDown: (event) => pressHeader(id, event),
-        title,
-        count,
-        dataPane: id,
-        style: paneStyle(id),
-        tools,
-        footer,
-        sash: open[id] && laterOpen ? /* @__PURE__ */ React.createElement("div", { className: "df-sash", role: "separator", "aria-orientation": "horizontal", "aria-label": "\u8C03\u6574\u9762\u677F\u9AD8\u5EA6", onPointerDown: (event) => resizePane(id, event) }) : null
-      },
-      id === "schedule" ? schedules.length === 0 ? /* @__PURE__ */ React.createElement("div", { className: "df-empty" }, /* @__PURE__ */ React.createElement("p", null, t("section.emptySchedule"))) : schedules.map((schedule) => /* @__PURE__ */ React.createElement(ScheduleItem, { key: schedule.id, ui, t, schedule, open: scheduleOpen[schedule.id] === true, onToggle: () => setScheduleOpen({ ...scheduleOpen, [schedule.id]: scheduleOpen[schedule.id] !== true }) })) : null,
-      id === "dev" ? /* @__PURE__ */ React.createElement("div", { className: "df-card" }, devRows.length === 0 ? /* @__PURE__ */ React.createElement("div", { className: "df-empty" }, /* @__PURE__ */ React.createElement("p", null, t("section.emptyDev"))) : devRows.map((task) => /* @__PURE__ */ React.createElement(DevTaskItem, { key: task.id, ui, t, task, picked, setPicked, sessionId, call, reload, show, selectionMode, onDeleteTask: removeOne, ...detailProps(task.id), onOpenDiff: (file, index) => openDiff?.(task.id, task.title, index) }))) : null,
-      id === "accept" ? /* @__PURE__ */ React.createElement("div", { className: "df-card" }, acceptRows.length === 0 ? /* @__PURE__ */ React.createElement("div", { className: "df-empty" }, /* @__PURE__ */ React.createElement("p", null, t("section.emptyAccept"))) : acceptRows.map((batch) => {
-        const children = containedTasks(data, batch);
-        const open2 = children.length > 0 && (opened[batch.id] ?? batch.status === "accepting");
-        const deletable = batch.status !== "accepting";
-        return /* @__PURE__ */ React.createElement(
-          AcceptTaskItem,
-          {
-            key: batch.id,
-            ui,
-            t,
-            batch,
-            picked,
-            setPicked,
-            sessionId,
-            call,
-            reload,
-            show,
-            pickedBatches,
-            setPickedBatches,
-            open: open2,
-            onToggle: children.length > 0 ? () => setOpened({ ...opened, [batch.id]: !open2 }) : void 0,
-            children
-          }
-        );
-      })) : null
-    );
-  }));
-}
-var PANE_KEY = "dsh-dev-flow.task-panes";
-var PANE_IDS = ["schedule", "dev", "accept"];
-function isPaneId(value) {
-  return PANE_IDS.includes(value);
-}
-function loadPaneLayout() {
-  const fallback = { order: [...PANE_IDS], open: { schedule: true, dev: true, accept: true }, heights: { schedule: 220, dev: 260, accept: 220 } };
-  try {
-    const raw = localStorage.getItem(PANE_KEY);
-    if (!raw) return fallback;
-    const parsed = JSON.parse(raw);
-    const order = (parsed.order ?? []).filter(isPaneId);
-    for (const id of PANE_IDS) if (!order.includes(id)) order.push(id);
-    return {
-      order,
-      open: { schedule: parsed.open?.schedule !== false, dev: parsed.open?.dev !== false, accept: parsed.open?.accept !== false },
-      heights: { ...fallback.heights, ...parsed.heights }
-    };
-  } catch {
-    return fallback;
-  }
-}
-function savePaneLayout(layout) {
-  try {
-    localStorage.setItem(PANE_KEY, JSON.stringify(layout));
-  } catch {
-  }
-}
-function toneOf(status) {
-  if (status === "merged" || status === "accepted" || status === "dispatched") return "success";
-  if (status === "failed" || status === "rejected") return "error";
-  if (status === "pending-merge" || status === "waiting" || status === "pending-acceptance" || status === "accepting" || status === "awaiting-agent" || status === "paused") return "warn";
-  if (status === "developing" || status === "running" || status === "scheduling") return "info";
-  return "neutral";
-}
-function Chevron() {
-  return /* @__PURE__ */ React.createElement("svg", { width: "10", height: "10", viewBox: "0 0 10 10", "aria-hidden": "true", focusable: "false" }, /* @__PURE__ */ React.createElement("path", { d: "M1.6 3.6 L5 7 L8.4 3.6", fill: "none", stroke: "currentColor", strokeWidth: "1.4", strokeLinecap: "round", strokeLinejoin: "round" }));
-}
-function TrashIcon() {
-  return /* @__PURE__ */ React.createElement("svg", { width: "14", height: "14", viewBox: "0 0 16 16", "aria-hidden": "true", focusable: "false" }, /* @__PURE__ */ React.createElement("path", { d: "M2.5 4.2h11M6 4.2V2.6h4v1.6M4.1 4.2l.7 9.2h6.4l.7-9.2M6.6 6.6v4.6M9.4 6.6v4.6", fill: "none", stroke: "currentColor", strokeWidth: "1.2", strokeLinecap: "round", strokeLinejoin: "round" }));
-}
-function AcceptIcon() {
-  return /* @__PURE__ */ React.createElement("svg", { width: "14", height: "14", viewBox: "0 0 16 16", "aria-hidden": "true", focusable: "false" }, /* @__PURE__ */ React.createElement("circle", { cx: "8", cy: "8", r: "5.7", fill: "none", stroke: "currentColor", strokeWidth: "1.2" }), /* @__PURE__ */ React.createElement("path", { d: "M5.1 8.1l1.9 1.9 3.9-4", fill: "none", stroke: "currentColor", strokeWidth: "1.3", strokeLinecap: "round", strokeLinejoin: "round" }));
-}
-function TreeItem({
-  kind,
-  title,
-  chips,
-  leading,
-  actions,
-  facts,
-  expanded = false,
-  expandable = false,
-  onToggle,
-  onClick,
-  children,
-  depth = 0,
-  tone,
-  time
-}) {
-  const row = onToggle ?? onClick;
-  return /* @__PURE__ */ React.createElement("div", { className: `df-tree df-tree-${kind}`, "data-tone": tone ?? "neutral", "data-open": expanded ? "true" : "false", "data-clickable": row ? "true" : "false", "data-depth": depth, tabIndex: row ? 0 : void 0, onKeyDown: (event) => {
-    if (event.key === "Enter" || event.key === " ") {
-      event.preventDefault();
-      row?.();
-    }
-  } }, /* @__PURE__ */ React.createElement("div", { className: "df-tree-head", onClick: (event) => {
-    const target = event.target;
-    if (target && target.closest(".df-tree") !== event.currentTarget.parentElement) return;
-    row?.();
-  } }, expandable ? /* @__PURE__ */ React.createElement("button", { type: "button", className: "df-chev", "data-expanded": expanded ? "true" : "false", "aria-expanded": expanded, onClick: (event) => {
-    event.stopPropagation();
-    onToggle?.();
-  } }, /* @__PURE__ */ React.createElement(Chevron, null)) : /* @__PURE__ */ React.createElement("span", { className: "df-chev-space", "aria-hidden": "true" }), leading, /* @__PURE__ */ React.createElement("span", { className: "df-tree-content" }, /* @__PURE__ */ React.createElement("span", { className: "df-tree-title" }, title), chips.length > 0 ? /* @__PURE__ */ React.createElement("span", { className: "df-chips df-task-chips" }, chips.map((chip) => /* @__PURE__ */ React.createElement("span", { key: chip, className: "df-chip" }, chip))) : null), /* @__PURE__ */ React.createElement("span", { className: "df-actions" }, time ? /* @__PURE__ */ React.createElement("span", { className: "df-tree-time" }, time) : null, actions)), expanded && facts && facts.length > 0 ? /* @__PURE__ */ React.createElement("div", { className: "df-facts" }, facts.map((fact, index) => /* @__PURE__ */ React.createElement("div", { key: `${index}-${fact.slot}-${fact.detail}`, className: fact.wide ? "df-fact df-fact-wide" : "df-fact" }, /* @__PURE__ */ React.createElement("span", { className: "df-fact-slot" }, fact.slot), fact.detail ? /* @__PURE__ */ React.createElement("span", { className: "df-fact-detail" }, fact.detail) : null))) : null, expanded && children ? /* @__PURE__ */ React.createElement("div", { className: "df-tree-children" }, children) : null);
-}
-function ScheduleItem({ ui, t, schedule, open, onToggle, depth = 0 }) {
-  const tasks = [...schedule.tasks ?? []].sort((left, right) => String(right.createdAt ?? "").localeCompare(String(left.createdAt ?? "")));
-  const [openTasks, setOpenTasks] = useState2({});
-  return /* @__PURE__ */ React.createElement(
-    TreeItem,
-    {
-      kind: "schedule",
-      title: schedule.title,
-      chips: [
-        ...schedule.baseGroup ? [`#${schedule.baseGroup}`] : [],
-        ...schedule.base ? [schedule.base] : [],
-        ...schedule.usage?.totalTokens ? [formatTokens(schedule.usage.totalTokens)] : []
-      ],
-      time: createdText(schedule.createdAt),
-      actions: /* @__PURE__ */ React.createElement(StatusTag, { ui, t, status: schedule.status }),
-      facts: [
-        ...schedule.base ? [{ slot: t("page.bases"), detail: schedule.baseGroup ? `#${schedule.baseGroup} \xB7 ${schedule.base}` : schedule.base }] : [],
-        ...(schedule.warnings ?? []).map((warning) => ({ slot: t("fact.warning"), detail: warning })),
-        ...usageRows(schedule.usage, t)
-      ],
-      expandable: true,
-      expanded: open,
-      onToggle,
-      depth,
-      tone: toneOf(schedule.status)
-    },
-    tasks.map((task) => {
-      const facts = [
-        {
-          slot: "\u4F9D\u8D56",
-          detail: task.dependsOn.length === 0 ? "\u65E0" : task.dependsOn.map((dep) => `${dep.title}${dep.merged ? `\uFF0C\u5DF2\u5E76\u5165 ${dep.branch}` : "\uFF0C\u672A\u5E76\u5165"}`).join("\uFF1B")
-        },
-        ...task.slots.map((slot) => ({
-          slot: "\u69FD\u4F4D",
-          detail: `${slot.number ? `${slot.repo}-${slot.number}` : slot.repo}${slot.branch ? ` \xB7 ${slot.branch}` : ""}`
-        })),
-        ...usageRows(task.usage, t)
-      ];
-      return /* @__PURE__ */ React.createElement(
-        TreeItem,
-        {
-          key: task.id,
-          kind: "dev",
-          title: task.title,
-          chips: task.slots.map((slot) => slot.number ? `${slot.repo}-${slot.number}` : slot.repo),
-          actions: /* @__PURE__ */ React.createElement(StatusTag, { ui, t, status: shownStatus({ ...task, kind: "dev", repos: [] }) }),
-          facts,
-          expandable: true,
-          expanded: openTasks[task.id] === true,
-          onToggle: () => setOpenTasks({ ...openTasks, [task.id]: openTasks[task.id] !== true }),
-          depth: depth + 1
-        }
-      );
-    })
-  );
-}
-function DevTaskItem({
-  ui,
-  t,
-  task,
-  picked,
-  setPicked,
-  sessionId,
-  call,
-  reload,
-  show,
-  selectionMode = null,
-  detailsOpen = false,
-  onToggleDetails,
-  onOpenDiff,
-  onDeleteTask,
-  nested = false,
-  reviewing = false,
-  batchId,
-  depth = 0
-}) {
-  const facts = taskFacts(task, t);
-  const deps = task.dependsOn ?? [];
-  const [openDeps, setOpenDeps] = useState2({});
-  const [selfOpen, setSelfOpen] = useState2(false);
-  const [diff, setDiff] = useState2(null);
-  const loadDiff = () => {
-    if (diff !== null || !call || nested) return;
-    call("task-diff", { sessionId, taskId: task.id }).then((value) => setDiff(value)).catch(() => setDiff({ files: [], repos: [] }));
-  };
-  const toggle = () => {
-    if (!openDetails) loadDiff();
-    toggleDetails();
-  };
-  const openDetails = onToggleDetails === void 0 ? selfOpen : detailsOpen;
-  const toggleDetails = onToggleDetails ?? (() => setSelfOpen(!selfOpen));
-  const expandable = facts.length > 0 || deps.length > 0;
-  const selectable = selectionMode === "accept" ? task.selectable === true : task.deletable === true;
-  const checked = selectable && picked.includes(task.id);
-  const leading = !nested && selectionMode !== null ? /* @__PURE__ */ React.createElement("input", { className: "df-check", type: "checkbox", checked, disabled: !selectable, title: selectable ? void 0 : t("hint.notSelectable"), onClick: (event) => event.stopPropagation(), onChange: () => {
-    if (selectable) setPicked(togglePick(picked, task.id));
-  } }) : void 0;
-  return /* @__PURE__ */ React.createElement(
-    TreeItem,
-    {
-      kind: "dev",
-      title: task.title,
-      chips: task.kind === "accept" ? [...baseChips(task), ...taskBranchChips(task), ...taskChips(task)] : [...baseBranchChips(task), ...taskBranchChips(task)],
-      time: createdText(task.createdAt),
-      leading,
-      actions: /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement(StatusTag, { ui, t, status: shownStatus(task) }), !nested && call && reload && task.kind !== "accept" ? /* @__PURE__ */ React.createElement(React.Fragment, null, task.status === "developing" ? /* @__PURE__ */ React.createElement(ActionButton, { ui, title: t("hint.pause"), onClick: (event) => {
-        event.stopPropagation();
-        controlTask(call, sessionId, task.id, "pause", reload, show, t);
-      } }, t("action.pause")) : null, task.status === "paused" ? /* @__PURE__ */ React.createElement(ActionButton, { ui, title: t("hint.resume"), onClick: (event) => {
-        event.stopPropagation();
-        controlTask(call, sessionId, task.id, "resume", reload, show, t);
-      } }, t("action.resume")) : null, task.status === "developing" || task.status === "paused" || task.status === "waiting" || task.status === "failed" ? /* @__PURE__ */ React.createElement(ActionButton, { ui, title: t("hint.stop"), onClick: (event) => {
-        event.stopPropagation();
-        controlTask(call, sessionId, task.id, "stop", reload, show, t);
-      } }, t("action.stop")) : null) : null, task.status === "pending-merge" && task.kind !== "accept" && call && reload ? /* @__PURE__ */ React.createElement(ActionButton, { ui, onClick: (event) => {
-        event.stopPropagation();
-        mergeTask(call, sessionId, task.id, reload, show);
-      } }, t("action.merge")) : null, task.deletable && !nested && call && reload && onDeleteTask ? /* @__PURE__ */ React.createElement(ActionButton, { ui, className: "df-icon-btn", title: t("hint.deleteSingle"), ariaLabel: t("hint.deleteSingle"), onClick: (event) => {
-        event.stopPropagation();
-        onDeleteTask(task.id);
-      } }, /* @__PURE__ */ React.createElement(TrashIcon, null)) : null, nested && reviewing && task.acceptance !== "accepted" && batchId && call && reload ? /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement(ActionButton, { ui, onClick: (event) => {
-        event.stopPropagation();
-        finishTask(call, sessionId, batchId, task.id, "accepted", reload);
-      } }, t("action.pass")), /* @__PURE__ */ React.createElement(ActionButton, { ui, onClick: (event) => {
-        event.stopPropagation();
-        finishTask(call, sessionId, batchId, task.id, "rejected", reload);
-      } }, t("action.fail"))) : null),
-      facts,
-      expandable,
-      expanded: openDetails,
-      onToggle: expandable ? toggle : void 0,
-      onClick: !nested && selectionMode !== null && selectable ? () => setPicked(togglePick(picked, task.id)) : void 0,
-      depth,
-      tone: toneOf(shownStatus(task))
-    },
-    diff !== null && diff.files.length > 0 ? /* @__PURE__ */ React.createElement("div", { className: "df-files" }, diff.files.map((file, index) => {
-      const key = `${file.repo}:${file.path}`;
-      return /* @__PURE__ */ React.createElement("div", { key, className: "df-file-item" }, /* @__PURE__ */ React.createElement("div", { className: "df-file-row", onClick: (event) => {
-        event.stopPropagation();
-        onOpenDiff?.(file, index);
-      } }, /* @__PURE__ */ React.createElement("span", { className: "df-file-path" }, file.path), file.binary ? /* @__PURE__ */ React.createElement("span", { className: "df-meta" }, "binary") : /* @__PURE__ */ React.createElement("span", { className: "df-diff-counts" }, /* @__PURE__ */ React.createElement("span", { className: "df-diff-add" }, `+${file.added}`), /* @__PURE__ */ React.createElement("span", { className: "df-diff-del" }, `-${file.deleted}`))), file.binary ? null : /* @__PURE__ */ React.createElement("div", { className: "df-hover-card", "aria-hidden": "true" }, /* @__PURE__ */ React.createElement("div", { className: "df-hover-head" }, /* @__PURE__ */ React.createElement("span", { className: "df-hover-path" }, file.path), /* @__PURE__ */ React.createElement("span", { className: "df-diff-counts" }, /* @__PURE__ */ React.createElement("span", { className: "df-diff-add" }, `+${file.added}`), /* @__PURE__ */ React.createElement("span", { className: "df-diff-del" }, `-${file.deleted}`))), /* @__PURE__ */ React.createElement("div", { className: "df-hover-body" }, /* @__PURE__ */ React.createElement(FileDiff, { state: diffStateOf(file), split: false, wrap: false, retry: () => void 0, t: diffLabelsOf(t) }))));
-    })) : null,
-    deps.map((dep) => /* @__PURE__ */ React.createElement(
-      TreeItem,
-      {
-        key: `dep-${dep.id}`,
-        kind: "dev",
-        title: dep.title,
-        chips: [],
-        actions: /* @__PURE__ */ React.createElement(StatusTag, { ui, t, status: dep.status }),
-        facts: [
-          { slot: t("fact.state"), detail: t(`status.${dep.status}`) || dep.status },
-          { slot: t("fact.merged"), detail: dep.merged ? dep.branch ?? "" : t("fact.notMerged") }
-        ],
-        expandable: true,
-        expanded: openDeps[dep.id] === true,
-        onToggle: () => setOpenDeps({ ...openDeps, [dep.id]: openDeps[dep.id] !== true }),
-        depth: depth + 1,
-        tone: toneOf(dep.status)
-      }
-    ))
-  );
-}
-function AcceptTaskItem({
-  ui,
-  t,
-  batch,
-  picked,
-  setPicked,
-  sessionId,
-  call,
-  reload,
-  show,
-  pickedBatches,
-  setPickedBatches,
-  open,
-  onToggle,
-  children,
-  depth = 0
-}) {
-  const deletable = batch.status !== "accepting";
-  const leading = deletable ? /* @__PURE__ */ React.createElement("input", { className: "df-check", type: "checkbox", checked: pickedBatches.includes(batch.id), onClick: (event) => event.stopPropagation(), onChange: () => setPickedBatches(togglePick(pickedBatches, batch.id)) }) : void 0;
-  return /* @__PURE__ */ React.createElement(
-    TreeItem,
-    {
-      kind: "accept",
-      title: batch.title,
-      chips: [...baseChips(batch), ...taskChips(batch)],
-      time: createdText(batch.createdAt),
-      leading,
-      actions: /* @__PURE__ */ React.createElement(StatusTag, { ui, t, status: shownStatus(batch) }),
-      facts: usageRows(batch.usage, t),
-      expandable: onToggle !== void 0,
-      expanded: open,
-      onToggle,
-      onClick: deletable ? () => setPickedBatches(togglePick(pickedBatches, batch.id)) : void 0,
-      depth,
-      tone: toneOf(shownStatus(batch))
-    },
-    children.map((task) => /* @__PURE__ */ React.createElement(DevTaskItem, { key: task.id, ui, t, task, picked, setPicked, sessionId, call, reload, show, nested: true, reviewing: batch.status === "accepting", batchId: batch.id, depth: depth + 1 }))
-  );
-}
-function containedTasks(data, batch) {
-  const ids = batch.taskIds ?? [];
-  const fromIds = ids.map((id) => data.tasks.find((task) => task.kind !== "accept" && task.id === id)).filter((task) => task !== void 0);
-  const rows = fromIds.length > 0 ? fromIds : data.tasks.filter((task) => task.kind !== "accept" && task.batchId === batch.id);
-  return rows.sort((left, right) => String(right.createdAt ?? "").localeCompare(String(left.createdAt ?? "")));
-}
-function Slots({ ui, data, t }) {
-  const dev = data.counts.devSlots;
-  const accept = data.counts.acceptSlots;
-  return /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("p", { className: "df-meta" }, `${t("slot.dev")} ${dev?.used ?? 0}/${dev?.total ?? 0} \xB7 ${t("slot.accept")} ${accept?.used ?? 0}/${accept?.total ?? 0}`), data.repos.map((repo) => /* @__PURE__ */ React.createElement("section", { key: repo.name, className: "df-card" }, /* @__PURE__ */ React.createElement("div", { className: "df-repo" }, /* @__PURE__ */ React.createElement("strong", null, repo.name), repo.branch ? /* @__PURE__ */ React.createElement("span", { className: "df-branch" }, repo.branch) : null, /* @__PURE__ */ React.createElement("span", { className: repo.dirty ? "df-warn" : "df-ok" }, repo.dirty ? t("base.dirty") : t("base.clean"))), repo.devSlots.length === 0 ? /* @__PURE__ */ React.createElement(SlotLine, { t, kind: "dev", state: "missing", detail: t("slot.noDev") }) : repo.devSlots.map((slot) => /* @__PURE__ */ React.createElement(SlotLine, { key: slot.number, t, kind: "dev", repo: repo.name, number: slot.number, state: slot.taskId ? "busy" : "free", detail: devDetail(data, repo, slot, t) })), /* @__PURE__ */ React.createElement(
-    SlotLine,
-    {
-      t,
-      kind: "accept",
-      repo: repo.name,
-      number: repo.acceptSlot?.number,
-      state: repo.acceptSlot ? repo.acceptSlot.batchId ? "busy" : "free" : "missing",
-      detail: acceptDetail(repo, t)
-    }
-  ))));
-}
-function baseDraftOf(projects, group) {
-  const rows = {};
-  for (const project of projects) {
-    const member = group?.repos.find((item) => item.repo === project.name);
-    const branches = project.branches ?? [];
-    rows[project.name] = member !== void 0 ? { enabled: true, branch: member.branch } : { enabled: false, branch: project.branch ?? project.defaultBranch ?? branches[0] ?? "" };
-  }
-  return { number: group?.number ?? null, label: group?.label ?? "", rows };
-}
-function Bases({
-  ui,
-  data,
-  t,
-  call,
-  reload,
-  show,
-  sessionId
-}) {
-  const groups = data.baseGroups ?? [];
-  const projects = data.projects ?? [];
-  const [draft, setDraft] = useState2(null);
-  const [saving, setSaving] = useState2(false);
-  const [error, setError] = useState2("");
-  const openCreate = () => {
-    setDraft(baseDraftOf(projects));
-    setError("");
-  };
-  const openEdit = (group) => {
-    setDraft(baseDraftOf(projects, group));
-    setError("");
-  };
-  const close = () => {
-    if (saving) return;
-    setDraft(null);
-    setError("");
-  };
-  const setRow = (repo, next) => {
-    if (draft === null) return;
-    setDraft({ ...draft, rows: { ...draft.rows, [repo]: next } });
-  };
-  const save = () => {
-    if (draft === null || saving) return;
-    const members = Object.entries(draft.rows).filter(([, row]) => row.enabled).map(([repo, row]) => ({ repo, branch: row.branch }));
-    if (members.length === 0) {
-      setError(t("base.needMember"));
-      return;
-    }
-    if (members.some((member) => member.branch === "")) {
-      setError(t("base.needBranch"));
-      return;
-    }
-    setSaving(true);
-    setError("");
-    call("base-save", { sessionId, number: draft.number, label: draft.label, members }).then(() => {
-      setDraft(null);
-      show(t("base.saved"), "info");
-      return reload();
-    }).catch((reason) => {
-      const text = textOf(reason);
-      setError(text);
-      show(text, "error");
-    }).finally(() => setSaving(false));
-  };
-  return /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("div", { className: "df-base-toolbar" }, /* @__PURE__ */ React.createElement(ActionButton, { ui, variant: "primary", onClick: openCreate, disabled: draft !== null }, t("action.newBase"))), draft !== null ? /* @__PURE__ */ React.createElement("section", { className: "df-card df-base-editor" }, /* @__PURE__ */ React.createElement("div", { className: "df-repo" }, /* @__PURE__ */ React.createElement("strong", null, draft.number === null ? t("base.editor.create") : t("base.editor.edit").replace("{number}", draft.number))), /* @__PURE__ */ React.createElement("label", { className: "df-base-label-row" }, /* @__PURE__ */ React.createElement("span", null, t("base.label")), /* @__PURE__ */ React.createElement(
-    "input",
-    {
-      type: "text",
-      value: draft.label,
-      placeholder: t("base.labelPlaceholder"),
-      disabled: saving,
-      onChange: (event) => setDraft({ ...draft, label: event.target.value })
-    }
-  )), projects.some((project) => !Array.isArray(project.branches)) ? /* @__PURE__ */ React.createElement("p", { className: "df-base-warn", role: "status" }, t("base.branchesStale")) : null, projects.map((project) => {
-    const row = draft.rows[project.name] ?? { enabled: false, branch: "" };
-    const branches = [...new Set([...project.branches ?? [], row.branch].filter((branch) => branch !== ""))].sort();
-    return /* @__PURE__ */ React.createElement("div", { key: project.name, className: "df-base-edit-row" }, /* @__PURE__ */ React.createElement(
-      "input",
-      {
-        type: "checkbox",
-        checked: row.enabled,
-        disabled: saving,
-        "aria-label": project.name,
-        onChange: () => setRow(project.name, { ...row, enabled: !row.enabled })
-      }
-    ), /* @__PURE__ */ React.createElement("span", { className: "df-base-edit-name" }, project.name), /* @__PURE__ */ React.createElement(
-      "select",
-      {
-        value: row.branch,
-        disabled: !row.enabled || saving,
-        "aria-label": `${project.name} ${t("base.branch")}`,
-        onChange: (event) => setRow(project.name, { ...row, branch: event.target.value })
-      },
-      branches.length === 0 ? /* @__PURE__ */ React.createElement("option", { value: "" }, t("base.noBranches")) : null,
-      branches.map((branch) => /* @__PURE__ */ React.createElement("option", { key: branch, value: branch }, branch))
-    ));
-  }), error !== "" ? /* @__PURE__ */ React.createElement("p", { className: "df-base-error", role: "alert" }, error) : null, /* @__PURE__ */ React.createElement("div", { className: "df-base-edit-actions" }, /* @__PURE__ */ React.createElement(ActionButton, { ui, variant: "ghost", onClick: close, disabled: saving }, t("action.cancel")), /* @__PURE__ */ React.createElement(ActionButton, { ui, variant: "primary", onClick: save, disabled: saving }, saving ? t("action.saving") : t("action.save")))) : null, groups.length === 0 && draft === null ? /* @__PURE__ */ React.createElement("div", { className: "df-empty" }, /* @__PURE__ */ React.createElement("p", null, t("empty.bases")), /* @__PURE__ */ React.createElement("p", { className: "df-meta" }, t("empty.basesHint"))) : null, groups.map((group) => /* @__PURE__ */ React.createElement("section", { key: group.number, className: "df-card" }, /* @__PURE__ */ React.createElement("div", { className: "df-repo" }, /* @__PURE__ */ React.createElement("strong", null, `#${group.number}`), /* @__PURE__ */ React.createElement("span", { className: "df-branch" }, group.label), /* @__PURE__ */ React.createElement("span", { className: "df-meta" }, t("base.projects").replace("{count}", String(group.repos.length))), /* @__PURE__ */ React.createElement("span", { className: "df-base-actions" }, /* @__PURE__ */ React.createElement(ActionButton, { ui, variant: "ghost", onClick: () => openEdit(group), title: t("action.edit") }, t("action.edit")))), group.repos.length === 0 ? /* @__PURE__ */ React.createElement("p", { className: "df-empty-line" }, t("base.noRepo")) : null, group.repos.map((base) => /* @__PURE__ */ React.createElement("div", { key: base.repo, className: "df-base" }, /* @__PURE__ */ React.createElement("span", { className: "df-base-name" }, /* @__PURE__ */ React.createElement("span", { className: "df-meta" }, base.repo), /* @__PURE__ */ React.createElement("span", { className: base.current ? "df-base-branch is-current" : "df-base-branch" }, base.branch), base.default ? /* @__PURE__ */ React.createElement("span", { className: "df-base-flag" }, t("base.default")) : null, base.current ? /* @__PURE__ */ React.createElement("span", { className: "df-base-flag" }, t("base.current")) : null), /* @__PURE__ */ React.createElement("span", { className: "df-base-meta" }, /* @__PURE__ */ React.createElement("span", { className: "df-base-loc", "data-location": base.location }, t(`base.${base.location}`)), /* @__PURE__ */ React.createElement("span", { className: base.dirty ? "df-warn" : "df-ok" }, base.dirty ? t("base.dirty") : t("base.clean")), /* @__PURE__ */ React.createElement("span", { className: "df-meta" }, t("base.tasks").replace("{count}", String(base.tasks))), base.shortHead ? /* @__PURE__ */ React.createElement("span", { className: "df-base-head" }, base.shortHead) : null))))));
-}
-function SlotLine({ t, kind, repo, number, state, detail }) {
-  const label = repo && number ? `${repo}-${number}` : `${kind === "dev" ? t("slot.dev") : t("slot.accept")} ${number ?? ""}`.trim();
-  const tone = state === "busy" ? "df-warn" : state === "free" ? "df-ok" : "df-muted";
-  const text = state === "busy" ? t("slot.busy") : state === "free" ? t("slot.free") : t("slot.missing");
-  return /* @__PURE__ */ React.createElement("div", { className: "df-slot" }, /* @__PURE__ */ React.createElement("span", null, label), /* @__PURE__ */ React.createElement("span", { className: tone }, text), /* @__PURE__ */ React.createElement("span", { className: "df-meta" }, detail));
-}
-function visibleAgents(agents) {
-  const running = agents.filter((agent) => agent.status === "running");
-  const latestIdle = /* @__PURE__ */ new Map();
-  for (const agent of agents) {
-    if (agent.status === "running") continue;
-    latestIdle.set(agent.kind ?? "dev", agent);
-  }
-  return [...running, ...latestIdle.values()];
-}
-function Agents({ ui, data, t }) {
-  const rows = [{ id: t("agent.lead"), status: "lead", kind: "lead" }, ...visibleAgents(data.agents)];
-  return /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("p", { className: "df-meta" }, `${t("metric.agents")} ${data.counts.activeAgents}/${data.counts.agentLimit}`), /* @__PURE__ */ React.createElement("div", { className: "df-card" }, rows.map((agent) => /* @__PURE__ */ React.createElement("div", { key: agent.id, className: "df-agent" }, /* @__PURE__ */ React.createElement(Dot, { ui, state: agent.status === "running" ? "ongoing" : "idle" }), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { className: "df-name" }, agent.id), /* @__PURE__ */ React.createElement("div", { className: "df-meta" }, agentDetail(data, agent, t))), /* @__PURE__ */ React.createElement(StatusTag, { ui, t, status: agent.status === "lead" ? "lead" : agentPhase(agent) })))));
-}
-function StatusTag({ ui, t, status }) {
-  const label = status === "running" ? t("agent.running") : status === "idle" ? t("agent.idle") : status === "lead" ? t("agent.dispatch") : t(`status.${status}`) || status;
-  const tone = status === "failed" || status === "rejected" ? "danger" : status === "accepted" || status === "merged" ? "success" : status === "pending-merge" || status === "awaiting-agent" ? "warning" : status === "developing" || status === "running" || status === "scheduling" ? "info" : status === "pending-acceptance" || status === "waiting" || status === "accepting" ? "warning" : "neutral";
-  return ui.Tag ? /* @__PURE__ */ React.createElement(ui.Tag, { tone }, label) : /* @__PURE__ */ React.createElement("span", { className: "df-meta" }, label);
-}
 function SettingsForm({ ui, view, call, t }) {
   const [draft, setDraft] = useState2(null);
   const [catalog, setCatalog] = useState2(null);
@@ -2435,211 +1651,953 @@ function ModelField({ ui, label, value, catalog, error, onChange }) {
     choice?.reasoningEffort === item.id ? /* @__PURE__ */ React.createElement("span", { className: "df-model-check" }, "\u2713") : null
   )))));
 }
-function useToast() {
-  const [toast, setToast] = useState2(null);
-  const timer = useRef2(null);
-  const show = (text, tone = "error") => {
-    if (text === "") return;
-    if (timer.current !== null) clearTimeout(timer.current);
-    setToast({ id: `${Date.now()}`, text, tone, closing: false });
-    timer.current = setTimeout(() => {
-      setToast((current) => current === null ? current : { ...current, closing: true });
-      timer.current = setTimeout(() => {
-        setToast(null);
-        timer.current = null;
-      }, 200);
-    }, 2600);
+
+// src/client/panel/Panel.tsx
+var import_react4 = require("react");
+
+// src/client/panel/parts.tsx
+var import_react2 = require("react");
+
+// src/client/panel/ui.module.css
+register("/* \u9762\u677F UI \u57FA\u7840\u4EF6\uFF1A\u9875\u5934\u3001\u5B50\u9762\u677F\u3001\u5217\u8868\u9879\u3001\u72B6\u6001\u3001\u952E\u503C\u4E0E\u8868\u5355\u3002\n   \u989C\u8272\u3001\u5706\u89D2\u3001\u5B57\u53F7\u5168\u90E8\u53D6 DSH \u8BED\u4E49\u53D8\u91CF\uFF0C\u4E0D\u5199\u5B57\u9762\u8272\u503C\u3002 */\n\n.df-pane-be4272 {\n  position: absolute;\n  inset: 0;\n  display: flex;\n  flex-direction: column;\n  height: 100%;\n  min-height: 0;\n  color: var(--dsw-alias-label-primary);\n  font-size: 13px;\n  line-height: 20px;\n}\n\n/* \u2500\u2500 \u9875\u5934\uFF1A\u6587\u672C tab + \u65F6\u95F4 + \u5237\u65B0 \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500 */\n.df-head-be4272 {\n  display: flex;\n  align-items: center;\n  gap: 4px;\n  flex: none;\n  height: 38px;\n  padding: 0 6px 0 16px;\n  border-bottom: 0.5px solid var(--dsw-alias-border-l3);\n}\n\n.df-tab-be4272,\n.df-tabOn-be4272 {\n  appearance: none;\n  border: 0;\n  padding: 0 8px;\n  height: 28px;\n  border-radius: var(--dsw-radius-sm, 6px);\n  background: transparent;\n  color: var(--dsw-alias-label-secondary);\n  font: inherit;\n  cursor: pointer;\n  white-space: nowrap;\n}\n\n.df-tabOn-be4272 {\n  color: var(--dsw-alias-label-primary);\n  font-weight: 500;\n}\n\n@media (hover: hover) {\n  .df-tab-be4272:hover {\n    background: var(--dsw-alias-interactive-bg-hover);\n    color: var(--dsw-alias-label-primary);\n  }\n}\n\n.df-stamp-be4272 {\n  margin-left: auto;\n  padding: 0 4px;\n  color: var(--dsw-alias-label-tertiary);\n  font-size: 12px;\n  font-variant-numeric: tabular-nums;\n}\n\n.df-iconButton-be4272 {\n  appearance: none;\n  display: inline-flex;\n  align-items: center;\n  justify-content: center;\n  flex: none;\n  width: 28px;\n  height: 28px;\n  border: 0;\n  border-radius: var(--dsw-radius-sm, 6px);\n  background: transparent;\n  color: var(--dsw-alias-label-secondary);\n  cursor: pointer;\n}\n\n@media (hover: hover) {\n  .df-iconButton-be4272:hover {\n    background: var(--dsw-alias-interactive-bg-hover);\n    color: var(--dsw-alias-label-primary);\n  }\n}\n\n/* \u2500\u2500 \u5B50\u9762\u677F \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500 */\n.df-group-be4272 {\n  display: flex;\n  flex-direction: column;\n  flex: 1 1 auto;\n  min-height: 0;\n  overflow: hidden;\n}\n\n.df-panel-be4272 {\n  position: relative;\n  display: flex;\n  flex-direction: column;\n  flex: 0 1 auto;\n  min-height: 0;\n  overflow: hidden;\n  border-top: 0.5px solid var(--dsw-alias-border-l3);\n}\n\n/* \u4E0A\u8FB9\u6846\u5C31\u662F\u62D6\u62FD\u624B\u67C4\uFF1A\u70ED\u533A\u76D6\u5728\u8FB9\u6846\u4E0A\u4E0B\u5404 4px\u3002 */\n.df-grip-be4272 {\n  position: absolute;\n  left: 0;\n  right: 0;\n  top: -4px;\n  height: 9px;\n  z-index: 2;\n  cursor: row-resize;\n  background: transparent;\n}\n\n.df-grip-be4272::after {\n  content: '';\n  position: absolute;\n  left: 0;\n  right: 0;\n  top: 4px;\n  height: 1px;\n  background: transparent;\n  transition: background-color 120ms ease;\n}\n\n@media (hover: hover) {\n  .df-grip-be4272:hover::after {\n    background: var(--dsw-alias-border-l2);\n  }\n}\n\n.df-group-be4272>.df-panel-be4272:first-child {\n  border-top: 0;\n}\n\n.df-panelHead-be4272 {\n  appearance: none;\n  outline: none;\n  display: flex;\n  align-items: center;\n  gap: 6px;\n  flex: none;\n  width: auto;\n  margin: 0 8px;\n  height: 24px;\n  padding: 0 8px;\n  border: 0;\n  border-radius: 0;\n  background: transparent;\n  color: var(--dsw-alias-label-tertiary);\n  font: inherit;\n  text-align: left;\n  cursor: pointer;\n  transition: color 120ms ease;\n}\n\n/* \u53EA\u9760\u58A8\u8272\u4E0E\u7BAD\u5934\u53D8\u6DF1\u8868\u793A\u53EF\u70B9\uFF1A\u6574\u884C\u94FA\u5E95\u8272\u4F1A\u50CF\u201C\u88AB\u9009\u4E2D\u201D\uFF0C\u592A\u91CD */\n@media (hover: hover) {\n  .df-panelHead-be4272:hover {\n    color: var(--dsw-alias-label-secondary);\n  }\n\n  .df-panelHead-be4272:hover .df-headStatus-be4272 {\n  display: inline-flex;\n  align-items: center;\n  gap: 6px;\n  font-size: 11px;\n  line-height: 16px;\n  color: var(--dsw-alias-label-tertiary);\n}\n\n.df-panelChev-be4272 {\n    color: var(--dsw-alias-label-secondary);\n  }\n}\n\n.df-panelHead-be4272:active {\n  color: var(--dsw-alias-label-primary);\n}\n\n/* \u6807\u9898\u4E0A\u4E0D\u753B\u4EFB\u4F55\u76D2\u5B50\uFF1A\u65E0\u5E95\u8272\u3001\u65E0\u63CF\u8FB9\u3001\u65E0\u5706\u89D2 */\n.df-panelHead-be4272::before,\n.df-panelHead-be4272::after {\n  content: none;\n}\n\n/* \u70B9\u51FB\u540E\u4E0D\u8981\u7559\u4E0B\u4E00\u4E2A\u65B9\u6846\uFF1A\u9F20\u6807\u70B9\u51FB\u7ED9 background \u53CD\u9988\uFF0C\u952E\u76D8\u805A\u7126\u624D\u663E\u793A\u6D45\u5E95\u3002\n   \u5BBF\u4E3B\u9875\u9762\u7ED9 button \u7684 :focus-visible \u63CF\u8FB9\u4F18\u5148\u7EA7\u66F4\u9AD8\uFF0C\u8FD9\u91CC\u663E\u5F0F\u538B\u6389\u3002 */\n.df-panelHead-be4272:focus,\n.df-panelHead-be4272:focus-visible,\n.df-panelHead-be4272:focus-within {\n  outline: none !important;\n  box-shadow: none !important;\n}\n\n.df-panelHead-be4272:focus-visible {\n  color: var(--dsw-alias-label-secondary);\n}\n\n.df-panelTitle-be4272 {\n  font-size: 13px;\n  font-weight: 400;\n  white-space: nowrap;\n}\n\n.df-panelCount-be4272 {\n  color: inherit;\n  font-size: 12px;\n  font-variant-numeric: tabular-nums;\n}\n\n.df-panelTail-be4272 {\n  margin-left: auto;\n  display: inline-flex;\n  align-items: center;\n  gap: 6px;\n}\n\n.df-headStatus-be4272 {\n  display: inline-flex;\n  align-items: center;\n  gap: 6px;\n  font-size: 11px;\n  line-height: 16px;\n  color: var(--dsw-alias-label-tertiary);\n}\n\n.df-panelChev-be4272 {\n  display: inline-flex;\n  color: var(--dsw-alias-label-tertiary);\n  transform: rotate(0deg);\n  transition: transform 120ms ease;\n}\n\n.df-panelOpen-be4272 .df-headStatus-be4272 {\n  display: inline-flex;\n  align-items: center;\n  gap: 6px;\n  font-size: 11px;\n  line-height: 16px;\n  color: var(--dsw-alias-label-tertiary);\n}\n\n.df-panelOpen-be4272 .df-panelChev-be4272 {\n  transform: rotate(90deg);\n}\n\n.df-panelBody-be4272 {\n  flex: 1;\n  min-height: 0;\n  overflow: auto;\n  padding-bottom: 4px;\n}\n\n.df-panelCollapsed-be4272 .df-panelBody-be4272 {\n  display: none;\n}\n\n.df-panelOpen-be4272 {\n  flex-grow: 1;\n}\n\n.df-sash-be4272 {\n  flex: none;\n  height: 9px;\n  cursor: row-resize;\n  position: relative;\n}\n\n.df-sash-be4272::after {\n  content: '';\n  position: absolute;\n  left: 0;\n  right: 0;\n  top: 3px;\n  height: 1px;\n  background: transparent;\n}\n\n@media (hover: hover) {\n  .df-sash-be4272:hover::after {\n    background: var(--dsw-alias-border-l2);\n  }\n}\n\n.df-sashActive-be4272::after {\n  background: var(--dsw-alias-border-l2);\n}\n\n/* \u2500\u2500 \u5217\u8868\u9879 \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500 */\n.df-item-be4272 {\n  display: flex;\n  align-items: center;\n  gap: 8px;\n  height: 38px;\n  padding: 0 16px;\n  border-radius: var(--dsw-radius-sm, 6px);\n  color: var(--dsw-alias-label-primary);\n}\n\n/* \u53EF\u70B9\u7684\u884C\u4E00\u5B9A\u6709\u53CD\u9988\uFF1A\u6307\u9488 + \u60AC\u505C\u5E95\u8272\uFF0C\u5426\u5219\u7528\u6237\u4E0D\u77E5\u9053\u80FD\u70B9\u3002 */\n.df-item-be4272[role='button'] {\n  cursor: pointer;\n}\n\n.df-item-be4272[role='button']:focus-visible {\n  outline: 2px solid var(--dsw-alias-border-l2);\n  outline-offset: -2px;\n}\n\n@media (hover: hover) {\n  .df-item-be4272[role='button']:hover {\n    background: var(--dsw-alias-interactive-bg-hover);\n  }\n}\n\n.df-itemSub-be4272 {\n  height: 30px;\n  padding-left: 44px;\n  font-size: 12px;\n  color: var(--dsw-alias-label-secondary);\n}\n\n@media (hover: hover) {\n  .df-item-be4272:hover {\n    background: var(--dsw-alias-interactive-bg-hover);\n  }\n}\n\n.df-itemOn-be4272 {\n  background: var(--dsw-alias-interactive-bg-hover);\n}\n\n.df-icon-be4272 {\n  display: inline-flex;\n  align-items: center;\n  justify-content: center;\n  flex: none;\n  width: 20px;\n  height: 20px;\n  color: var(--dsw-alias-label-secondary);\n}\n\n.df-name-be4272 {\n  display: flex;\n  align-items: baseline;\n  gap: 8px;\n  flex: 1;\n  min-width: 0;\n  white-space: nowrap;\n  overflow: hidden;\n}\n\n.df-nameText-be4272 {\n  overflow: hidden;\n  text-overflow: ellipsis;\n}\n\n.df-itemHint-be4272 {\n  color: var(--dsw-alias-label-tertiary);\n}\n\n.df-suffix-be4272 {\n  flex: none;\n  color: var(--dsw-alias-label-tertiary);\n  font-family: var(--dsw-font-family-mono, ui-monospace, SFMono-Regular, Menlo, monospace);\n  font-size: 11px;\n  line-height: 16px;\n}\n\n.df-trail-be4272 {\n  display: flex;\n  align-items: center;\n  gap: 14px;\n  flex: none;\n  color: var(--dsw-alias-label-secondary);\n  font-size: 12px;\n  white-space: nowrap;\n}\n\n.df-pair-be4272 {\n  display: inline-flex;\n  align-items: baseline;\n  gap: 5px;\n}\n\n.df-pairLabel-be4272 {\n  color: var(--dsw-alias-label-tertiary);\n  font-size: 11px;\n}\n\n.df-pairValue-be4272 {\n  color: var(--dsw-alias-label-primary);\n  font-size: 13px;\n  font-weight: 500;\n  font-variant-numeric: tabular-nums;\n}\n\n/* \u2500\u2500 \u72B6\u6001\uFF1A\u706F + \u8BCD \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500 */\n.df-status-be4272 {\n  display: inline-flex;\n  align-items: center;\n  gap: 6px;\n  color: var(--dsw-alias-label-secondary);\n  font-size: 12px;\n  white-space: nowrap;\n}\n\n.df-lamp-be4272 {\n  position: relative;\n  width: 6px;\n  height: 6px;\n  border-radius: 50%;\n  flex: none;\n  background: var(--dsw-alias-label-tertiary);\n}\n\n.df-lampOk-be4272 { background: var(--dsw-alias-state-success-primary); }\n.df-lampWarn-be4272 { background: var(--dsw-alias-state-warn-primary); }\n.df-lampErr-be4272 { background: var(--dsw-alias-state-error-primary); }\n.df-lampIdle-be4272 { background: var(--dsw-alias-label-tertiary); }\n\n.df-lampRun-be4272 {\n  width: 7px;\n  height: 7px;\n  background: var(--dsw-alias-state-business-primary);\n  animation: breathe 1.9s ease-in-out infinite;\n}\n\n.df-lampRun-be4272::after {\n  content: '';\n  position: absolute;\n  inset: -2px;\n  border-radius: 50%;\n  background: var(--dsw-alias-state-business-primary);\n  opacity: 0.22;\n}\n\n@keyframes breathe {\n  0%, 100% { opacity: 1; }\n  50% { opacity: 0.45; }\n}\n\n@media (prefers-reduced-motion: reduce) {\n  .df-lampRun-be4272 { animation: none; }\n}\n\n/* \u2500\u2500 \u6307\u6807\u4E0E\u8BF4\u660E \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500 */\n.df-metrics-be4272 {\n  display: grid;\n  grid-template-columns: repeat(3, 1fr);\n  gap: 14px 10px;\n  padding: 14px 16px 14px;\n}\n\n.df-metric-be4272 {\n  display: flex;\n  flex-direction: column;\n  gap: 2px;\n}\n\n.df-metricValue-be4272 {\n  font-size: 22px;\n  line-height: 28px;\n  font-weight: 500;\n  font-variant-numeric: tabular-nums;\n}\n\n.df-metricLabel-be4272 {\n  color: var(--dsw-alias-label-tertiary);\n  font-size: 12px;\n}\n\n.df-note-be4272 {\n  padding: 0 16px 8px;\n  color: var(--dsw-alias-label-tertiary);\n  font-size: 11px;\n  line-height: 16px;\n}\n\n.df-pane-be4272,\n.df-pane-be4272 * {\n  box-sizing: border-box;\n}\n\n.df-empty-be4272 {\n  display: flex;\n  flex-direction: column;\n  align-items: center;\n  justify-content: center;\n  gap: 8px;\n  min-height: 96px;\n  padding: 24px 16px;\n  color: var(--dsw-alias-label-tertiary);\n  font-size: 12px;\n  line-height: 18px;\n  text-align: center;\n}\n\n.df-emptyIcon-be4272 {\n  display: inline-flex;\n  color: var(--dsw-alias-label-tertiary);\n  opacity: 0.9;\n}\n\n.df-noteIndent-be4272 {\n  padding: 2px 16px 6px 44px;\n  line-height: 18px;\n}\n\n.df-disclosure-be4272 {\n  appearance: none;\n  display: inline-flex;\n  align-items: center;\n  justify-content: center;\n  flex: none;\n  width: 20px;\n  height: 20px;\n  margin: -2px;\n  padding: 0;\n  border: 0;\n  border-radius: var(--dsw-radius-sm, 6px);\n  background: transparent;\n  color: var(--dsw-alias-label-tertiary);\n  cursor: pointer;\n}\n\n@media (hover: hover) {\n  .df-disclosure-be4272:hover {\n    background: var(--dsw-alias-interactive-bg-hover);\n    color: var(--dsw-alias-label-secondary);\n  }\n}\n\n.df-disclosure-be4272:focus-visible {\n  outline: 1px solid var(--dsw-alias-border-l3);\n  outline-offset: 1px;\n}\n\n.df-disclosureOpen-be4272,\n.df-disclosureClosed-be4272 {\n  display: inline-flex;\n  transition: transform 120ms ease;\n}\n\n.df-disclosureClosed-be4272 {\n  transform: rotate(0deg);\n}\n\n.df-disclosureOpen-be4272 {\n  transform: rotate(90deg);\n}\n\n.df-progress-be4272 {\n  font-size: 12px;\n  line-height: 18px;\n  color: var(--dsw-alias-label-secondary);\n  font-variant-numeric: tabular-nums;\n}\n\n.df-detail-be4272 {\n  padding: 2px 16px 12px;\n}\n\n.df-detailHead-be4272 {\n  display: flex;\n  align-items: baseline;\n  gap: 10px;\n  padding: 4px 0 8px;\n}\n\n.df-detailHeadTitle-be4272 {\n  flex: 1;\n  min-width: 0;\n  overflow: hidden;\n  text-overflow: ellipsis;\n  white-space: nowrap;\n  font-size: 13px;\n  line-height: 20px;\n  font-weight: 500;\n  color: var(--dsw-alias-label-primary);\n}\n\n.df-kvGrid-be4272 {\n  display: grid;\n  grid-template-columns: repeat(2, minmax(0, 1fr));\n  column-gap: 24px;\n}\n\n.df-kvRow-be4272 {\n  display: flex;\n  gap: 12px;\n  align-items: baseline;\n  min-height: 26px;\n  padding: 3px 0;\n}\n\n.df-kvLabel-be4272 {\n  flex: none;\n  width: 44px;\n  font-size: 12px;\n  line-height: 18px;\n  color: var(--dsw-alias-label-tertiary);\n}\n\n.df-kvValue-be4272 {\n  flex: 1;\n  min-width: 0;\n  overflow: hidden;\n  text-overflow: ellipsis;\n  white-space: nowrap;\n  font-size: 12px;\n  line-height: 18px;\n  color: var(--dsw-alias-label-secondary);\n  overflow-wrap: anywhere;\n}\n\n.df-fileList-be4272 {\n  margin-top: 10px;\n}\n\n.df-detailTitle-be4272 {\n  margin: 0 0 4px;\n  font-size: 12px;\n  line-height: 18px;\n  color: var(--dsw-alias-label-tertiary);\n}\n\n.df-fileRow-be4272 {\n  display: flex;\n  gap: 10px;\n  align-items: baseline;\n  min-height: 26px;\n  padding: 3px 0;\n}\n\n.df-filePath-be4272 {\n  flex: 1;\n  min-width: 0;\n  overflow: hidden;\n  text-overflow: ellipsis;\n  white-space: nowrap;\n  font-family: var(--dsw-alias-font-mono, ui-monospace, SFMono-Regular, Menlo, monospace);\n  font-size: 11px;\n  line-height: 18px;\n  color: var(--dsw-alias-label-secondary);\n}\n\n.df-fileAdd-be4272 {\n  font-variant-numeric: tabular-nums;\n  font-size: 12px;\n  color: var(--dsw-alias-state-success-primary);\n}\n\n.df-fileDel-be4272 {\n  font-variant-numeric: tabular-nums;\n  font-size: 12px;\n  color: var(--dsw-alias-state-error-primary);\n}\n\n.df-emptyText-be4272 {\n  margin: 0;\n  font-size: 12px;\n  line-height: 18px;\n  color: var(--dsw-alias-state-error-primary);\n  text-align: center;\n  word-break: break-word;\n}\n\n.df-fileRowAction-be4272 {\n  cursor: pointer;\n  border-radius: var(--dsw-radius-sm, 6px);\n}\n\n@media (hover: hover) {\n  .df-fileRowAction-be4272:hover {\n    background: var(--dsw-alias-interactive-bg-hover);\n  }\n}\n");
+var ui_default = { "pane": "df-pane-be4272", "head": "df-head-be4272", "tab": "df-tab-be4272", "tabOn": "df-tabOn-be4272", "stamp": "df-stamp-be4272", "iconButton": "df-iconButton-be4272", "group": "df-group-be4272", "panel": "df-panel-be4272", "grip": "df-grip-be4272", "panelHead": "df-panelHead-be4272", "headStatus": "df-headStatus-be4272", "panelChev": "df-panelChev-be4272", "panelTitle": "df-panelTitle-be4272", "panelCount": "df-panelCount-be4272", "panelTail": "df-panelTail-be4272", "panelOpen": "df-panelOpen-be4272", "panelBody": "df-panelBody-be4272", "panelCollapsed": "df-panelCollapsed-be4272", "sash": "df-sash-be4272", "sashActive": "df-sashActive-be4272", "item": "df-item-be4272", "itemSub": "df-itemSub-be4272", "itemOn": "df-itemOn-be4272", "icon": "df-icon-be4272", "name": "df-name-be4272", "nameText": "df-nameText-be4272", "itemHint": "df-itemHint-be4272", "suffix": "df-suffix-be4272", "trail": "df-trail-be4272", "pair": "df-pair-be4272", "pairLabel": "df-pairLabel-be4272", "pairValue": "df-pairValue-be4272", "status": "df-status-be4272", "lamp": "df-lamp-be4272", "lampOk": "df-lampOk-be4272", "lampWarn": "df-lampWarn-be4272", "lampErr": "df-lampErr-be4272", "lampIdle": "df-lampIdle-be4272", "lampRun": "df-lampRun-be4272", "metrics": "df-metrics-be4272", "metric": "df-metric-be4272", "metricValue": "df-metricValue-be4272", "metricLabel": "df-metricLabel-be4272", "note": "df-note-be4272", "empty": "df-empty-be4272", "emptyIcon": "df-emptyIcon-be4272", "noteIndent": "df-noteIndent-be4272", "disclosure": "df-disclosure-be4272", "disclosureOpen": "df-disclosureOpen-be4272", "disclosureClosed": "df-disclosureClosed-be4272", "progress": "df-progress-be4272", "detail": "df-detail-be4272", "detailHead": "df-detailHead-be4272", "detailHeadTitle": "df-detailHeadTitle-be4272", "kvGrid": "df-kvGrid-be4272", "kvRow": "df-kvRow-be4272", "kvLabel": "df-kvLabel-be4272", "kvValue": "df-kvValue-be4272", "fileList": "df-fileList-be4272", "detailTitle": "df-detailTitle-be4272", "fileRow": "df-fileRow-be4272", "filePath": "df-filePath-be4272", "fileAdd": "df-fileAdd-be4272", "fileDel": "df-fileDel-be4272", "emptyText": "df-emptyText-be4272", "fileRowAction": "df-fileRowAction-be4272" };
+
+// src/client/panel/parts.tsx
+var LAMP_CLASS = {
+  ok: ui_default.lampOk,
+  warn: ui_default.lampWarn,
+  err: ui_default.lampErr,
+  idle: ui_default.lampIdle,
+  run: ui_default.lampRun
+};
+function Status({ tone, label }) {
+  return /* @__PURE__ */ React.createElement("span", { className: ui_default.status }, /* @__PURE__ */ React.createElement("i", { className: `${ui_default.lamp} ${LAMP_CLASS[tone]}`, "aria-hidden": "true" }), label);
+}
+function Item({
+  icon,
+  title,
+  suffix,
+  trail,
+  sub,
+  onClick,
+  selected,
+  titleAttr,
+  dataId
+}) {
+  const className = [ui_default.item, sub ? ui_default.itemSub : "", selected ? ui_default.itemOn : ""].filter(Boolean).join(" ");
+  const body = /* @__PURE__ */ React.createElement(React.Fragment, null, icon === void 0 ? null : /* @__PURE__ */ React.createElement("span", { className: ui_default.icon }, icon), /* @__PURE__ */ React.createElement("span", { className: ui_default.name }, /* @__PURE__ */ React.createElement("span", { className: ui_default.nameText, title: titleAttr }, title), suffix === void 0 ? null : /* @__PURE__ */ React.createElement("span", { className: ui_default.suffix }, suffix)), trail === void 0 ? null : /* @__PURE__ */ React.createElement("span", { className: ui_default.trail }, trail));
+  const dataAttr = dataId === void 0 ? {} : { "data-task-id": dataId };
+  if (!onClick) return /* @__PURE__ */ React.createElement("div", { className, ...dataAttr }, body);
+  return /* @__PURE__ */ React.createElement(
+    "div",
+    {
+      className,
+      ...dataAttr,
+      role: "button",
+      tabIndex: 0,
+      onClick,
+      onKeyDown: (event) => {
+        if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault();
+          onClick();
+        }
+      }
+    },
+    body
+  );
+}
+function Pairs({ items }) {
+  const shown = items.filter((item) => item.value > 0);
+  if (shown.length === 0) return null;
+  return /* @__PURE__ */ React.createElement(React.Fragment, null, shown.map((item) => /* @__PURE__ */ React.createElement("span", { key: item.label, className: ui_default.pair }, /* @__PURE__ */ React.createElement("span", { className: ui_default.pairLabel }, item.label), /* @__PURE__ */ React.createElement(
+    "span",
+    {
+      className: ui_default.pairValue,
+      style: item.tone === "err" ? { color: "var(--dsw-alias-state-error-primary)" } : void 0
+    },
+    item.value
+  ))));
+}
+var HEAD = 24;
+var MIN_BODY = 40;
+function SplitGroup({ panes, footer, expandKey, expandSignal }) {
+  const [sizes, setSizes] = (0, import_react2.useState)([]);
+  const [layoutTick, setLayoutTick] = (0, import_react2.useState)(0);
+  const [collapsed, setCollapsed] = (0, import_react2.useState)(() => panes.map((pane) => pane.collapsed === true));
+  const [order, setOrder] = (0, import_react2.useState)(() => panes.map((_, index) => index));
+  const bodies = (0, import_react2.useRef)([]);
+  (0, import_react2.useEffect)(() => {
+    setCollapsed((prev) => prev.length === panes.length ? prev : panes.map((pane, index) => prev[index] ?? pane.collapsed === true));
+    setSizes((prev) => prev.length === panes.length ? prev : []);
+    setLayoutTick((value) => value + 1);
+  }, [panes.length]);
+  const panels = (0, import_react2.useRef)([]);
+  const expanded = (0, import_react2.useRef)({});
+  const avail = (0, import_react2.useRef)(0);
+  const [, setResizing] = (0, import_react2.useState)(-1);
+  const keys = panes.map((pane) => pane.key).join("|");
+  const orderRef = (0, import_react2.useRef)(order);
+  const sizesRef = (0, import_react2.useRef)(sizes);
+  const collapsedRef = (0, import_react2.useRef)(collapsed);
+  orderRef.current = order;
+  sizesRef.current = sizes;
+  collapsedRef.current = collapsed;
+  (0, import_react2.useLayoutEffect)(() => {
+    const host = panels.current[order[0]]?.parentElement;
+    if (!host) return;
+    const frame = requestAnimationFrame(() => {
+      avail.current = host.clientHeight;
+      const content = panes.map((_, index) => {
+        if (collapsed[index]) return HEAD;
+        const inner = bodies.current[index]?.scrollHeight ?? 0;
+        const raw = HEAD + inner;
+        return Math.max(HEAD + 20, raw > HEAD + 76 ? Math.ceil(raw / 38) * 38 : raw);
+      });
+      const total = content.reduce((sum, value) => sum + value, 0);
+      const openOrder = order.filter((index) => collapsed[index] !== true);
+      const tailIndex = openOrder[openOrder.length - 1];
+      if (total <= avail.current) {
+        const next2 = content.slice();
+        for (let index = 0; index < next2.length; index += 1) {
+          if (collapsed[index] === true) next2[index] = HEAD;
+        }
+        const open = next2.reduce((sum, value, index) => collapsed[index] ? sum : sum + value, 0);
+        if (tailIndex !== void 0 && collapsed[tailIndex] !== true) {
+          next2[tailIndex] += Math.max(0, avail.current - open);
+        }
+        setSizes(next2);
+        return;
+      }
+      let remain = avail.current;
+      const next = content.slice();
+      for (let k = 0; k < order.length; k += 1) {
+        const index = order[k];
+        if (index === tailIndex) next[index] = Math.max(HEAD + 20, remain);
+        else if (collapsed[index] === true) next[index] = HEAD;
+        else next[index] = Math.max(HEAD + MIN_BODY, Math.floor(avail.current * content[index] / total / 38) * 38);
+        remain -= next[index];
+      }
+      let excess = next.reduce((sum, value) => sum + value, 0) - avail.current;
+      while (excess > 0.5) {
+        let widest = -1;
+        let room = 0;
+        for (let k = 0; k < next.length; k += 1) {
+          const spare = next[k] - (HEAD + (collapsed[k] ? 0 : 20));
+          if (spare > room) {
+            room = spare;
+            widest = k;
+          }
+        }
+        if (widest < 0 || room <= 0) break;
+        const cut = Math.min(room, excess);
+        next[widest] -= cut;
+        excess -= cut;
+      }
+      setSizes(next);
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [keys, layoutTick]);
+  const floorOf = (index) => HEAD + (collapsed[index] ? 0 : MIN_BODY);
+  const toggle = (index) => {
+    const closing = collapsed[index] !== true;
+    setSizes((prev) => {
+      if (prev.length !== panes.length) return prev;
+      const next = [...prev];
+      if (closing) {
+        expanded.current[index] = prev[index];
+        next[index] = HEAD;
+        return next;
+      }
+      let need = (expanded.current[index] ?? HEAD + 140) - HEAD;
+      next[index] = HEAD;
+      const spare = Math.max(0, avail.current - prev.reduce((sum, value) => sum + value, 0));
+      const fromSpare = Math.min(need, spare);
+      next[index] += fromSpare;
+      need -= fromSpare;
+      const position = order.indexOf(index);
+      for (const at of [position + 1, position - 1]) {
+        if (need <= 0) break;
+        const neighbour = order[at];
+        if (neighbour === void 0) continue;
+        const take = Math.min(need, Math.max(0, next[neighbour] - floorOf(neighbour)));
+        next[neighbour] -= take;
+        next[index] += take;
+        need -= take;
+      }
+      return next;
+    });
+    setCollapsed((prev) => prev.map((value, at) => at === index ? !value : value));
   };
-  const node = toast === null ? null : /* @__PURE__ */ React.createElement("div", { className: "df-toasts" }, /* @__PURE__ */ React.createElement("div", { className: "df-toast", "data-tone": toast.tone, "data-closing": toast.closing ? "true" : void 0 }, /* @__PURE__ */ React.createElement("span", { className: "df-toast-mark" }), /* @__PURE__ */ React.createElement("span", { className: "df-toast-text" }, toast.text)));
-  return { show, node };
+  (0, import_react2.useEffect)(() => {
+    if (expandSignal === void 0 || expandSignal === 0 || expandKey === void 0) return;
+    const index = panes.findIndex((pane) => pane.key === expandKey);
+    if (index < 0 || collapsed[index] !== true) return;
+    toggle(index);
+  }, [expandSignal, expandKey]);
+  const floorOfRef = (index) => HEAD + (collapsedRef.current[index] ? 0 : MIN_BODY);
+  const beginResize = (top, bottom, event) => {
+    if (event.button !== 0) return;
+    event.preventDefault();
+    const snapshot = [...sizesRef.current];
+    if (snapshot.length !== panes.length) return;
+    const startY = event.clientY;
+    setResizing(top);
+    const onMove = (moveEvent) => {
+      const total = snapshot[top] + snapshot[bottom];
+      const delta = moveEvent.clientY - startY;
+      const size = Math.min(Math.max(snapshot[top] + delta, floorOfRef(top)), total - floorOfRef(bottom));
+      setSizes((prev) => {
+        const next = [...prev];
+        next[top] = size;
+        next[bottom] = total - size;
+        return next;
+      });
+    };
+    const onUp = () => {
+      setResizing(-1);
+      window.removeEventListener("pointermove", onMove);
+      window.removeEventListener("pointerup", onUp);
+      window.removeEventListener("pointercancel", onUp);
+    };
+    window.addEventListener("pointermove", onMove);
+    window.addEventListener("pointerup", onUp);
+    window.addEventListener("pointercancel", onUp);
+  };
+  const beginMove = (index, event) => {
+    if (event.button !== 0) return;
+    const button = event.currentTarget;
+    const startY = event.clientY;
+    let moved = false;
+    const onMove = (moveEvent) => {
+      if (!moved && Math.abs(moveEvent.clientY - startY) < 4) return;
+      moved = true;
+      const host = panels.current[index]?.parentElement;
+      if (!host) return;
+      const offset = moveEvent.clientY - host.getBoundingClientRect().top;
+      const currentOrder = orderRef.current;
+      let acc = 0;
+      let target = 0;
+      for (let k = 0; k < currentOrder.length; k += 1) {
+        const at = currentOrder[k];
+        const size = collapsedRef.current[at] ? HEAD : sizesRef.current[at] ?? 0;
+        if (offset > acc + size / 2) target = k + 1;
+        acc += size;
+      }
+      setOrder((prev) => {
+        const position = prev.indexOf(index);
+        let to = target;
+        if (to > position) to -= 1;
+        if (to === position) return prev;
+        const next = [...prev];
+        next.splice(position, 1);
+        next.splice(to, 0, index);
+        return next;
+      });
+    };
+    const onUp = () => {
+      window.removeEventListener("pointermove", onMove);
+      window.removeEventListener("pointerup", onUp);
+      window.removeEventListener("pointercancel", onUp);
+      if (!moved) {
+        toggle(index);
+        button.blur();
+      }
+    };
+    window.addEventListener("pointermove", onMove);
+    window.addEventListener("pointerup", onUp);
+    window.addEventListener("pointercancel", onUp);
+  };
+  const openList = order.filter((index) => collapsed[index] !== true);
+  const view = order;
+  return /* @__PURE__ */ React.createElement("div", { className: ui_default.group }, view.map((index, position) => {
+    const pane = panes[index];
+    const isCollapsed = collapsed[index] === true;
+    const size = sizes[index];
+    const style = size === void 0 ? { flex: "1 1 0" } : {
+      flexBasis: isCollapsed ? HEAD : size,
+      // 展开块吃掉剩余高度；收起块固定 24px。
+      flexGrow: !isCollapsed && index === openList[openList.length - 1] ? 1 : 0,
+      flexShrink: isCollapsed ? 0 : 1
+    };
+    return /* @__PURE__ */ React.createElement(
+      "section",
+      {
+        key: pane.key,
+        className: `${ui_default.panel} ${isCollapsed ? ui_default.panelCollapsed : ui_default.panelOpen}`,
+        style,
+        ref: (node) => {
+          panels.current[index] = node;
+        }
+      },
+      position > 0 && !isCollapsed && collapsed[view[position - 1]] !== true && /* @__PURE__ */ React.createElement(
+        "div",
+        {
+          className: ui_default.grip,
+          role: "separator",
+          "aria-orientation": "horizontal",
+          title: "\u62D6\u52A8\u8C03\u6574\u9AD8\u5EA6",
+          onPointerDown: (event) => beginResize(view[position - 1], index, event)
+        }
+      ),
+      /* @__PURE__ */ React.createElement(
+        "button",
+        {
+          type: "button",
+          className: ui_default.panelHead,
+          "aria-expanded": !isCollapsed,
+          onPointerDown: (event) => beginMove(index, event)
+        },
+        /* @__PURE__ */ React.createElement("span", { className: ui_default.panelTitle }, pane.title),
+        pane.count === void 0 ? null : /* @__PURE__ */ React.createElement("span", { className: ui_default.panelCount }, pane.count),
+        /* @__PURE__ */ React.createElement("span", { className: ui_default.panelTail }, pane.actions, /* @__PURE__ */ React.createElement("span", { className: ui_default.panelChev }, Chevron()))
+      ),
+      /* @__PURE__ */ React.createElement("div", { className: ui_default.panelBody, ref: (node) => {
+        bodies.current[index] = node;
+      } }, pane.content)
+    );
+  }), footer);
 }
-function textOf(reason) {
-  return reason instanceof Error ? reason.message : String(reason);
-}
-function start(call, sessionId, picked, setPicked, reload) {
-  const id = `batch-${Date.now().toString(36)}`;
-  return call("accept-start", { sessionId, id, taskIds: picked }).then(() => {
-    setPicked([]);
-    return reload();
-  }).catch((reason) => {
-    reload(reason);
-    throw reason;
-  });
-}
-function removeBatches(call, sessionId, ids, setPicked, setBusy, reload, show) {
-  setBusy(true);
-  call("accept-delete", { sessionId, ids }).then(() => {
-    setPicked([]);
-    show?.(`\u5DF2\u5220\u9664 ${ids.length} \u4E2A\u9A8C\u6536\u4EFB\u52A1`, "info");
-    return reload();
-  }).catch((reason) => reload(reason)).finally(() => setBusy(false));
-}
-function removeTasks(call, sessionId, ids, picked, setPicked, setBusy, reload, show, t) {
-  if (ids.length === 0) return;
-  setBusy(true);
-  call("task-delete", { sessionId, ids }).then((value) => {
-    const result = value;
-    const deleted = Array.isArray(result?.deleted) ? result.deleted : ids;
-    const warnings = Array.isArray(result?.deleteWarnings) ? result.deleteWarnings : [];
-    setPicked(picked.filter((id) => !deleted.includes(id)));
-    if (warnings.length > 0) {
-      show?.(t("toast.deleteWarnings").replace("{count}", String(deleted.length)).replace("{warnings}", warnings.join("\uFF1B")), "error");
-    } else {
-      show?.(t("toast.deletedTasks").replace("{count}", String(deleted.length)), "info");
+var Boundary = class extends React.Component {
+  state = { message: null };
+  static getDerivedStateFromError(error) {
+    return { message: error instanceof Error ? error.message : String(error) };
+  }
+  render() {
+    if (this.state.message !== null) {
+      return /* @__PURE__ */ React.createElement("div", { className: ui_default.empty }, /* @__PURE__ */ React.createElement("p", { className: ui_default.emptyText }, this.state.message));
     }
-    return reload();
-  }).catch((reason) => reload(reason)).finally(() => setBusy(false));
+    return this.props.children;
+  }
+};
+function Empty({ icon, text }) {
+  return /* @__PURE__ */ React.createElement("div", { className: ui_default.empty }, /* @__PURE__ */ React.createElement("span", { className: ui_default.emptyIcon }, icon ?? IconTray()), /* @__PURE__ */ React.createElement("span", null, text));
 }
-function controlTask(call, sessionId, taskId, action, reload, show, t) {
-  call(`task-${action}`, { sessionId, taskId }).then((value) => {
-    const result = value;
-    const warning = result?.interrupt?.warning;
-    if (warning) show?.(warning, "error");
-    else show?.(t?.(`toast.${action}`) ?? action, "info");
-    return reload();
-  }).catch((reason) => {
-    show?.(textOf(reason), "error");
-    return reload(reason);
-  });
+function Svg({ children, size = 16, viewBox = "0 0 16 16", strokeWidth = 1 }) {
+  return /* @__PURE__ */ React.createElement(
+    "svg",
+    {
+      width: size,
+      height: size,
+      viewBox,
+      fill: "none",
+      stroke: "currentColor",
+      strokeWidth,
+      strokeLinecap: "round",
+      strokeLinejoin: "round",
+      "aria-hidden": "true"
+    },
+    children
+  );
 }
-function mergeTask(call, sessionId, taskId, reload, show) {
-  call("task-merge", { sessionId, taskId }).then((value) => {
-    const task = value?.tasks?.find((item) => item.id === taskId);
-    if (task?.status === "pending-merge") show?.(task.warnings?.join("\uFF0C") || "\u6CA1\u6709\u5408\u5165", "error");
-    else show?.("\u5DF2\u5408\u5165\u57FA\u7EBF", "info");
-    return reload();
-  }).catch((reason) => reload(reason));
+function Chevron() {
+  return /* @__PURE__ */ React.createElement(Svg, { size: 14, viewBox: "0 0 24 24", strokeWidth: 1.5 }, /* @__PURE__ */ React.createElement("path", { d: "m9 18 6-6-6-6" }));
 }
-function finishTask(call, sessionId, id, taskId, result, reload) {
-  call("accept-task", { sessionId, id, taskId, result }).then(() => reload()).catch((reason) => reload(reason));
+function IconDevTask() {
+  return /* @__PURE__ */ React.createElement(Svg, { size: 18, viewBox: "0 0 24 24", strokeWidth: 1.5 }, /* @__PURE__ */ React.createElement("path", { d: "M6 22a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.704.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2z" }), /* @__PURE__ */ React.createElement("path", { d: "M14 2v5a1 1 0 0 0 1 1h5" }), /* @__PURE__ */ React.createElement("path", { d: "M10 12.5 8 15l2 2.5" }), /* @__PURE__ */ React.createElement("path", { d: "m14 12.5 2 2.5-2 2.5" }));
 }
-function togglePick(picked, id) {
-  return picked.includes(id) ? picked.filter((item) => item !== id) : [...picked, id];
+function IconAcceptTask() {
+  return /* @__PURE__ */ React.createElement(Svg, { size: 18, viewBox: "0 0 24 24", strokeWidth: 1.5 }, /* @__PURE__ */ React.createElement("path", { d: "m13 13.5 2-2.5-2-2.5" }), /* @__PURE__ */ React.createElement("path", { d: "m21 21-4.3-4.3" }), /* @__PURE__ */ React.createElement("path", { d: "M9 8.5 7 11l2 2.5" }), /* @__PURE__ */ React.createElement("circle", { cx: "11", cy: "11", r: "8" }));
 }
-function shownStatus(task) {
-  if (task.kind !== "accept" && task.status === "developing" && task.agentStatus !== "running") return "awaiting-agent";
-  return task.status;
+function IconRepo() {
+  return /* @__PURE__ */ React.createElement(Svg, { size: 18, viewBox: "0 0 24 24", strokeWidth: 1.5 }, /* @__PURE__ */ React.createElement("path", { d: "M10 10.5 8 13l2 2.5" }), /* @__PURE__ */ React.createElement("path", { d: "m14 10.5 2 2.5-2 2.5" }), /* @__PURE__ */ React.createElement("path", { d: "M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2z" }));
 }
-function matchFilter(filter, task) {
-  if (filter === "pending") return task.status === "pending-acceptance";
-  if (filter === "dev") return task.status === "developing" || task.status === "waiting" || task.status === "paused" || task.status === "failed";
-  if (filter === "earlier") return task.status === "accepted" || task.status === "merged" || task.status === "abandoned" || task.status === "rejected" || task.status === "stopped";
-  return true;
+function IconAgent() {
+  return /* @__PURE__ */ React.createElement(Svg, { size: 18, viewBox: "0 0 24 24", strokeWidth: 1.5 }, /* @__PURE__ */ React.createElement("path", { d: "M12 8V4H8" }), /* @__PURE__ */ React.createElement("path", { d: "M2 14h2" }), /* @__PURE__ */ React.createElement("path", { d: "M20 14h2" }), /* @__PURE__ */ React.createElement("path", { d: "M15 13v2" }), /* @__PURE__ */ React.createElement("path", { d: "M9 13v2" }), /* @__PURE__ */ React.createElement("path", { d: "M4 8h16a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2" }));
 }
-function acceptReason(data, picked, t) {
-  if (!data.enabled) return "\u4F1A\u8BDD\u672A\u542F\u7528\u5DE5\u4F5C\u6D41";
-  const selected = data.tasks.filter((task) => task.selectable && picked.includes(task.id));
-  if (selected.length === 0) return t("hint.pick");
-  if (data.counts.activeAgents >= data.counts.agentLimit) return "\u5B50\u4EE3\u7406\u5DF2\u8FBE\u4E0A\u9650";
-  const busy = selected.flatMap((task) => task.repos).filter((name) => data.repos.find((repo) => repo.name === name)?.acceptSlot?.batchId);
-  if (busy.length > 0) return `${busy[0]} \u7684\u9A8C\u6536\u69FD\u4F4D\u6B63\u5728\u5360\u7528`;
-  const perRepo = /* @__PURE__ */ new Map();
-  for (const task of selected) {
-    for (const name of task.repos) {
-      const bases = perRepo.get(name) ?? /* @__PURE__ */ new Set();
-      bases.add(task.base ?? "");
-      perRepo.set(name, bases);
+function IconChat() {
+  return /* @__PURE__ */ React.createElement(Svg, null, /* @__PURE__ */ React.createElement("path", { d: "M3.6 5.2a1.6 1.6 0 0 1 1.6-1.6h5.6a1.6 1.6 0 0 1 1.6 1.6v3.2a1.6 1.6 0 0 1-1.6 1.6H7l-2.6 2v-2H5.2a1.6 1.6 0 0 1-1.6-1.6Z" }));
+}
+function IconTray() {
+  return /* @__PURE__ */ React.createElement(Svg, { size: 28 }, /* @__PURE__ */ React.createElement("path", { d: "M3.2 9.2h2.6l1.2 2h4l1.2-2h2.6" }), /* @__PURE__ */ React.createElement("path", { d: "M3.2 9.2 5 4.9A1.4 1.4 0 0 1 6.3 4h5.4a1.4 1.4 0 0 1 1.3.9l1.8 4.3v4.2a1.4 1.4 0 0 1-1.4 1.4H4.6a1.4 1.4 0 0 1-1.4-1.4Z" }));
+}
+function IconRefresh() {
+  return /* @__PURE__ */ React.createElement(Svg, { viewBox: "0 0 24 24", strokeWidth: 1.5 }, /* @__PURE__ */ React.createElement("path", { d: "M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8" }), /* @__PURE__ */ React.createElement("path", { d: "M21 3v5h-5" }), /* @__PURE__ */ React.createElement("path", { d: "M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16" }), /* @__PURE__ */ React.createElement("path", { d: "M8 16H3v5" }));
+}
+
+// src/client/panel/Tasks.tsx
+var import_react3 = require("react");
+
+// src/client/panel/status.ts
+var TONES = {
+  developing: "run",
+  running: "run",
+  accepting: "run",
+  scheduling: "run",
+  dispatched: "ok",
+  "pending-acceptance": "ok",
+  accepted: "ok",
+  merged: "ok",
+  "pending-merge": "warn",
+  busy: "warn",
+  failed: "err",
+  rejected: "err",
+  waiting: "idle",
+  paused: "idle",
+  stopped: "idle",
+  idle: "idle",
+  "awaiting-agent": "idle",
+  abandoned: "idle",
+  review: "idle"
+};
+function toneOf(status) {
+  return TONES[status] ?? "idle";
+}
+function statusText(t, status) {
+  const key = `status.${status}`;
+  const text = t(key);
+  return text === key ? status : text;
+}
+var ORDER = {
+  failed: 0,
+  "pending-acceptance": 1,
+  "pending-merge": 2,
+  developing: 3,
+  waiting: 4,
+  paused: 5
+};
+var CLOSED = /* @__PURE__ */ new Set(["accepted", "merged", "abandoned", "stopped"]);
+function isOpenTask(status) {
+  return !CLOSED.has(status);
+}
+function openTaskOrder(status) {
+  return ORDER[status] ?? 9;
+}
+
+// src/client/panel/Tasks.tsx
+function usageText(usage) {
+  if (!usage || usage.totalTokens <= 0) return "";
+  if (usage.totalTokens >= 1e3) return `${(usage.totalTokens / 1e3).toFixed(1)}k`;
+  return String(usage.totalTokens);
+}
+function slotText(task) {
+  const entries = Object.entries(task.slots ?? {});
+  if (entries.length > 0) return entries.map(([repo, slot]) => `${repo}/${slot.number ?? ""}`).join("\u3000");
+  return (task.repos ?? []).join("\u3000");
+}
+function Tasks({ data, t, call, sessionId, focus }) {
+  const [picked, setPicked] = (0, import_react3.useState)(null);
+  const [diff, setDiff] = (0, import_react3.useState)(null);
+  const [pickTick, setPickTick] = (0, import_react3.useState)(0);
+  const tasks = data.tasks ?? [];
+  const schedules = data.schedules ?? [];
+  const newest = (a, b) => String(b.createdAt ?? "").localeCompare(String(a.createdAt ?? ""));
+  const dev = tasks.filter((task) => task.kind !== "accept").sort((a, b) => openTaskOrder(a.status) - openTaskOrder(b.status) || newest(a, b));
+  const accept = tasks.filter((task) => task.kind === "accept").sort((a, b) => (a.status === "accepting" ? 0 : 1) - (b.status === "accepting" ? 0 : 1) || newest(a, b));
+  const pickedTask = picked?.kind === "task" ? picked.task : null;
+  const pickedSchedule = picked?.kind === "schedule" ? picked.schedule : null;
+  const pickedId = picked?.kind === "task" ? picked.task.id : picked?.schedule.id ?? null;
+  (0, import_react3.useEffect)(() => {
+    setDiff(null);
+    if (!pickedTask || pickedTask.kind === "accept") return void 0;
+    let alive = true;
+    call("task-diff", { sessionId, taskId: pickedTask.id }).then((value) => {
+      if (alive) setDiff(value ?? null);
+    }).catch(() => {
+      if (alive) setDiff(null);
+    });
+    return () => {
+      alive = false;
+    };
+  }, [pickedTask?.id, pickedTask?.kind, sessionId, call]);
+  (0, import_react3.useEffect)(() => {
+    if (!focus) return;
+    const task = (data.tasks ?? []).find((item) => item.id === focus.id);
+    if (task) pickTask(task);
+  }, [focus?.tick]);
+  const pickTask = (task) => {
+    const full = tasks.find((item) => item.id === task.id) ?? task;
+    setPicked({ kind: "task", task: full });
+    setPickTick((value) => value + 1);
+  };
+  const pickSchedule = (schedule) => {
+    setPicked({ kind: "schedule", schedule });
+    setPickTick((value) => value + 1);
+  };
+  const panes = [
+    {
+      key: "schedule",
+      title: t("section.scheduleTasks"),
+      count: schedules.length,
+      actions: /* @__PURE__ */ React.createElement("span", { className: ui_default.headStatus }, /* @__PURE__ */ React.createElement(
+        Status,
+        {
+          tone: "ok",
+          label: `${t("section.scheduleEvery")}\u3000${t("fact.concurrency")} ${data.counts.activeAgents}/${data.counts.agentLimit}`
+        }
+      )),
+      content: /* @__PURE__ */ React.createElement(SchedulePane, { schedules, t, pickedId, onPick: pickSchedule })
+    },
+    {
+      key: "dev",
+      title: t("section.devTasks"),
+      count: dev.length,
+      content: dev.length === 0 ? /* @__PURE__ */ React.createElement(Empty, { text: t("section.emptyDev") }) : dev.map((task) => /* @__PURE__ */ React.createElement(
+        DevRow,
+        {
+          key: task.id,
+          task,
+          t,
+          selected: pickedTask?.id === task.id,
+          onSelect: () => pickTask(task)
+        }
+      ))
+    },
+    {
+      key: "accept",
+      title: t("section.acceptTasks"),
+      count: accept.length,
+      content: accept.length === 0 ? /* @__PURE__ */ React.createElement(Empty, { text: t("section.emptyAccept") }) : accept.map((batch) => /* @__PURE__ */ React.createElement(
+        AcceptRow,
+        {
+          key: batch.id,
+          batch,
+          tasks,
+          t,
+          selected: pickedTask?.id === batch.id,
+          onSelect: () => pickTask(batch)
+        }
+      ))
+    },
+    {
+      key: "detail",
+      title: t("action.detail"),
+      content: pickedTask ? /* @__PURE__ */ React.createElement(
+        DetailPane,
+        {
+          task: pickedTask,
+          diff,
+          t,
+          onPick: pickTask,
+          contained: pickedTask.kind === "accept" ? containedTasks(tasks, pickedTask) : void 0
+        }
+      ) : pickedSchedule ? /* @__PURE__ */ React.createElement(ScheduleDetail, { schedule: pickedSchedule, t }) : /* @__PURE__ */ React.createElement(Empty, { text: t("section.emptyDetail") })
     }
-  }
-  if ([...perRepo.values()].some((bases) => bases.size > 1)) return t("hint.baseMismatch");
-  return "";
-}
-function taskTitle(data, id) {
-  if (!id) return "";
-  return data.tasks.find((task) => task.id === id)?.title ?? id;
-}
-function agentPhase(agent) {
-  if (agent.status !== "running") return "idle";
-  if (agent.kind === "accept") return "accepting";
-  if (agent.kind === "schedule") return "scheduling";
-  return "developing";
-}
-function baseChips(task) {
-  if (task.kind === "accept") return Object.values(task.bases ?? {}).filter((base) => typeof base === "string" && base !== "");
-  const chips = [];
-  if (typeof task.baseGroup === "string" && task.baseGroup !== "") chips.push(`#${task.baseGroup}`);
-  if (typeof task.base === "string" && task.base !== "") chips.push(task.base);
-  return chips;
-}
-function baseBranchChips(task) {
-  return typeof task.base === "string" && task.base !== "" ? [task.base] : [];
-}
-function taskChips(task) {
-  return Object.entries(task.slots ?? {}).map(([repo, slot]) => {
-    if (slot.port) return `${repo} \xB7 ${slot.port}`;
-    return slot.number ?? repo;
-  });
-}
-function createdText(createdAt) {
-  if (!createdAt) return void 0;
-  const date = new Date(createdAt);
-  if (Number.isNaN(date.getTime())) return void 0;
-  const pad = (value) => String(value).padStart(2, "0");
-  return `${pad(date.getMonth() + 1)}-${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}`;
-}
-function taskBranchChips(task) {
-  return Object.values(task.slots ?? {}).map((slot) => slot.branch).filter((branch) => typeof branch === "string" && branch !== "");
-}
-function taskFacts(task, t) {
-  const rows = [];
-  for (const [repo, slot] of Object.entries(task.slots ?? {})) {
-    const slotLabel = task.kind === "dev" && slot.number ? `${repo}-${slot.number}` : repo;
-    rows.push({ slot: t("fact.slot"), detail: slotLabel });
-    if (slot.branch) rows.push({ slot: t("fact.branch"), detail: slot.branch });
-  }
-  if (task.kind === "dev") {
-    const base = [
-      typeof task.baseGroup === "string" && task.baseGroup !== "" ? `#${task.baseGroup}` : "",
-      typeof task.base === "string" ? task.base : ""
-    ].filter(Boolean).join(" \xB7 ");
-    if (base) rows.push({ slot: t("fact.base"), detail: base });
-    if (task.batchId) rows.push({ slot: t("fact.batch"), detail: task.batchId });
-  }
-  if (task.status === "paused" && task.pausedAt) rows.push({ slot: t("fact.paused"), detail: createdText(task.pausedAt) ?? "" });
-  if (task.status === "stopped" && task.stoppedAt) rows.push({ slot: t("fact.stopped"), detail: createdText(task.stoppedAt) ?? "" });
-  if (task.warnings?.length) rows.push({ slot: t("fact.warning"), detail: task.warnings.join("\uFF0C"), wide: true });
-  rows.push(...usageRows(task.usage, t));
-  if (rows.length % 2 === 1) rows[rows.length - 1].wide = true;
-  return rows;
-}
-function usageRows(usage, t) {
-  if (!usage?.totalTokens) return [];
-  const parts = [
-    `${t("usage.total")} ${formatCount(usage.totalTokens)}`,
-    `${t("usage.input")} ${formatCount(usage.inputTokens)}`,
-    `${t("usage.output")} ${formatCount(usage.outputTokens)}`
   ];
-  const cache = (usage.cacheReadTokens ?? 0) + (usage.cacheWriteTokens ?? 0);
-  if (cache > 0) parts.push(`${t("usage.cache")} ${formatCount(cache)}`);
-  return [{ slot: t("fact.usage"), detail: parts.join(" \xB7 "), wide: true }];
+  return /* @__PURE__ */ React.createElement(SplitGroup, { panes, expandKey: "detail", expandSignal: pickTick });
 }
-function formatTokens(total) {
-  if (total >= 1e4) return `${Math.round(total / 1e3)}k`;
-  if (total >= 1e3) return `${(total / 1e3).toFixed(1)}k`;
-  return String(total);
+function SchedulePane({
+  schedules,
+  t,
+  pickedId,
+  onPick
+}) {
+  if (schedules.length === 0) return /* @__PURE__ */ React.createElement(Empty, { text: t("section.emptySchedule") });
+  return /* @__PURE__ */ React.createElement(React.Fragment, null, schedules.map((schedule) => {
+    const target = schedule.slots?.[0];
+    return /* @__PURE__ */ React.createElement(
+      Item,
+      {
+        key: schedule.id,
+        icon: /* @__PURE__ */ React.createElement("span", { className: ui_default.suffix }, schedule.baseGroup ?? "\xB7"),
+        title: schedule.title,
+        titleAttr: schedule.title,
+        suffix: target ? [target.repo, target.number].filter(Boolean).join("/") : void 0,
+        trail: /* @__PURE__ */ React.createElement(Status, { tone: toneOf(schedule.status), label: statusText(t, schedule.status) }),
+        selected: pickedId === schedule.id,
+        onClick: () => onPick(schedule)
+      }
+    );
+  }));
 }
-function formatCount(total) {
-  return String(total).replace(/\B(?=(\d{3})+(?!\d))/gu, ",");
+function DevRow({
+  task,
+  t,
+  selected,
+  onSelect
+}) {
+  return /* @__PURE__ */ React.createElement(
+    Item,
+    {
+      icon: /* @__PURE__ */ React.createElement(IconDevTask, null),
+      title: task.title,
+      titleAttr: task.title,
+      suffix: slotText(task),
+      trail: /* @__PURE__ */ React.createElement(Status, { tone: toneOf(task.status), label: statusText(t, task.status) }),
+      selected,
+      onClick: onSelect
+    }
+  );
 }
-function devDetail(data, repo, slot, t) {
-  if (!slot.taskId) return t("slot.reusable");
-  const title = taskTitle(data, slot.taskId);
-  return [title, slot.branch].filter(Boolean).join(" \xB7 ");
+function AcceptRow({
+  batch,
+  tasks,
+  t,
+  selected,
+  onSelect
+}) {
+  const contained = containedTasks(tasks, batch);
+  const passed = contained.filter((task) => task.status === "accepted" || task.acceptance === "accepted").length;
+  const total = contained.length || (batch.taskIds ?? []).length;
+  return /* @__PURE__ */ React.createElement(
+    Item,
+    {
+      icon: /* @__PURE__ */ React.createElement(IconAcceptTask, null),
+      title: batch.title,
+      titleAttr: batch.title,
+      trail: /* @__PURE__ */ React.createElement("span", { className: ui_default.progress }, `${passed}/${total}`),
+      selected,
+      onClick: onSelect
+    }
+  );
 }
-function acceptDetail(repo, t) {
-  if (!repo.acceptSlot) return t("slot.noAccept");
-  const portLabel = t("page.tasks") === "\u4EFB\u52A1" ? "\u7AEF\u53E3" : "port";
-  if (!repo.acceptSlot.batchId) return repo.acceptSlot.port ? `${portLabel} ${repo.acceptSlot.port}` : t("slot.free");
-  return [`${portLabel} ${repo.acceptSlot.port ?? ""}`, repo.acceptSlot.batchId].filter(Boolean).join(" \xB7 ");
+function containedTasks(tasks, batch) {
+  const ids = batch.taskIds ?? [];
+  const fromIds = ids.map((id) => tasks.find((task) => task.kind !== "accept" && task.id === id)).filter((task) => task !== void 0);
+  const rows = fromIds.length > 0 ? fromIds : tasks.filter((task) => task.kind !== "accept" && task.batchId === batch.id);
+  return rows.sort((a, b) => String(b.createdAt ?? "").localeCompare(String(a.createdAt ?? "")));
 }
-function agentDetail(data, agent, t) {
-  if (agent.kind === "lead" || agent.status === "lead") return t("agent.leadDetail");
-  if (agent.status === "running") {
-    const title = taskTitle(data, agent.taskId);
-    return [agent.kind === "accept" ? t("slot.accept") : t("slot.dev"), title].filter(Boolean).join(" \xB7 ");
+function kv(label, value) {
+  return /* @__PURE__ */ React.createElement("div", { className: ui_default.kvRow }, /* @__PURE__ */ React.createElement("span", { className: ui_default.kvLabel }, label), /* @__PURE__ */ React.createElement("span", { className: ui_default.kvValue }, value));
+}
+function fileList(files, t) {
+  return /* @__PURE__ */ React.createElement("div", { className: ui_default.fileList }, /* @__PURE__ */ React.createElement("p", { className: ui_default.detailTitle }, `${t("fact.changeFiles")} ${files.length}`), files.map((file) => /* @__PURE__ */ React.createElement("div", { key: `${file.repo}:${file.path}`, className: ui_default.fileRow }, /* @__PURE__ */ React.createElement("span", { className: ui_default.filePath }, file.binary ? `${file.path}\uFF08binary\uFF09` : file.path), /* @__PURE__ */ React.createElement("span", { className: ui_default.fileAdd }, `+${file.added}`), /* @__PURE__ */ React.createElement("span", { className: ui_default.fileDel }, `-${file.deleted}`))));
+}
+function DetailPane({ task, diff, t, contained, onPick }) {
+  const files = diff?.files ?? [];
+  const entries = Object.entries(task.bases ?? {});
+  const base = entries.length > 0 ? entries.map(([repo, branch]) => `${repo} ${branch}`).join("\u3000") : task.base ?? "\u2014";
+  const batchIds = task.taskIds ?? [];
+  const isBatch = task.kind === "accept";
+  const deps = task.dependsOn ?? [];
+  return /* @__PURE__ */ React.createElement("div", { className: ui_default.detail }, /* @__PURE__ */ React.createElement("div", { className: ui_default.detailHead }, /* @__PURE__ */ React.createElement("span", { className: ui_default.detailHeadTitle, title: task.title }, task.title), /* @__PURE__ */ React.createElement(Status, { tone: toneOf(task.status), label: statusText(t, task.status) })), /* @__PURE__ */ React.createElement("div", { className: ui_default.kvGrid }, kv(t("fact.slot"), slotText(task) || "\u2014"), kv(t("fact.branch"), Object.values(task.slots ?? {})[0]?.branch || "\u2014"), kv(t("fact.base"), base), kv(t("fact.usage"), usageText(task.usage) || "\u2014"), isBatch ? kv(t("fact.batch"), `${batchIds.length}`) : null, task.pausedAt ? kv(t("fact.paused"), task.pausedAt) : null, task.stoppedAt ? kv(t("fact.stopped"), task.stoppedAt) : null), isBatch && contained && contained.length > 0 ? /* @__PURE__ */ React.createElement("div", { className: ui_default.fileList }, /* @__PURE__ */ React.createElement("p", { className: ui_default.detailTitle }, `${t("section.devTasks")} ${contained.length}`), contained.map((child) => /* @__PURE__ */ React.createElement(
+    "div",
+    {
+      key: child.id,
+      className: `${ui_default.fileRow} ${onPick ? ui_default.fileRowAction : ""}`,
+      onClick: onPick ? () => onPick(child) : void 0
+    },
+    /* @__PURE__ */ React.createElement("span", { className: ui_default.filePath }, child.title),
+    /* @__PURE__ */ React.createElement(Status, { tone: toneOf(child.status), label: statusText(t, child.status) })
+  ))) : null, !isBatch && deps.length > 0 ? /* @__PURE__ */ React.createElement("div", { className: ui_default.fileList }, /* @__PURE__ */ React.createElement("p", { className: ui_default.detailTitle }, `${t("fact.depends")} ${deps.length}`), deps.map((dep) => /* @__PURE__ */ React.createElement(
+    "div",
+    {
+      key: dep.id,
+      className: `${ui_default.fileRow} ${onPick ? ui_default.fileRowAction : ""}`,
+      onClick: onPick ? () => onPick(dep) : void 0
+    },
+    /* @__PURE__ */ React.createElement("span", { className: ui_default.filePath }, `${dep.title}\u3000${dep.merged ? t("fact.merged") : t("fact.notMerged")}`),
+    /* @__PURE__ */ React.createElement(Status, { tone: toneOf(dep.status), label: statusText(t, dep.status) })
+  ))) : null, task.warnings && task.warnings.length > 0 ? kv(t("fact.warning"), task.warnings.join("\uFF1B")) : null, files.length > 0 ? fileList(files, t) : null);
+}
+function ScheduleDetail({ schedule, t }) {
+  const target = schedule.slots?.[0];
+  const slots = (schedule.slots ?? []).map((slot) => [slot.repo, slot.number].filter(Boolean).join("/")).filter((value) => value !== "");
+  return /* @__PURE__ */ React.createElement("div", { className: ui_default.detail }, /* @__PURE__ */ React.createElement("div", { className: ui_default.detailHead }, /* @__PURE__ */ React.createElement("span", { className: ui_default.detailHeadTitle, title: schedule.title }, schedule.title), /* @__PURE__ */ React.createElement(Status, { tone: toneOf(schedule.status), label: statusText(t, schedule.status) })), /* @__PURE__ */ React.createElement("div", { className: ui_default.kvGrid }, kv(t("fact.base"), schedule.base ?? schedule.baseGroup ?? "\u2014"), kv(t("fact.slot"), slots.join("\u3000") || (target ? [target.repo, target.number].filter(Boolean).join("/") : "\u2014")), kv(t("fact.batch"), `${schedule.taskIds.length}`), kv(t("fact.usage"), usageText(schedule.usage) || "\u2014")));
+}
+
+// src/client/panel/Slots.tsx
+function Slots({ data, t }) {
+  const repos = data.repos ?? [];
+  const tasks = new Map((data.tasks ?? []).map((task) => [task.id, task]));
+  if (repos.length === 0) return /* @__PURE__ */ React.createElement(Empty, { text: t("slots.empty") });
+  return /* @__PURE__ */ React.createElement("div", { className: ui_default.group, style: { overflow: "hidden" } }, /* @__PURE__ */ React.createElement(
+    SplitGroup,
+    {
+      panes: repos.map((repo) => {
+        const used = repo.devSlots.filter((slot) => slot.taskId).length;
+        const branch = repo.branch ?? repo.defaultBranch ?? "";
+        return {
+          key: `repo:${repo.name}`,
+          title: repo.name,
+          count: used,
+          actions: /* @__PURE__ */ React.createElement("span", { className: ui_default.suffix }, branch, repo.dirty ? ` \xB7 ${t("metric.dirtyBases")}` : ""),
+          content: /* @__PURE__ */ React.createElement(React.Fragment, null, repo.devSlots.map((slot) => {
+            const task = slot.taskId ? tasks.get(slot.taskId) : void 0;
+            return /* @__PURE__ */ React.createElement(
+              Item,
+              {
+                key: `dev:${slot.number}`,
+                icon: /* @__PURE__ */ React.createElement(IconDevTask, null),
+                title: task ? task.title : t("status.idle"),
+                titleAttr: task ? task.title : void 0,
+                suffix: slot.branch ?? task?.repos?.[0],
+                trail: task ? /* @__PURE__ */ React.createElement(Status, { tone: toneOf(task.status), label: statusText(t, task.status) }) : /* @__PURE__ */ React.createElement("span", { className: ui_default.suffix }, slot.number)
+              }
+            );
+          }), acceptRow(repo, tasks, t), repo.devSlots.length === 0 && repo.acceptSlot === null ? /* @__PURE__ */ React.createElement(Empty, { text: t("slots.emptyRepo") }) : null)
+        };
+      })
+    }
+  ));
+}
+function acceptRow(repo, tasks, t) {
+  const slot = repo.acceptSlot;
+  if (slot === null) {
+    return /* @__PURE__ */ React.createElement(
+      Item,
+      {
+        key: "accept",
+        icon: /* @__PURE__ */ React.createElement(IconAcceptTask, null),
+        title: /* @__PURE__ */ React.createElement("span", { className: ui_default.itemHint }, t("status.none")),
+        suffix: t("slots.accept"),
+        trail: /* @__PURE__ */ React.createElement(Status, { tone: "idle", label: t("status.none") })
+      }
+    );
   }
-  if (agent.lastTaskId) return `${t("agent.last")} \xB7 ${taskTitle(data, agent.lastTaskId)}`;
-  return t("agent.idle");
+  const batch = slot.batchId ? tasks.get(slot.batchId) : void 0;
+  return /* @__PURE__ */ React.createElement(
+    Item,
+    {
+      key: "accept",
+      icon: /* @__PURE__ */ React.createElement(IconAcceptTask, null),
+      title: batch ? batch.title : t("slots.acceptFree"),
+      titleAttr: batch ? batch.title : void 0,
+      suffix: `:${slot.port ?? "\u2014"}`,
+      trail: batch ? /* @__PURE__ */ React.createElement(Status, { tone: toneOf(batch.status), label: statusText(t, batch.status) }) : /* @__PURE__ */ React.createElement(Status, { tone: "idle", label: t("status.idle") })
+    }
+  );
+}
+
+// src/client/panel/Bases.tsx
+var LOCATION = {
+  root: { key: "bases.root", tone: "idle" },
+  slot: { key: "bases.slot", tone: "idle" },
+  busy: { key: "bases.busy", tone: "warn" },
+  missing: { key: "bases.missing", tone: "err" },
+  none: { key: "bases.none", tone: "idle" }
+};
+function Bases({ data, t }) {
+  const groups = data.baseGroups ?? [];
+  if (groups.length === 0) return /* @__PURE__ */ React.createElement(Empty, { text: t("bases.empty") });
+  return /* @__PURE__ */ React.createElement("div", { className: ui_default.group, style: { overflow: "hidden" } }, /* @__PURE__ */ React.createElement(
+    SplitGroup,
+    {
+      panes: groups.map((group) => ({
+        key: `group:${group.number}`,
+        title: groupTitle(group),
+        count: group.repos.length,
+        content: group.repos.length === 0 ? /* @__PURE__ */ React.createElement(Empty, { text: t("bases.emptyGroup") }) : group.repos.map((row) => memberRow(row, t))
+      }))
+    }
+  ));
+}
+function memberRow(row, t) {
+  const state = LOCATION[row.location] ?? LOCATION.none;
+  return /* @__PURE__ */ React.createElement(
+    Item,
+    {
+      key: `${row.repo}:${row.branch}:${row.id}`,
+      icon: /* @__PURE__ */ React.createElement(IconRepo, null),
+      title: row.repo,
+      titleAttr: `${row.repo} ${row.branch}`,
+      suffix: row.branch,
+      trail: /* @__PURE__ */ React.createElement(Status, { tone: state.tone, label: t(state.key) })
+    }
+  );
+}
+function groupTitle(group) {
+  return `${group.number} ${group.label}`;
+}
+var BASE_ROW_HINT = ui_default.item;
+
+// src/client/panel/Agents.tsx
+function Agents({ data, t }) {
+  const counts = data.counts;
+  const agents = data.agents ?? [];
+  const tasks = new Map((data.tasks ?? []).map((task) => [task.id, task]));
+  const limit = counts.agentLimit ?? 0;
+  const active = counts.activeAgents ?? 0;
+  const accepting = agents.filter((agent) => agent.status === "accepting").length;
+  const idle = Math.max(0, limit - active);
+  const metrics = [
+    {
+      key: "running",
+      value: /* @__PURE__ */ React.createElement(React.Fragment, null, active, /* @__PURE__ */ React.createElement("span", { className: ui_default.metricLabel, style: { fontSize: 13, marginLeft: 1 } }, `/${limit}`)),
+      label: t("agents.running")
+    },
+    { key: "accepting", value: accepting, label: t("status.accepting") },
+    { key: "idle", value: idle, label: t("status.idle") }
+  ];
+  return /* @__PURE__ */ React.createElement("div", { className: ui_default.group, style: { overflow: "hidden" } }, /* @__PURE__ */ React.createElement("div", { className: ui_default.metrics }, metrics.map((metric) => /* @__PURE__ */ React.createElement("div", { key: metric.key, className: ui_default.metric }, /* @__PURE__ */ React.createElement("span", { className: ui_default.metricValue }, metric.value), /* @__PURE__ */ React.createElement("span", { className: ui_default.metricLabel }, metric.label)))), /* @__PURE__ */ React.createElement(
+    SplitGroup,
+    {
+      panes: [
+        {
+          key: "main",
+          title: t("agents.main"),
+          content: /* @__PURE__ */ React.createElement(
+            Item,
+            {
+              icon: /* @__PURE__ */ React.createElement(IconChat, null),
+              title: t("agents.mainHint"),
+              titleAttr: t("agents.mainHint"),
+              trail: /* @__PURE__ */ React.createElement(Status, { tone: "idle", label: t("agents.notCounted") })
+            }
+          )
+        },
+        {
+          key: "sub",
+          title: t("agents.sub"),
+          count: agents.length,
+          content: agents.length === 0 ? /* @__PURE__ */ React.createElement(Empty, { text: t("agents.empty") }) : agents.map((agent) => agentRow(agent, tasks, t))
+        }
+      ]
+    }
+  ));
+}
+function agentRow(agent, tasks, t) {
+  const task = agent.taskId ? tasks.get(agent.taskId) : agent.lastTaskId ? tasks.get(agent.lastTaskId) : void 0;
+  const status = agent.status === "running" ? "running" : agent.status || "idle";
+  return /* @__PURE__ */ React.createElement(
+    Item,
+    {
+      key: agent.id,
+      icon: /* @__PURE__ */ React.createElement(IconAgent, null),
+      title: agent.id,
+      titleAttr: agent.id,
+      suffix: task ? task.title : t("status.idle"),
+      trail: /* @__PURE__ */ React.createElement(Status, { tone: toneOf(status), label: statusText(t, status) })
+    }
+  );
+}
+
+// src/client/panel/Panel.tsx
+var PAGES = ["overview", "tasks", "slots", "bases", "agents"];
+function textOf(value) {
+  return value instanceof Error ? value.message : String(value);
+}
+function stamp(date) {
+  const pad = (value) => String(value).padStart(2, "0");
+  return `${pad(date.getHours())}:${pad(date.getMinutes())}`;
+}
+function Panel({ sessionId, call, t }) {
+  const [page, setPage] = (0, import_react4.useState)("overview");
+  const [focus, setFocus] = (0, import_react4.useState)(null);
+  const [data, setData] = (0, import_react4.useState)(null);
+  const [error, setError] = (0, import_react4.useState)("");
+  const [at, setAt] = (0, import_react4.useState)(() => /* @__PURE__ */ new Date());
+  const alive = (0, import_react4.useRef)(true);
+  (0, import_react4.useEffect)(() => () => {
+    alive.current = false;
+  }, []);
+  const root = (0, import_react4.useRef)(null);
+  (0, import_react4.useEffect)(() => {
+    const node = root.current;
+    if (!node) return;
+    const onCapture = (event) => {
+      const target = event.target;
+      const row = target?.closest?.("[data-task-id]");
+      if (!row) return;
+      const id = row.getAttribute("data-task-id");
+      if (!id) return;
+      setFocus({ id, tick: Date.now() });
+      setPage("tasks");
+    };
+    node.addEventListener("click", onCapture, true);
+    return () => node.removeEventListener("click", onCapture, true);
+  }, []);
+  const load = (failure) => call("snapshot", { sessionId }).then((value) => {
+    if (!alive.current) return;
+    const snapshot = normalizeSnapshot(value);
+    setData(snapshot);
+    setAt(/* @__PURE__ */ new Date());
+    setError(failure ? textOf(failure) : snapshot?.problem ?? "");
+  }).catch((reason) => {
+    if (alive.current) setError(textOf(reason));
+  });
+  (0, import_react4.useEffect)(() => {
+    void load();
+  }, [sessionId]);
+  return /* @__PURE__ */ React.createElement("div", { className: ui_default.pane, ref: root }, /* @__PURE__ */ React.createElement("div", { className: ui_default.head }, PAGES.map((id) => /* @__PURE__ */ React.createElement(
+    "button",
+    {
+      key: id,
+      type: "button",
+      className: id === page ? ui_default.tabOn : ui_default.tab,
+      "aria-current": id === page,
+      onClick: () => setPage(id)
+    },
+    t(`page.${id}`)
+  )), /* @__PURE__ */ React.createElement("span", { className: ui_default.stamp }, stamp(at)), /* @__PURE__ */ React.createElement(
+    "button",
+    {
+      type: "button",
+      className: ui_default.iconButton,
+      title: t("action.refresh"),
+      "aria-label": t("action.refresh"),
+      onClick: () => {
+        void load();
+      }
+    },
+    /* @__PURE__ */ React.createElement(IconRefresh, null)
+  )), error === "" ? null : /* @__PURE__ */ React.createElement("p", { className: ui_default.note, role: "status" }, error), data === null ? null : data.initialized === false ? /* @__PURE__ */ React.createElement(Empty, { text: t("empty.init") }) : /* @__PURE__ */ React.createElement(Boundary, null, page === "overview" ? /* @__PURE__ */ React.createElement(Overview, { data, t, onOpenTask: (task) => {
+    setFocus({ id: task.id, tick: Date.now() });
+    setPage("tasks");
+  } }) : page === "tasks" ? /* @__PURE__ */ React.createElement(Tasks, { data, t, call, sessionId, focus }) : page === "slots" ? /* @__PURE__ */ React.createElement(Slots, { data, t }) : page === "bases" ? /* @__PURE__ */ React.createElement(Bases, { data, t }) : /* @__PURE__ */ React.createElement(Agents, { data, t })));
+}
+function Overview({ data, t, onOpenTask }) {
+  const tasks = (data.tasks ?? []).filter((task) => isOpenTask(task.status)).sort((a, b) => openTaskOrder(a.status) - openTaskOrder(b.status));
+  const projects = data.projects ?? [];
+  const counts = data.counts;
+  const metrics = [
+    { key: "projects", label: t("nav.projects"), value: counts.projects },
+    {
+      key: "agents",
+      label: t("metric.agents"),
+      value: /* @__PURE__ */ React.createElement(React.Fragment, null, counts.activeAgents, /* @__PURE__ */ React.createElement("span", { className: ui_default.metricLabel, style: { fontSize: 13, marginLeft: 1 } }, `/${counts.agentLimit ?? 0}`))
+    },
+    { key: "tasks", label: t("metric.devTasks"), value: counts.activeTasks },
+    { key: "slots", label: t("metric.baseSlots"), value: counts.activeSlots },
+    { key: "pending", label: t("status.pending-acceptance"), value: counts.pending },
+    { key: "dirty", label: t("metric.dirtyBases"), value: counts.dirtyBases }
+  ];
+  return /* @__PURE__ */ React.createElement("div", { className: ui_default.group, style: { overflow: "hidden" } }, /* @__PURE__ */ React.createElement("div", { className: ui_default.metrics }, metrics.map((metric) => /* @__PURE__ */ React.createElement("div", { key: metric.key, className: ui_default.metric }, /* @__PURE__ */ React.createElement("span", { className: ui_default.metricValue }, metric.value), /* @__PURE__ */ React.createElement("span", { className: ui_default.metricLabel }, metric.label)))), /* @__PURE__ */ React.createElement(
+    SplitGroup,
+    {
+      panes: [
+        {
+          key: "open",
+          title: t("section.open"),
+          count: tasks.length,
+          content: tasks.length === 0 ? /* @__PURE__ */ React.createElement(Empty, { text: t("overview.noTasks") }) : tasks.map((task) => /* @__PURE__ */ React.createElement(TaskItem, { key: task.id, task, t, onOpen: () => onOpenTask(task) }))
+        },
+        {
+          key: "projects",
+          title: t("nav.projects"),
+          count: projects.length,
+          content: projects.length === 0 ? /* @__PURE__ */ React.createElement(Empty, { text: t("overview.noTasks") }) : projects.map((project) => /* @__PURE__ */ React.createElement(ProjectItem, { key: project.name, project, tasks, t }))
+        }
+      ]
+    }
+  ));
+}
+function TaskItem({ task, t, onOpen }) {
+  return /* @__PURE__ */ React.createElement(
+    Item,
+    {
+      icon: task.kind === "accept" ? /* @__PURE__ */ React.createElement(IconAcceptTask, null) : /* @__PURE__ */ React.createElement(IconDevTask, null),
+      title: task.title,
+      suffix: task.repos[0],
+      trail: /* @__PURE__ */ React.createElement(Status, { tone: toneOf(task.status), label: statusText(t, task.status) }),
+      titleAttr: `${task.title} \xB7 ${t("action.detail")}`,
+      onClick: onOpen,
+      dataId: task.id
+    }
+  );
+}
+var COUNT_ORDER = [
+  { status: "developing", label: "status.developing" },
+  { status: "waiting", label: "status.waiting" },
+  { status: "pending-acceptance", label: "status.pending-acceptance" },
+  { status: "pending-merge", label: "status.pending-merge" },
+  { status: "failed", label: "status.failed", tone: "err" }
+];
+function ProjectItem({ project, tasks, t }) {
+  const mine = tasks.filter((task) => task.repos.includes(project.name));
+  const pairs = COUNT_ORDER.map((entry) => ({
+    label: t(entry.label),
+    value: mine.filter((task) => task.status === entry.status).length,
+    tone: entry.tone
+  }));
+  return /* @__PURE__ */ React.createElement(
+    Item,
+    {
+      icon: /* @__PURE__ */ React.createElement(IconRepo, null),
+      title: project.name,
+      titleAttr: project.path ?? project.name,
+      trail: /* @__PURE__ */ React.createElement(Pairs, { items: pairs })
+    }
+  );
 }
 
 // src/client/plugin.tsx
